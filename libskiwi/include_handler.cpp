@@ -3,6 +3,7 @@
 #include <cassert>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 #include "visitor.h"
 #include "filename_setter.h"

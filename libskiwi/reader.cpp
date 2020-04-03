@@ -1,6 +1,7 @@
 #include "reader.h"
 #include "tokenize.h"
 
+#include <algorithm>
 #include <sstream>
 #include <vector>
 

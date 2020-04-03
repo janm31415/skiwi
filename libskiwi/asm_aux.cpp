@@ -537,7 +537,7 @@ void break_point(asmcode& code)
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_break);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_read);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_break);
 #endif  
   code.add(asmcode::CALL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context

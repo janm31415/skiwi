@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <stdint.h>
+#include <algorithm>
 
 SKIWI_BEGIN
   

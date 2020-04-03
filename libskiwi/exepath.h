@@ -54,11 +54,11 @@ inline std::string get_folder(const std::string& path)
   {
   auto pos1 = path.find_last_of('/');
   auto pos2 = path.find_last_of('\\');
-  if (pos1 == std::wstring::npos && pos2 == std::wstring::npos)
-    return L".";
-  if (pos1 == std::wstring::npos)
+  if (pos1 == std::string::npos && pos2 == std::string::npos)
+    return ".";
+  if (pos1 == std::string::npos)
     return path.substr(0, pos2 + 1);
-  if (pos2 == std::wstring::npos)
+  if (pos2 == std::string::npos)
     return path.substr(0, pos1 + 1);
   return path.substr(0, (pos1 > pos2 ? pos1 : pos2) + 1);
 

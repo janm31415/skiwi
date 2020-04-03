@@ -152,7 +152,7 @@ namespace
               macro_data md; // all macros are in the environment
               compile(*p_env, *p_rd, md, *p_ctxt, code, pr, *p_pm, externals, ops);
 
-              typedef uint64_t(__cdecl *compiled_fun_ptr)(void*);
+              typedef uint64_t(*compiled_fun_ptr)(void*);
 
               first_pass_data d;
               uint64_t fie_size;
@@ -180,7 +180,7 @@ namespace
                   e = b;
                   }
 
-                free_assembled_function(fie, fie_size);
+                free_assembled_function((void*)fie, fie_size);
                 }
               else
                 e = Nop();
@@ -373,7 +373,7 @@ namespace
       compile(env, rd, md, ctxt, code, prog, pm, externals, ops); // they need to be inside the global environment, because of gc
 
       first_pass_data d;
-      typedef uint64_t(__cdecl *_fun_ptr)(void*);
+      typedef uint64_t(*_fun_ptr)(void*);
 
       uint64_t fie_size;
       auto fie = (_fun_ptr)assemble(fie_size, d, code);

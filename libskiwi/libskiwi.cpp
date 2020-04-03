@@ -3,7 +3,11 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#ifdef WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <fstream>
 
 #include <asm/assembler.h>
@@ -34,7 +38,7 @@ namespace
     compiler_data() : initialized(false), trace(nullptr) {}
 
     bool initialized;
-    typedef uint64_t(__cdecl *fptr)(void*);
+    typedef uint64_t(*fptr)(void*);
     compiler_options ops;
     context ctxt;
     repl_data rd;
@@ -96,7 +100,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling primitives library";
@@ -125,7 +129,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling string-to-symbol";
@@ -154,7 +158,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling apply";
@@ -183,7 +187,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling call/cc library";
@@ -212,7 +216,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling r5rs library";
@@ -241,7 +245,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling modules";
@@ -272,7 +276,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling " << path << " library";
@@ -458,14 +462,22 @@ namespace
     if (!cd.initialized)
       throw std::runtime_error("Skiwi is not initialized");
     asmcode code;
-    wchar_t buf[4096];
-    GetCurrentDirectoryW(4096, buf);
     std::string filename = JAM::get_filename(scheme_file);
     std::string folder = JAM::get_folder(scheme_file);
+#ifdef WIN32
+    wchar_t buf[4096];
+    GetCurrentDirectoryW(4096, buf);    
     std::wstring wfolder = JAM::convert_string_to_wstring(folder);
     std::wstring wfilename = JAM::convert_string_to_wstring(filename);
     SetCurrentDirectoryW(wfolder.c_str());
+
     auto input_file = std::ifstream{ wfilename };
+#else
+    char cwd[4096];
+    getcwd(cwd, sizeof(cwd));
+    chdir(folder.c_str());
+    auto input_file = std::ifstream{ filename };
+#endif
     std::string file_in_chars;
     uint64_t res = bool_f;
     if (input_file.is_open())
@@ -481,7 +493,11 @@ namespace
       {
       err("cannot open ", filename, "\n");
       }
+  #ifdef WIN32
     SetCurrentDirectoryW(buf);
+  #else
+    chdir(cwd);
+  #endif
     return res;
     }
 
@@ -784,7 +800,7 @@ void skiwi_quit()
     throw std::runtime_error("Skiwi is not initialized");
   destroy_macro_data(cd.md);
   for (auto& f : cd.compiled_functions)
-    free_assembled_function(f.first, f.second);
+    free_assembled_function((void*)f.first, f.second);
   destroy_context(cd.ctxt);
   cd.initialized = false;
   }

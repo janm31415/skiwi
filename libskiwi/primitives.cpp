@@ -7,7 +7,11 @@
 #include "inlines.h"
 #include "types.h"
 
+#ifdef WIN32
 #include <io.h>
+#else
+#include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <fstream>
 
@@ -4914,17 +4918,17 @@ void compile_structurally_equal(asmcode& code, const compiler_options&, const st
   r15 is clobbered
   */
   code.add(asmcode::LABEL, label_name);
-  auto not_eq = label_to_string(label++);
+  auto not_equal = label_to_string(label++);
   auto fail = label_to_string(label++);
   auto cleanup = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::RAX, asmcode::R11);
-  code.add(asmcode::JNES, not_eq );
+  code.add(asmcode::JNES, not_equal );
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_t);
   code.add(asmcode::RET);
   code.add(asmcode::LABEL, fail);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_f);
   code.add(asmcode::RET);
-  code.add(asmcode::LABEL, not_eq );
+  code.add(asmcode::LABEL, not_equal );
   jump_short_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, fail);
   jump_short_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, fail);
   //get addresses of the blocks
@@ -4976,18 +4980,18 @@ void compile_recursively_equal(asmcode& code, const compiler_options&, const std
   r15 is clobbered
   */
   code.add(asmcode::LABEL, label_name);
-  auto not_eq = label_to_string(label++);
+  auto not_equal = label_to_string(label++);
   auto fail = label_to_string(label++);
   auto cleanup = label_to_string(label++);
   auto simple_type = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::RAX, asmcode::R11);
-  code.add(asmcode::JNES, not_eq );
+  code.add(asmcode::JNES, not_equal );
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_t);
   code.add(asmcode::RET);
   code.add(asmcode::LABEL, fail);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_f);
   code.add(asmcode::RET);
-  code.add(asmcode::LABEL, not_eq );
+  code.add(asmcode::LABEL, not_equal );
   jump_short_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, fail);
   jump_short_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, fail);
   //get addresses of the blocks
@@ -5840,7 +5844,7 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef _WIN32
+#ifdef WIN32
     return _close(fd);
 #else
     return close(fd);
@@ -5851,10 +5855,10 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef _WIN32
+#ifdef WIN32
     return _read(fd, buffer, buffer_size);
 #else
-    return read(fd, buffer, buffer_size);
+    return ::read(fd, buffer, buffer_size);
 #endif
     }
 
@@ -5862,7 +5866,7 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef _WIN32
+#ifdef WIN32
     return _write(fd, buffer, count);
 #else
     return write(fd, buffer, count);
@@ -6566,11 +6570,19 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
 
   code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(1)); // rcx now points to string representing filename
 
+#ifdef WIN32
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, _O_CREAT | O_WRONLY | O_TRUNC | O_BINARY);
+#else
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_CREAT | O_WRONLY | O_TRUNC);
+#endif
   code.add(asmcode::CMP, asmcode::RDX, asmcode::NUMBER, bool_t);
   auto is_output = label_to_string(label++);
   code.add(asmcode::JNES, is_output);
+#ifdef WIN32
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_RDONLY | O_BINARY);
+#else
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_RDONLY);
+#endif
   code.add(asmcode::LABEL, is_output);
   /*
   Windows:
@@ -6593,7 +6605,7 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::PUSH, asmcode::RSI);
 
-  code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, _S_IREAD | _S_IWRITE);
+  code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, __S_IREAD | __S_IWRITE);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
   code.add(asmcode::MOV, asmcode::RSI, asmcode::R11);
 #endif
@@ -7953,7 +7965,7 @@ namespace
     std::wstring wvalue = JAM::convert_string_to_wstring(svalue);
     return (int)_wputenv_s(wname.c_str(), wvalue.c_str());
 #else
-    return putenv(name, value);
+    return setenv(name, value, 1);
 #endif
     }
 

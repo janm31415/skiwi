@@ -23,8 +23,8 @@ struct visitor<Fixnum, T>
   {
   static void visit(Fixnum& f, T* v)
     {
-    ((T::base*)v)->_previsit(f);
-    ((T::base*)v)->_postvisit(f);
+    ((typename T::base*)v)->_previsit(f);
+    ((typename T::base*)v)->_postvisit(f);
     }
   };
 
@@ -33,8 +33,8 @@ struct visitor<Flonum, T>
   {
   static void visit(Flonum& f, T* v)
     {
-    ((T::base*)v)->_previsit(f);
-    ((T::base*)v)->_postvisit(f);
+    ((typename T::base*)v)->_previsit(f);
+    ((typename T::base*)v)->_postvisit(f);
     }
   };
 
@@ -43,8 +43,8 @@ struct visitor<Nil, T>
   {
   static void visit(Nil& n, T* v)
     {
-    ((T::base*)v)->_previsit(n);
-    ((T::base*)v)->_postvisit(n);
+    ((typename T::base*)v)->_previsit(n);
+    ((typename T::base*)v)->_postvisit(n);
     }
   };
 
@@ -53,8 +53,8 @@ struct visitor<String, T>
   {
   static void visit(String& s, T* v)
     {
-    ((T::base*)v)->_previsit(s);
-    ((T::base*)v)->_postvisit(s);
+    ((typename T::base*)v)->_previsit(s);
+    ((typename T::base*)v)->_postvisit(s);
     }
   };
 
@@ -63,8 +63,8 @@ struct visitor<Symbol, T>
   {
   static void visit(Symbol& s, T* v)
     {
-    ((T::base*)v)->_previsit(s);
-    ((T::base*)v)->_postvisit(s);
+    ((typename T::base*)v)->_previsit(s);
+    ((typename T::base*)v)->_postvisit(s);
     }
 
   };
@@ -73,8 +73,8 @@ struct visitor<True, T>
   {
   static void visit(True& t, T* v)
     {
-    ((T::base*)v)->_previsit(t);
-    ((T::base*)v)->_postvisit(t);
+    ((typename T::base*)v)->_previsit(t);
+    ((typename T::base*)v)->_postvisit(t);
     }
   };
 
@@ -83,8 +83,8 @@ struct visitor<False, T>
   {
   static void visit(False& f, T* v)
     {
-    ((T::base*)v)->_previsit(f);
-    ((T::base*)v)->_postvisit(f);
+    ((typename T::base*)v)->_previsit(f);
+    ((typename T::base*)v)->_postvisit(f);
     }
   };
 
@@ -93,8 +93,8 @@ struct visitor<Character, T>
   {
   static void visit(Character& c, T* v)
     {
-    ((T::base*)v)->_previsit(c);
-    ((T::base*)v)->_postvisit(c);
+    ((typename T::base*)v)->_previsit(c);
+    ((typename T::base*)v)->_postvisit(c);
     }
   };
 
@@ -103,8 +103,8 @@ struct visitor<Nop, T>
   {
   static void visit(Nop& c, T* v)
     {
-    ((T::base*)v)->_previsit(c);
-    ((T::base*)v)->_postvisit(c);
+    ((typename T::base*)v)->_previsit(c);
+    ((typename T::base*)v)->_postvisit(c);
     }
   };
 
@@ -113,8 +113,8 @@ struct visitor<Variable, T>
   {
   static void visit(Variable& va, T* v)
     {
-    ((T::base*)v)->_previsit(va);
-    ((T::base*)v)->_postvisit(va);
+    ((typename T::base*)v)->_previsit(va);
+    ((typename T::base*)v)->_postvisit(va);
     }
   };
 
@@ -123,9 +123,9 @@ struct visitor<Set, T>
   {
   static void visit(Set& s, T* v)
     {
-    if (((T::base*)v)->_previsit(s))
+    if (((typename T::base*)v)->_previsit(s))
       visitor<Expression, T>::visit(s.value.front(), v);
-    ((T::base*)v)->_postvisit(s);
+    ((typename T::base*)v)->_postvisit(s);
     }
   };
 
@@ -134,10 +134,10 @@ struct visitor<PrimitiveCall, T>
   {
   static void visit(PrimitiveCall& p, T* v)
     {
-    if (((T::base*)v)->_previsit(p))
+    if (((typename T::base*)v)->_previsit(p))
       for (auto& arg : p.arguments)
         visitor<Expression, T>::visit(arg, v);
-    ((T::base*)v)->_postvisit(p);
+    ((typename T::base*)v)->_postvisit(p);
     }
   };
 
@@ -146,10 +146,10 @@ struct visitor<ForeignCall, T>
   {
   static void visit(ForeignCall& p, T* v)
     {
-    if (((T::base*)v)->_previsit(p))
+    if (((typename T::base*)v)->_previsit(p))
       for (auto& arg : p.arguments)
         visitor<Expression, T>::visit(arg, v);
-    ((T::base*)v)->_postvisit(p);
+    ((typename T::base*)v)->_postvisit(p);
     }
   };
 
@@ -158,9 +158,9 @@ struct visitor<Literal, T>
   {
   static void visit(Literal& l, T* v)
     {
-    if (((T::base*)v)->_previsit(l))
+    if (((typename T::base*)v)->_previsit(l))
       std::visit(*v, l);
-    ((T::base*)v)->_postvisit(l);
+    ((typename T::base*)v)->_postvisit(l);
     }
   };
 
@@ -169,13 +169,13 @@ struct visitor<Let, T>
   {
   static void visit(Let& l, T* v)
     {
-    if (((T::base*)v)->_previsit(l))
+    if (((typename T::base*)v)->_previsit(l))
       {
       for (auto& arg : l.bindings)
         visitor<Expression, T>::visit(arg.second, v);
       visitor<Expression, T>::visit(l.body.front(), v);
       }
-    ((T::base*)v)->_postvisit(l);
+    ((typename T::base*)v)->_postvisit(l);
     }
   };
 
@@ -184,9 +184,9 @@ struct visitor<Lambda, T>
   {
   static void visit(Lambda& l, T* v)
     {
-    if (((T::base*)v)->_previsit(l))
+    if (((typename T::base*)v)->_previsit(l))
       visitor<Expression, T>::visit(l.body.front(), v);
-    ((T::base*)v)->_postvisit(l);
+    ((typename T::base*)v)->_postvisit(l);
     }
   };
 
@@ -195,10 +195,10 @@ struct visitor<If, T>
   {
   static void visit(If& i, T* v)
     {
-    if (((T::base*)v)->_previsit(i))
+    if (((typename T::base*)v)->_previsit(i))
       for (auto& arg : i.arguments)
         visitor<Expression, T>::visit(arg, v);
-    ((T::base*)v)->_postvisit(i);
+    ((typename T::base*)v)->_postvisit(i);
     }
   };
 
@@ -207,13 +207,13 @@ struct visitor<Cond, T>
   {
   static void visit(Cond& c, T* v)
     {
-    if (((T::base*)v)->_previsit(c))
+    if (((typename T::base*)v)->_previsit(c))
       {
       for (auto& arg_v : c.arguments)
         for (auto& arg : arg_v)
           visitor<Expression, T>::visit(arg, v);
       }
-    ((T::base*)v)->_postvisit(c);
+    ((typename T::base*)v)->_postvisit(c);
     }
   };
 
@@ -222,7 +222,7 @@ struct visitor<Do, T>
   {
   static void visit(Do& d, T* v)
     {
-    if (((T::base*)v)->_previsit(d))
+    if (((typename T::base*)v)->_previsit(d))
       {
       for (auto& binding : d.bindings)
         for (auto& arg : binding)
@@ -232,7 +232,7 @@ struct visitor<Do, T>
       for (auto& command : d.commands)
         visitor<Expression, T>::visit(command, v);
       }
-    ((T::base*)v)->_postvisit(d);
+    ((typename T::base*)v)->_postvisit(d);
     }
   };
 
@@ -242,7 +242,7 @@ struct visitor<Case, T>
   {
   static void visit(Case& c, T* v)
     {
-    if (((T::base*)v)->_previsit(c))
+    if (((typename T::base*)v)->_previsit(c))
       {
       visitor<Expression, T>::visit(c.val_expr.front(), v);
       assert(c.datum_args.size() == c.then_bodies.size());
@@ -254,7 +254,7 @@ struct visitor<Case, T>
       for (auto& arg : c.else_body)
         visitor<Expression, T>::visit(arg, v);
       }
-    ((T::base*)v)->_postvisit(c);
+    ((typename T::base*)v)->_postvisit(c);
     }
   };
 
@@ -263,8 +263,8 @@ struct visitor<Quote, T>
   {
   static void visit(Quote& q, T* v)
     {
-    ((T::base*)v)->_previsit(q);
-    ((T::base*)v)->_postvisit(q);
+    ((typename T::base*)v)->_previsit(q);
+    ((typename T::base*)v)->_postvisit(q);
     }
   };
 
@@ -273,13 +273,13 @@ struct visitor<FunCall, T>
   {
   static void visit(FunCall& f, T* v)
     {
-    if (((T::base*)v)->_previsit(f))
+    if (((typename T::base*)v)->_previsit(f))
       {
       for (auto& arg : f.arguments)
         visitor<Expression, T>::visit(arg, v);
       visitor<Expression, T>::visit(f.fun.front(), v);
       }
-    ((T::base*)v)->_postvisit(f);
+    ((typename T::base*)v)->_postvisit(f);
     }
   };
 
@@ -288,10 +288,10 @@ struct visitor<Begin, T>
   {
   static void visit(Begin& b, T* v)
     {
-    if (((T::base*)v)->_previsit(b))
+    if (((typename T::base*)v)->_previsit(b))
       for (auto& arg : b.arguments)
         visitor<Expression, T>::visit(arg, v);
-    ((T::base*)v)->_postvisit(b);
+    ((typename T::base*)v)->_postvisit(b);
     }
   };
 
@@ -300,9 +300,9 @@ struct visitor<Expression, T>
   {
   static void visit(Expression& exp, T* v)
     {
-    if (((T::base*)v)->_previsit(exp))
+    if (((typename T::base*)v)->_previsit(exp))
       std::visit(*v, exp);
-    ((T::base*)v)->_postvisit(exp);
+    ((typename T::base*)v)->_postvisit(exp);
     }
   };
 
@@ -321,9 +321,9 @@ struct visitor<Program, T>
   {
   static void visit(Program& prog, T* v)
     {
-    if (((T::base*)v)->_previsit(prog))
+    if (((typename T::base*)v)->_previsit(prog))
       visitor<Expressions, T>::visit(prog.expressions, v);
-    ((T::base*)v)->_postvisit(prog);
+    ((typename T::base*)v)->_postvisit(prog);
     }
   };
 
@@ -331,7 +331,7 @@ struct visitor<Program, T>
 template <class T>
 struct base_visitor
   {
-  typedef typename base_visitor<T> base;
+  typedef base_visitor<T> base;
 
   template <class F>
   void operator()(F& i)
