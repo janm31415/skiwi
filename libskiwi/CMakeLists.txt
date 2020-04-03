@@ -1,13 +1,15 @@
 
-set(TBB_INCLUDE_DIR "C:/Program Files/TBB/include")
-set(TBB_LIBRARY "C:/Program Files/TBB/lib/intel64/vc14")
-set(TBB_DIR "C:/Program Files/TBB")
 
-find_package(TBB REQUIRED)
+if (WIN32)
+  set(TBB_INCLUDE_DIR "C:/Program Files/TBB/include")
+  set(TBB_LIBRARIES "C:/Program Files/TBB/lib/intel64/vc14/tbb.lib" "C:/Program Files/TBB/lib/intel64/vc14/tbb_debug.lib")
+endif (WIN32)
 
-include_directories(${TBB_INCLUDE_DIR})
-link_directories(${TBB_LIBRARY})
 
+if (UNIX)
+  set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
+  set(TBB_LIBRARIES)
+endif (UNIX)
 
 set(HDRS
 alpha_conversion.h
@@ -136,12 +138,14 @@ target_include_directories(libskiwi
     PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}/../utils
+    ${TBB_INCLUDE_DIR}
     )	
+    
 	
 target_link_libraries(libskiwi
     PRIVATE	
     asm
-    tbb.lib
+    ${TBB_LIBRARIES}
     )	
 
 add_custom_command(TARGET libskiwi POST_BUILD 
