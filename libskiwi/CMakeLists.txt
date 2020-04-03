@@ -8,7 +8,7 @@ endif (WIN32)
 
 if (UNIX)
   set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
-  set(TBB_LIBRARIES)
+  set(TBB_LIBRARIES "/usr/lib/x86_64-linux-gnu/libtbb.so" "/usr/lib/x86_64-linux-gnu/libtbb.so.2")
 endif (UNIX)
 
 set(HDRS

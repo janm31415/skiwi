@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include <libskiwi/parse.h>
 #include <libskiwi/tokenize.h>

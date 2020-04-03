@@ -15,7 +15,11 @@
 #include <cassert>
 #include <map>
 #include <stdint.h>
+#ifdef _WIN32
 #include <io.h>
+#else
+#include <unistd.h>
+#endif
 #include <fcntl.h>
 
 #include <libskiwi/alpha_conversion.h>
@@ -49,7 +53,7 @@ namespace
   struct compile_fixture
     {
     compiler_options ops;
-    typedef uint64_t(__cdecl *fun_ptr)(void*);
+    typedef uint64_t(*fun_ptr)(void*);
     context ctxt;
     repl_data rd;
     macro_data md;
@@ -190,7 +194,7 @@ namespace
     void make_new_context(uint64_t heap_size, uint64_t global_stack, uint16_t local_stack, uint64_t scheme_stack)
       {
       for (auto& f : compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_context(ctxt);
       ctxt = create_context(heap_size, global_stack, local_stack, scheme_stack);
       env = std::make_shared<environment<environment_entry>>(nullptr);
@@ -216,7 +220,7 @@ namespace
       {
       TEST_ASSERT(ctxt.stack == ctxt.stack_top);
       for (auto& f : compiled_functions)
-        free_assembled_function(f.first, f.second);
+        free_assembled_function((void*)f.first, f.second);
       destroy_macro_data(md);
       destroy_context(ctxt);
       }
@@ -3766,7 +3770,11 @@ namespace
       TEST_EQ("#t", run("(inf? (/ 1.0 0.0))"));
       TEST_EQ("#f", run("(inf? (/ 0.0 0.0))"));
 
+#ifdef _WIN32
       TEST_EQ("-nan(ind)", run("(/ 0.0 0.0)"));
+#else
+      TEST_EQ("-nan", run("(/ 0.0 0.0)"));
+#endif
 
       TEST_EQ("#t", run("(integer? 3)"));
       TEST_EQ("#f", run("(integer? 3.2)"));
@@ -5331,7 +5339,7 @@ void run_all_compile_tests()
   add_flonums_optimized().test();
   add_flonums_and_fixnums().test();
   add_flonums_and_fixnums_optimized().test();
-  sub().test();
+  sub().test();  
   sub_optimized().test();
   mul().test();
   mul_optimized().test();
@@ -5398,7 +5406,7 @@ void run_all_compile_tests()
   append().test();
   quote_bug().test();
   quote().test();
-  fibonacci().test();
+  fibonacci().test();  
   set_car_cdr().test();
   when_unless().test();
   fixnum_to_char().test();
@@ -5421,7 +5429,7 @@ void run_all_compile_tests()
   lambda_variable_arity_not_using_rest_arg().test();
   lambda_variable_arity_while_using_rest_arg().test();
   lambda_bug().test();
-  lambda_variable_arity_while_using_rest_arg_and_closure().test();
+  lambda_variable_arity_while_using_rest_arg_and_closure().test();  
   foreign_call_1().test();
   foreign_call_2().test();
   foreign_call_3().test();
@@ -5432,7 +5440,7 @@ void run_all_compile_tests()
   foreign_call_8().test();
   foreign_call_9().test();
   foreign_call_10().test();
-  foreign_call_11().test();
+  foreign_call_11().test();  
   case_examples().test();
   memv().test();
   memq().test();
@@ -5458,7 +5466,7 @@ void run_all_compile_tests()
   string_ops().test();
   symbol_ops().test();
   string_to_symbol_ops().test();
-  control_ops().test();
+  control_ops().test();  
   do_ops().test();
   no_square_brackets().test();
   calcc_extended().test();
@@ -5496,7 +5504,7 @@ void run_all_compile_tests()
   load_error_during_load();
   load_error();
   load_test();
-  empty_let_crash().test();
+  empty_let_crash().test();  
 #endif  
   
   }

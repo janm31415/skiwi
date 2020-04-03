@@ -1294,6 +1294,25 @@ namespace
         }
       }
 
+  #ifndef _WIN32
+      std::vector<asmcode::operand> arg_regs;
+      int regular_arg_id = 0;
+      int floating_arg_id = 0;
+      for (size_t i = 0; i < foreign.arguments.size(); ++i)
+      {
+        if (ext.arguments[i] == external_function::T_DOUBLE)
+        {
+          arg_regs.push_back(arg_float_reg[floating_arg_id]);
+          ++floating_arg_id;
+        }
+        else
+        {
+          arg_regs.push_back(arg_reg[regular_arg_id]);
+          ++regular_arg_id;
+        }
+      }
+  #endif
+
     for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
       compile_expression(fns, env, rd, data, code, foreign.arguments[i], pm, ops);
@@ -1307,7 +1326,11 @@ namespace
         {
         case external_function::T_BOOL:
         {
+        #ifdef _WIN32
         auto reg = arg_reg[i];
+        #else
+        auto reg = arg_regs[i];
+        #endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         code.add(asmcode::CMP, reg, asmcode::NUMBER, bool_f);
@@ -1318,7 +1341,11 @@ namespace
         }
         case external_function::T_INT64:
         {
+        #ifdef _WIN32
         auto reg = arg_reg[i];
+        #else
+        auto reg = arg_regs[i];
+        #endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         if (ops.safe_primitives)
@@ -1331,14 +1358,22 @@ namespace
         }
         case external_function::T_SCM:
         {
+        #ifdef _WIN32
         auto reg = arg_reg[i];
+        #else
+        auto reg = arg_regs[i];
+        #endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         break;
         }
         case external_function::T_DOUBLE:
         {
+        #ifdef _WIN32
         auto reg = arg_float_reg[i];
+        #else
+        auto reg = arg_regs[i];
+        #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
         if (ops.safe_primitives)
@@ -1351,7 +1386,11 @@ namespace
         }
         case external_function::T_CHAR_POINTER:
         {
+        #ifdef _WIN32
         auto reg = arg_reg[i];
+        #else
+        auto reg = arg_regs[i];
+        #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
         if (ops.safe_primitives)
