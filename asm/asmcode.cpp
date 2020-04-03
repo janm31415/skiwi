@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <bitset>
+#include <algorithm>
 
 SKIWI_BEGIN
 

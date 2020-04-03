@@ -5,25 +5,34 @@
 #include "AssemblerTests.h"
 #include <stdint.h>
 #include <asm/assembler.h>
+#ifdef WIN32
 #include <windows.h>
+#endif
 #include <iostream>
 
 #include "test_assert.h"
 
 SKIWI_BEGIN
 
+
 namespace
   {
   void assembler_add()
     {
     asmcode code;
+  #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+  #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+  #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
 
-    fun_ptr f = (fun_ptr)assemble(code);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -33,7 +42,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -45,13 +54,18 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -61,7 +75,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -73,16 +87,21 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label_2");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
     code.add(asmcode::CALL, "L_label_2");
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -92,7 +111,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -103,13 +122,18 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -119,7 +143,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -133,13 +157,18 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -149,7 +178,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -161,16 +190,21 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label_2");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
     code.add(asmcode::CALL, "L_label_2");
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -180,7 +214,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -191,13 +225,18 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL_ALIGNED, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -207,14 +246,14 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
   namespace
     {
 
-    double _cdecl get_value()
+    double get_value()
       {
       return 5.678;
       }
@@ -232,9 +271,9 @@ namespace
     code.add(asmcode::MOVQ, asmcode::RAX, asmcode::XMM0);
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)();
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)();
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -243,7 +282,7 @@ namespace
       uint64_t res = f();
       double d = *reinterpret_cast<double*>(&res);
       TEST_EQ(5.678, d);
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
     }
 
@@ -258,12 +297,12 @@ namespace
 
     uint64_t get_value_address = (uint64_t)(&get_value);
 
-    typedef uint64_t(__cdecl *fun_ptr)();
+    typedef uint64_t(*fun_ptr)();
 
     std::map<std::string, uint64_t> external_functions;
     external_functions["get_value"] = get_value_address;
-
-    fun_ptr f = (fun_ptr)assemble(code, external_functions);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code, external_functions);
 
     TEST_ASSERT(f != NULL);
 
@@ -272,7 +311,7 @@ namespace
       uint64_t res = f();
       double d = *reinterpret_cast<double*>(&res);
       TEST_EQ(5.678, d);
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
     }
 
@@ -283,13 +322,18 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -299,7 +343,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -311,13 +355,18 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
+    #ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
 
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t, ...);
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)(uint64_t, ...);
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -327,7 +376,7 @@ namespace
       TEST_EQ(res, uint64_t(10));
       res = f(100, 211);
       TEST_EQ(res, uint64_t(311));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -344,9 +393,9 @@ namespace
     code.add(asmcode::DATA);
     code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
 
-    typedef uint64_t(__cdecl *fun_ptr)();
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)();
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -354,7 +403,7 @@ namespace
       {
       uint64_t res = f();
       TEST_EQ(res, uint64_t(2));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -369,9 +418,9 @@ namespace
     code.add(asmcode::DATA);
     code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
 
-    typedef uint64_t(__cdecl *fun_ptr)();
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)();
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -379,7 +428,7 @@ namespace
       {
       uint64_t res = f();
       TEST_EQ(res, uint64_t(100));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -401,9 +450,9 @@ namespace
     code.add(asmcode::DQ, asmcode::NUMBER, 11, "var1");
     code.add(asmcode::DQ, asmcode::NUMBER, 12, "var2");
     code.add(asmcode::DQ, asmcode::NUMBER, 13, "var3");
-    typedef uint64_t(__cdecl *fun_ptr)();
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)();
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -411,7 +460,7 @@ namespace
       {
       uint64_t res = f();
       TEST_EQ(res, uint64_t(36));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
@@ -427,9 +476,9 @@ namespace
     code.add(asmcode::DATA);
     code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
 
-    typedef uint64_t(__cdecl *fun_ptr)();
-
-    fun_ptr f = (fun_ptr)assemble(code);
+    typedef uint64_t(*fun_ptr)();
+    uint64_t size;
+    fun_ptr f = (fun_ptr)assemble(size, code);
 
     TEST_ASSERT(f != NULL);
 
@@ -437,11 +486,12 @@ namespace
       {
       uint64_t res = f();
       TEST_EQ(res, uint64_t(100));
-      free_assembled_function(f);
+      free_assembled_function((void*)f, size);
       }
 
     }
-  }
+    
+  }  
 
 SKIWI_END
 
@@ -449,7 +499,9 @@ SKIWI_END
 void run_all_assembler_tests()
   {
   using namespace SKIWI;
+  
   assembler_add();
+  
   assembler_call();
   assembler_call_2();
   assembler_jmp();

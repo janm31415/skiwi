@@ -5,8 +5,11 @@
 #include "AsmCodeTests.h"
 #include <stdint.h>
 #include <asm/asmcode.h>
+#ifdef WIN32
 #include <windows.h>
-
+#else
+#include <sys/mman.h>
+#endif
 #include "test_assert.h"
 
 SKIWI_BEGIN
@@ -572,39 +575,55 @@ namespace
     for (const auto& c : commands)
       size += c.fill_opcode(buffer);
 
+#ifdef WIN32
     unsigned char* my_func = (unsigned char*)malloc(size);
-
+#else
+    unsigned char* my_func = (unsigned char*)mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
     unsigned char* ptr = my_func;
     for (const auto& c : commands)
       {
       ptr += c.fill_opcode(ptr);
       }
-
     unsigned long i;
+    #ifdef WIN32
     auto success = VirtualProtect((void *)(my_func), size, 0x40/*PAGE_EXECUTE_READWRITE*/, (unsigned long *)&i);
     TEST_ASSERT(success);
-
-    typedef uint64_t(__cdecl *fun_ptr)(void);
+    #endif
+    typedef uint64_t(*fun_ptr)(void);
 
     uint64_t res = ((fun_ptr)(my_func))();
 
     TEST_EQ(res, uint64_t(10));
 
+#ifdef WIN32
     free(my_func);
+#else
+    munmap((void*)(my_func), size);
+#endif
     }
 
   void asmcode_add_two_integers()
     {
     asmcode code; uint8_t buffer[255];
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
+    #ifdef WIN32
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX); // windows calling convention
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
+    #else
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI); // linux calling convention
+    code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
+    #endif
     code.add(asmcode::RET);
     uint64_t size = 0;
     const auto& commands = code.get_instructions_list().front();
     for (const auto& c : commands)
       size += c.fill_opcode(buffer);
 
+#ifdef WIN32
     unsigned char* my_func = (unsigned char*)malloc(size);
+#else
+    unsigned char* my_func = (unsigned char*)mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
 
     unsigned char* ptr = my_func;
     for (const auto& c : commands)
@@ -613,17 +632,22 @@ namespace
       }
 
     unsigned long i;
+#ifdef WIN32
     auto success = VirtualProtect((void *)(my_func), size, 0x40/*PAGE_EXECUTE_READWRITE*/, (unsigned long *)&i);
     TEST_ASSERT(success);
-
-    typedef uint64_t(__cdecl *fun_ptr)(uint64_t a, uint64_t b);
+#endif
+    typedef uint64_t(*fun_ptr)(uint64_t a, uint64_t b);
 
     uint64_t res = ((fun_ptr)(my_func))(3, 7);
     TEST_EQ(res, uint64_t(10));
     res = ((fun_ptr)(my_func))(100, 211);
     TEST_EQ(res, uint64_t(311));
 
+#ifdef WIN32
     free(my_func);
+#else
+    munmap((void*)(my_func), size);
+#endif
     }
 
   void asmcode_cmp()

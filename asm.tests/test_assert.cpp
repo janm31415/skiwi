@@ -5,6 +5,8 @@
 #ifdef _MSC_VER
 #  include <crtdbg.h>
 #  include <windows.h>
+#else
+#include <string.h>
 #endif
 
 int testing_fails = 0;

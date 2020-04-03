@@ -3,7 +3,12 @@
 #include <stdint.h>
 #include <map>
 #include <string>
+
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/mman.h>
+#endif
 
 SKIWI_BEGIN
 
@@ -273,14 +278,19 @@ namespace
     }
   }
 
-void* _cdecl assemble(first_pass_data& d, asmcode& code, const std::map<std::string, uint64_t>& externals)
+void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map<std::string, uint64_t>& externals)
   {
   d.external_to_address.clear();
   d.label_to_address.clear();
   d.dq_to_pair_offset_value.clear();
   first_pass(d, code, externals);
 
-  void *compiled_func = VirtualAlloc(0, d.size + d.data_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  void *compiled_func;
+#ifdef WIN32
+  compiled_func = VirtualAlloc(0, d.size + d.data_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#else
+  compiled_func = mmap(NULL, d.size + d.data_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
 
   if (!compiled_func)
     throw std::runtime_error("Could not allocate virtual memory");
@@ -301,36 +311,44 @@ void* _cdecl assemble(first_pass_data& d, asmcode& code, const std::map<std::str
     *(uint64_t*)(func_end + offset) = value;
     }
 
+  size = d.size + d.data_size;
+
+#ifdef WIN32
   unsigned long i;
   auto success = VirtualProtect((void *)(compiled_func), d.size + d.data_size, 0x40, (unsigned long *)&i);
 
   if (!success)
     return NULL;
+#endif
   return compiled_func;
   }
 
-void* _cdecl assemble(asmcode& code, const std::map<std::string, uint64_t>& externals)
+void* assemble(uint64_t& size, asmcode& code, const std::map<std::string, uint64_t>& externals)
   {
   first_pass_data d;
-  return assemble(d, code, externals);
+  return assemble(size, d, code, externals);
   }
 
-void* _cdecl assemble(first_pass_data& d, asmcode& code)
+void* assemble(uint64_t& size, first_pass_data& d, asmcode& code)
   {
   std::map<std::string, uint64_t> externals;
-  return assemble(d, code, externals);
+  return assemble(size, d, code, externals);
   }
 
-void* _cdecl assemble(asmcode& code)
+void* assemble(uint64_t& size, asmcode& code)
   {
   std::map<std::string, uint64_t> externals;
-  return assemble(code, externals);
+  return assemble(size, code, externals);
   }
 
-void free_assembled_function(void* f)
+void free_assembled_function(void* f, uint64_t size)
   {
+#ifdef WIN32
+  (void*)size;
   VirtualFree(f, 0, MEM_RELEASE);
-  //free(f);
+#else
+  munmap(f, size);
+#endif
   }
 
 SKIWI_END
