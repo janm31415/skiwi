@@ -174,7 +174,7 @@ namespace
           {
           auto it2 = data.dq_to_pair_offset_value.find(instr.text);
           if (it2 == data.dq_to_pair_offset_value.end())
-            throw std::logic_error("error: dq variable is not defined");          
+            throw std::logic_error("error: dq variable is not defined");
           instr.operand1_mem = address_start + data.size + it2->second.first;
           }
         if (instr.operand2 == asmcode::MOFFS64)

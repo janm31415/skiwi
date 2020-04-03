@@ -55,7 +55,7 @@ namespace
     macro_data md;
     std::shared_ptr<environment<environment_entry>> env;
     bool stream_out;
-    std::vector<fun_ptr> compiled_functions;
+    std::vector<std::pair<fun_ptr, uint64_t>> compiled_functions;
     primitive_map pm;
     std::map<std::string, external_function> externals;
 
@@ -72,9 +72,10 @@ namespace
         {
         compile_primitives_library(pm, rd, env, ctxt, code, ops);
         first_pass_data d;
-        fun_ptr f = (fun_ptr)assemble(d, code);
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
         f(&ctxt);
-        compiled_functions.push_back(f);
+        compiled_functions.emplace_back(f, size);
         assign_primitive_addresses(pm, d, (uint64_t)f);
         }
       catch (std::logic_error e)
@@ -91,9 +92,10 @@ namespace
         if (load_callcc(env, rd, md, ctxt, code, pm, ops))
           {
           first_pass_data d;
-          fun_ptr f = (fun_ptr)assemble(d, code);
+          uint64_t size;
+          fun_ptr f = (fun_ptr)assemble(size, d, code);
           f(&ctxt);
-          compiled_functions.push_back(f);
+          compiled_functions.emplace_back(f, size);
           }
         else
           std::cout << "Cannot load callcc\n";
@@ -112,9 +114,10 @@ namespace
         if (load_apply(env, rd, md, ctxt, code, pm, ops))
           {
           first_pass_data d;
-          fun_ptr f = (fun_ptr)assemble(d, code);
+          uint64_t size;
+          fun_ptr f = (fun_ptr)assemble(size, d, code);
           f(&ctxt);
-          compiled_functions.push_back(f);
+          compiled_functions.emplace_back(f, size);
           }
         else
           std::cout << "Cannot load apply\n";
@@ -133,9 +136,10 @@ namespace
         if (load_r5rs(env, rd, md, ctxt, code, pm, ops))
           {
           first_pass_data d;
-          fun_ptr f = (fun_ptr)assemble(d, code);
+          uint64_t size;
+          fun_ptr f = (fun_ptr)assemble(size, d, code);
           f(&ctxt);
-          compiled_functions.push_back(f);
+          compiled_functions.emplace_back(f, size);
           }
         else
           std::cout << "Cannot load r5rs library\n";
@@ -154,9 +158,10 @@ namespace
         if (load_string_to_symbol(env, rd, md, ctxt, code, pm, ops))
           {
           first_pass_data d;
-          fun_ptr f = (fun_ptr)assemble(d, code);
+          uint64_t size;
+          fun_ptr f = (fun_ptr)assemble(size, d, code);
           f(&ctxt);
-          compiled_functions.push_back(f);
+          compiled_functions.emplace_back(f, size);
           }
         else
           std::cout << "Cannot load string-to-symbol library\n";
@@ -185,7 +190,7 @@ namespace
     void make_new_context(uint64_t heap_size, uint64_t global_stack, uint16_t local_stack, uint64_t scheme_stack)
       {
       for (auto& f : compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(ctxt);
       ctxt = create_context(heap_size, global_stack, local_stack, scheme_stack);
       env = std::make_shared<environment<environment_entry>>(nullptr);
@@ -195,9 +200,10 @@ namespace
         {
         compile_primitives_library(pm, rd, env, ctxt, code, ops);
         first_pass_data d;
-        fun_ptr f = (fun_ptr)assemble(d, code);
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
         f(&ctxt);
-        compiled_functions.push_back(f);
+        compiled_functions.emplace_back(f, size);
         assign_primitive_addresses(pm, d, (uint64_t)f);
         }
       catch (std::logic_error e)
@@ -210,7 +216,7 @@ namespace
       {
       TEST_ASSERT(ctxt.stack == ctxt.stack_top);
       for (auto& f : compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_macro_data(md);
       destroy_context(ctxt);
       }
@@ -326,7 +332,8 @@ namespace
       if (stream_out)
         code.stream(std::cout);
       first_pass_data d;
-      fun_ptr f = (fun_ptr)assemble(d, code);
+      uint64_t size;
+      fun_ptr f = (fun_ptr)assemble(size, d, code);
       std::stringstream str;
       str << std::setprecision(precision);
       if (f)
@@ -336,7 +343,7 @@ namespace
           scheme_runtime(res, str, env, nullptr);
         else
           scheme_runtime(res, str, env, &ctxt);
-        compiled_functions.push_back(f);
+        compiled_functions.emplace_back(f, size);
         }
       return str.str();
       }

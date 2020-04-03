@@ -3,10 +3,11 @@
 #include <assert.h>
 
 #ifdef _MSC_VER
-#  include <crtdbg.h>
-#  include <windows.h>
+#include <crtdbg.h>
+#include <windows.h>
+#else
+#include <string.h>
 #endif
-
 int testing_fails = 0;
 int testing_success = 0;
 static TestFailEventListener fail_listener_ = nullptr;
@@ -55,7 +56,7 @@ void InitTestEngine(TestFailEventListener listener)
   // dump.
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stderr, NULL, _IONBF, 0);
-  
+
 #ifdef _MSC_VER
   // By default, send all reports to STDOUT to prevent CI hangs.
   // Enable assert report box [Abort|Retry|Ignore] if a debugger is present.
@@ -74,31 +75,31 @@ void InitTestEngine(TestFailEventListener listener)
 #endif
 
   // clang-format off
-  
+
 #if defined(MEMORY_LEAK_TRACKING_MSVC)
   // For more thorough checking:
   // _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF
   auto flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
   _CrtSetDbgFlag(flags | _CRTDBG_ALLOC_MEM_DF);
 #endif
-  
+
   // clang-format on
 
   fail_listener_ = listener;
   }
 
-int CloseTestEngine(bool force_report) 
+int CloseTestEngine(bool force_report)
   {
-  if (!testing_fails || force_report) 
+  if (!testing_fails || force_report)
     {
-    
+
 #if defined(MEMORY_LEAK_TRACKING_MSVC)
     auto flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
     flags &= ~_CRTDBG_DELAY_FREE_MEM_DF;
     flags |= _CRTDBG_LEAK_CHECK_DF;
     _CrtSetDbgFlag(flags);
 #endif
-    
+
     }
 
   return (0 != testing_fails);

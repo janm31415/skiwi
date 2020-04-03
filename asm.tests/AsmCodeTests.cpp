@@ -586,10 +586,10 @@ namespace
       ptr += c.fill_opcode(ptr);
       }
     unsigned long i;
-    #ifdef WIN32
+#ifdef WIN32
     auto success = VirtualProtect((void *)(my_func), size, 0x40/*PAGE_EXECUTE_READWRITE*/, (unsigned long *)&i);
     TEST_ASSERT(success);
-    #endif
+#endif
     typedef uint64_t(*fun_ptr)(void);
 
     uint64_t res = ((fun_ptr)(my_func))();
@@ -606,13 +606,13 @@ namespace
   void asmcode_add_two_integers()
     {
     asmcode code; uint8_t buffer[255];
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX); // windows calling convention
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI); // linux calling convention
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
     uint64_t size = 0;
     const auto& commands = code.get_instructions_list().front();

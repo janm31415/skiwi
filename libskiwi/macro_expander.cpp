@@ -155,7 +155,8 @@ namespace
               typedef uint64_t(__cdecl *compiled_fun_ptr)(void*);
 
               first_pass_data d;
-              compiled_fun_ptr fie = (compiled_fun_ptr)assemble(d, code);
+              uint64_t fie_size;
+              compiled_fun_ptr fie = (compiled_fun_ptr)assemble(fie_size, d, code);
 
               if (fie)
                 {
@@ -179,7 +180,7 @@ namespace
                   e = b;
                   }
 
-                free_assembled_function(fie);
+                free_assembled_function(fie, fie_size);
                 }
               else
                 e = Nop();
@@ -374,11 +375,12 @@ namespace
       first_pass_data d;
       typedef uint64_t(__cdecl *_fun_ptr)(void*);
 
-      auto fie = (_fun_ptr)assemble(d, code);
+      uint64_t fie_size;
+      auto fie = (_fun_ptr)assemble(fie_size, d, code);
       if (fie)
         {
         fie(&ctxt);
-        md.compiled_macros.push_back((void*)fie);
+        md.compiled_macros.emplace_back((void*)fie, fie_size);
         }
       }
     catch (std::logic_error e)

@@ -40,7 +40,7 @@ namespace
     repl_data rd;
     macro_data md;
     std::shared_ptr<environment<environment_entry>> env;
-    std::vector<fptr> compiled_functions;
+    std::vector<std::pair<fptr, uint64_t>> compiled_functions;
     primitive_map pm;
     std::map<std::string, external_function> externals;
     std::ostream* trace;
@@ -87,15 +87,16 @@ namespace
       log("skiwi> compiling primitives library...\n");
       compile_primitives_library(cd.pm, cd.rd, cd.env, cd.ctxt, code, cd.ops);
       first_pass_data d;
-      compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+      uint64_t size;
+      compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
       f(&cd.ctxt);
-      cd.compiled_functions.push_back(f);
+      cd.compiled_functions.emplace_back(f, size);
       assign_primitive_addresses(cd.pm, d, (uint64_t)f);
       }
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling primitives library";
@@ -113,9 +114,10 @@ namespace
       if (load_string_to_symbol(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile symbol-table.scm\n");
@@ -123,7 +125,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling string-to-symbol";
@@ -141,9 +143,10 @@ namespace
       if (load_apply(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile apply.scm\n");
@@ -151,7 +154,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling apply";
@@ -169,9 +172,10 @@ namespace
       if (load_callcc(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile callcc.scm\n");
@@ -179,7 +183,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling call/cc library";
@@ -197,9 +201,10 @@ namespace
       if (load_r5rs(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile r5rs.scm\n");
@@ -207,7 +212,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling r5rs library";
@@ -225,9 +230,10 @@ namespace
       if (load_modules(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile modules.scm\n");
@@ -235,7 +241,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling modules";
@@ -255,9 +261,10 @@ namespace
       if (load_lib(path, cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
-        compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+        uint64_t size;
+        compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
         f(&cd.ctxt);
-        cd.compiled_functions.push_back(f);
+        cd.compiled_functions.emplace_back(f, size);
         }
       else
         err("Could not compile ", path, "\n");
@@ -265,7 +272,7 @@ namespace
     catch (std::logic_error e)
       {
       for (auto& f : cd.compiled_functions)
-        free_assembled_function(f);
+        free_assembled_function(f.first, f.second);
       destroy_context(cd.ctxt);
       std::stringstream ss;
       ss << e.what() << " while compiling " << path << " library";
@@ -273,7 +280,7 @@ namespace
       }
     }
 
-  compiler_data::fptr compile(const std::string& input, environment_map& env, repl_data& rd)
+  compiler_data::fptr compile(uint64_t& size, const std::string& input, environment_map& env, repl_data& rd)
     {
     using namespace SKIWI;
 
@@ -299,7 +306,7 @@ namespace
       {
       compile(env, rd, cd.md, cd.ctxt, code, prog, cd.pm, cd.externals, cd.ops);
       first_pass_data d;
-      compiler_data::fptr f = (compiler_data::fptr)assemble(d, code);
+      compiler_data::fptr f = (compiler_data::fptr)assemble(size, d, code);
       return f;
       }
     catch (std::logic_error e)
@@ -324,11 +331,12 @@ namespace
     {
     using namespace SKIWI;
     uint64_t result = undefined;
-    compiler_data::fptr f = compile(input, env, rd);
+    uint64_t size;
+    compiler_data::fptr f = compile(size, input, env, rd);
     if (f)
       {
       result = f(&cd.ctxt);
-      cd.compiled_functions.push_back(f);
+      cd.compiled_functions.emplace_back(f, size);
       }
     return result;
     }
@@ -776,7 +784,7 @@ void skiwi_quit()
     throw std::runtime_error("Skiwi is not initialized");
   destroy_macro_data(cd.md);
   for (auto& f : cd.compiled_functions)
-    free_assembled_function(f);
+    free_assembled_function(f.first, f.second);
   destroy_context(cd.ctxt);
   cd.initialized = false;
   }
@@ -1300,11 +1308,12 @@ uint64_t c_prim_eval(const char* script)
 
   if (!cd.initialized)
     throw std::runtime_error("Skiwi is not initialized");
-  auto f = compile(script, cd.env, cd.rd);
+  uint64_t size;
+  auto f = compile(size, script, cd.env, cd.rd);
   if (f)
     {
     return_value = f(&cd.ctxt);
-    cd.compiled_functions.push_back(f);
+    cd.compiled_functions.emplace_back(f, size);
     }
 
   cd.ctxt.rbx = rbx;

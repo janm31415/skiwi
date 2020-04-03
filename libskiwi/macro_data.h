@@ -23,7 +23,7 @@ struct macro_data
   {
   macro_map m;  
 
-  std::vector<void*> compiled_macros;
+  std::vector<std::pair<void*, uint64_t>> compiled_macros;
   };
 
 SKIWI_SCHEME_API macro_data create_macro_data();

@@ -222,7 +222,7 @@ namespace
       case asmcode::DEC: return "dec";
       case asmcode::DIV: return "div";
       case asmcode::DIVSD: return "divsd";
-      case asmcode::DIVPS: return "divps";      
+      case asmcode::DIVPS: return "divps";
       case asmcode::F2XM1: return "f2xm1";
       case asmcode::FABS: return "fabs";
       case asmcode::FADD: return "fadd";
@@ -388,7 +388,7 @@ namespace
       case asmcode::MEM_EDX: return mem ? "[edx+" + _to_string(mem) + "]" : "[edx]";
       case asmcode::MEM_EDI: return mem ? "[edi+" + _to_string(mem) + "]" : "[edi]";
       case asmcode::MEM_ESI: return mem ? "[esi+" + _to_string(mem) + "]" : "[esi]";
-      case asmcode::MEM_ESP: return mem ? ("[esp" + ((int64_t(mem))>0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[esp]";
+      case asmcode::MEM_ESP: return mem ? ("[esp" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[esp]";
       case asmcode::MEM_EBP: return mem ? "[ebp+" + _to_string(mem) + "]" : "[ebp]";
       case asmcode::MEM_RAX: return mem ? "[rax+" + _to_string(mem) + "]" : "[rax]";
       case asmcode::MEM_RBX: return mem ? "[rbx+" + _to_string(mem) + "]" : "[rbx]";
@@ -396,7 +396,7 @@ namespace
       case asmcode::MEM_RDX: return mem ? "[rdx+" + _to_string(mem) + "]" : "[rdx]";
       case asmcode::MEM_RDI: return mem ? "[rdi+" + _to_string(mem) + "]" : "[rdi]";
       case asmcode::MEM_RSI: return mem ? "[rsi+" + _to_string(mem) + "]" : "[rsi]";
-      case asmcode::MEM_RSP: return mem ? ("[rsp" + ((int64_t(mem))>0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[rsp]";
+      case asmcode::MEM_RSP: return mem ? ("[rsp" + ((int64_t(mem)) > 0 ? ("+" + _to_string(mem)) : _to_string_signed(mem)) + "]") : "[rsp]";
       case asmcode::MEM_RBP: return mem ? "[rbp+" + _to_string(mem) + "]" : "[rbp]";
       case asmcode::MEM_R8: return  mem ? "[r8+" + _to_string(mem) + "]" : "[r8]";
       case asmcode::MEM_R9: return  mem ? "[r9+" + _to_string(mem) + "]" : "[r9]";
@@ -428,7 +428,7 @@ namespace
       case asmcode::DWORD_MEM_RDX: return mem ? "dword ptr [rdx+" + _to_string(mem) + "]" : "dword ptr [rdx]";
       case asmcode::DWORD_MEM_RDI: return mem ? "dword ptr [rdi+" + _to_string(mem) + "]" : "dword ptr [rdi]";
       case asmcode::DWORD_MEM_RSI: return mem ? "dword ptr [rsi+" + _to_string(mem) + "]" : "dword ptr [rsi]";
-      case asmcode::DWORD_MEM_RSP: return mem ? ("dword ptr [rsp" + ((int64_t(mem))>0 ? (" + " + _to_string(mem)) : _to_string_signed(mem)) + "]") : "dword ptr [rsp]";
+      case asmcode::DWORD_MEM_RSP: return mem ? ("dword ptr [rsp" + ((int64_t(mem)) > 0 ? (" + " + _to_string(mem)) : _to_string_signed(mem)) + "]") : "dword ptr [rsp]";
       case asmcode::DWORD_MEM_RBP: return mem ? "dword ptr [rbp+" + _to_string(mem) + "]" : "dword ptr [rbp]";
       case asmcode::DWORD_MEM_R8: return  mem ? "dword ptr [r8+" + _to_string(mem) + "]" : "dword ptr [r8]";
       case asmcode::DWORD_MEM_R9: return  mem ? "dword ptr [r9+" + _to_string(mem) + "]" : "dword ptr [r9]";
@@ -1422,7 +1422,7 @@ namespace
     o.vex_5 = f5;
     o.vex_6 = opcode::NO_WIG;
     return o;
-    }  
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_2 f2, opcode::vex_field_4 f4, opcode::vex_field_6 f6, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2)
     {
@@ -1445,7 +1445,7 @@ namespace
     o.vex_5 = opcode::W0;
     o.vex_6 = f6;
     return o;
-    }  
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_1 f1, opcode::vex_field_2 f2, opcode::vex_field_4 f4, opcode::vex_field_6 f6, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3, opcode::opcode_operand_type op4)
     {
@@ -1468,7 +1468,7 @@ namespace
     o.vex_5 = opcode::W0;
     o.vex_6 = f6;
     return o;
-    }  
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_1 f1, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_5 f5, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3, opcode::opcode_operand_type op4)
     {
@@ -1491,7 +1491,7 @@ namespace
     o.vex_5 = f5;
     o.vex_6 = opcode::NO_WIG;
     return o;
-    } 
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_1 f1, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_5 f5, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3)
     {
@@ -1514,7 +1514,7 @@ namespace
     o.vex_5 = f5;
     o.vex_6 = opcode::NO_WIG;
     return o;
-    }  
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_1 f1, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_6 f6, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3)
     {
@@ -1620,7 +1620,7 @@ namespace
     t.add_opcode(make_opcode("MOV", opcode::rexw | opcode::r, 0x89, opcode::rm64, opcode::r64));
     t.add_opcode(make_opcode("MOV", opcode::rexw | opcode::r, 0x8B, opcode::r64, opcode::rm64));
     t.add_opcode(make_opcode("MOV", opcode::rexw | opcode::rd | opcode::io, 0xB8, opcode::r64, opcode::imm64));
-    t.add_opcode(make_opcode("MOV", opcode::rexw | opcode::id | opcode::digit0, 0xC7, opcode::rm64, opcode::imm32));    
+    t.add_opcode(make_opcode("MOV", opcode::rexw | opcode::id | opcode::digit0, 0xC7, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("MOV", opcode::id | opcode::digit0, 0xC7, opcode::rm32, opcode::imm32));
 
     t.add_opcode(make_opcode("MOV", opcode::r, 0x8A, opcode::r8, opcode::rm8));
@@ -1687,14 +1687,14 @@ namespace
 
     t.add_opcode(make_opcode("ADD", opcode::rexw | opcode::digit0 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("ADD", opcode::digit0 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
-   
+
     t.add_opcode(make_opcode("ADD", opcode::rexw | opcode::digit0 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("ADD", opcode::digit0 | opcode::ib, 0x83, opcode::rm32, opcode::imm8));
-   
+
 
     t.add_opcode(make_opcode("ADD", opcode::rexw | opcode::r, 0x01, opcode::rm64, opcode::r64));
     t.add_opcode(make_opcode("ADD", opcode::r, 0x01, opcode::rm32, opcode::r32));
-   
+
     t.add_opcode(make_opcode("ADD", opcode::rexw | opcode::r, 0x03, opcode::r64, opcode::rm64));
     t.add_opcode(make_opcode("ADD", opcode::r, 0x03, opcode::r32, opcode::rm32));
 
@@ -1709,13 +1709,13 @@ namespace
     t.add_opcode(make_opcode("SUB", opcode::rexw | opcode::id, 0x2D, opcode::rax, opcode::imm32));
     t.add_opcode(make_opcode("SUB", opcode::rexw | opcode::digit5 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("SUB", opcode::digit5 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
-    
+
     t.add_opcode(make_opcode("SUB", opcode::rexw | opcode::digit5 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("SUB", opcode::digit5 | opcode::ib, 0x83, opcode::rm32, opcode::imm8));
 
     t.add_opcode(make_opcode("SUB", opcode::rexw | opcode::r, 0x29, opcode::rm64, opcode::r64));
     t.add_opcode(make_opcode("SUB", opcode::r, 0x29, opcode::rm32, opcode::r32));
-    
+
     t.add_opcode(make_opcode("SUB", opcode::rexw | opcode::r, 0x2B, opcode::r64, opcode::rm64));
     t.add_opcode(make_opcode("SUB", opcode::r, 0x2B, opcode::r32, opcode::rm32));
 
@@ -1728,8 +1728,8 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("AND", opcode::rexw | opcode::id, 0x25, opcode::rax, opcode::imm32));
-    t.add_opcode(make_opcode("AND", opcode::rexw | opcode::digit4 | opcode::id, 0x81, opcode::rm64, opcode::imm32));    
-    t.add_opcode(make_opcode("AND", opcode::rexw | opcode::digit4 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));    
+    t.add_opcode(make_opcode("AND", opcode::rexw | opcode::digit4 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
+    t.add_opcode(make_opcode("AND", opcode::rexw | opcode::digit4 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("AND", opcode::digit4 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
     t.add_opcode(make_opcode("AND", opcode::digit4 | opcode::ib, 0x83, opcode::rm32, opcode::imm8));
     t.add_opcode(make_opcode("AND", opcode::rexw | opcode::r, 0x21, opcode::rm64, opcode::r64));
@@ -1745,7 +1745,7 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("OR", opcode::rexw | opcode::id, 0x0D, opcode::rax, opcode::imm32));
-    t.add_opcode(make_opcode("OR", opcode::rexw | opcode::digit1 | opcode::id, 0x81, opcode::rm64, opcode::imm32));    
+    t.add_opcode(make_opcode("OR", opcode::rexw | opcode::digit1 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("OR", opcode::rexw | opcode::digit1 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("OR", opcode::digit1 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
     t.add_opcode(make_opcode("OR", opcode::digit1 | opcode::ib, 0x83, opcode::rm32, opcode::imm8));
@@ -1762,14 +1762,14 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::id, 0x35, opcode::rax, opcode::imm32));
-    t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::digit6 | opcode::id, 0x81, opcode::rm64, opcode::imm32));    
+    t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::digit6 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::digit6 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("XOR", opcode::digit6 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
     t.add_opcode(make_opcode("XOR", opcode::digit6 | opcode::ib, 0x83, opcode::rm32, opcode::imm8));
 
     t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::r, 0x31, opcode::rm64, opcode::r64));
     t.add_opcode(make_opcode("XOR", opcode::r, 0x31, opcode::rm32, opcode::r32));
-    
+
     t.add_opcode(make_opcode("XOR", opcode::rexw | opcode::r, 0x33, opcode::r64, opcode::rm64));
     t.add_opcode(make_opcode("XOR", opcode::r, 0x33, opcode::r32, opcode::rm32));
 
@@ -1795,7 +1795,7 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("CMP", opcode::rexw | opcode::id, 0x3D, opcode::rax, opcode::imm32));
-    t.add_opcode(make_opcode("CMP", opcode::rexw | opcode::digit7 | opcode::id, 0x81, opcode::rm64, opcode::imm32));   
+    t.add_opcode(make_opcode("CMP", opcode::rexw | opcode::digit7 | opcode::id, 0x81, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("CMP", opcode::rexw | opcode::digit7 | opcode::ib, 0x83, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("CMP", opcode::id, 0x3D, opcode::eax, opcode::imm32));
     t.add_opcode(make_opcode("CMP", opcode::digit7 | opcode::id, 0x81, opcode::rm32, opcode::imm32));
@@ -1814,9 +1814,9 @@ namespace
   opcode_table make_test_table()
     {
     opcode_table t;
-    
+
     t.add_opcode(make_opcode("TEST", opcode::rexw | opcode::id, 0xA9, opcode::rax, opcode::imm32));
-    t.add_opcode(make_opcode("TEST", opcode::rexw | opcode::digit0 | opcode::id, 0xF7, opcode::rm64, opcode::imm32));            
+    t.add_opcode(make_opcode("TEST", opcode::rexw | opcode::digit0 | opcode::id, 0xF7, opcode::rm64, opcode::imm32));
     t.add_opcode(make_opcode("TEST", opcode::id, 0xA9, opcode::eax, opcode::imm32));
     t.add_opcode(make_opcode("TEST", opcode::digit0 | opcode::id, 0xF7, opcode::rm32, opcode::imm32));
 
@@ -1828,7 +1828,7 @@ namespace
 
   opcode_table make_ucomisd_table()
     {
-    opcode_table t;    
+    opcode_table t;
     t.add_opcode(make_opcode(0x66, "UCOMISD", opcode::r, 0x0f, 0x2E, opcode::xmm, opcode::xmm_m64));
     return t;
     }
@@ -2013,7 +2013,7 @@ namespace
   opcode_table make_shl_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("SHL", opcode::rexw | opcode::digit4 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));    
+    t.add_opcode(make_opcode("SHL", opcode::rexw | opcode::digit4 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("SHL", opcode::digit4 | opcode::ib, 0xC1, opcode::rm32, opcode::imm8));
     t.add_opcode(make_opcode("SHL", opcode::rexw | opcode::digit4, 0xD3, opcode::rm64, opcode::cl));
     return t;
@@ -2022,7 +2022,7 @@ namespace
   opcode_table make_shr_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("SHR", opcode::rexw | opcode::digit5 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));    
+    t.add_opcode(make_opcode("SHR", opcode::rexw | opcode::digit5 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("SHR", opcode::digit5 | opcode::ib, 0xC1, opcode::rm32, opcode::imm8));
     t.add_opcode(make_opcode("SHR", opcode::rexw | opcode::digit5, 0xD3, opcode::rm64, opcode::cl));
     return t;
@@ -2031,7 +2031,7 @@ namespace
   opcode_table make_sal_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("SAL", opcode::rexw | opcode::digit4 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));    
+    t.add_opcode(make_opcode("SAL", opcode::rexw | opcode::digit4 | opcode::ib, 0xC1, opcode::rm64, opcode::imm8));
     t.add_opcode(make_opcode("SAL", opcode::rexw | opcode::digit4, 0xD3, opcode::rm64, opcode::cl));
     return t;
     }
@@ -2081,7 +2081,7 @@ namespace
   opcode_table make_cqo_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("CQO", opcode::rexw, 0x99, opcode::none, opcode::none));    
+    t.add_opcode(make_opcode("CQO", opcode::rexw, 0x99, opcode::none, opcode::none));
     return t;
     }
 
@@ -2096,7 +2096,7 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("DEC", opcode::rexw | opcode::digit1, 0xff, opcode::rm64, opcode::none));
-    t.add_opcode(make_opcode("DEC", opcode::digit1, 0xff, opcode::rm32, opcode::none));    
+    t.add_opcode(make_opcode("DEC", opcode::digit1, 0xff, opcode::rm32, opcode::none));
     return t;
     }
 
@@ -2104,14 +2104,14 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("INC", opcode::rexw | opcode::digit0, 0xff, opcode::rm64, opcode::none));
-    t.add_opcode(make_opcode("INC", opcode::digit0, 0xff, opcode::rm32, opcode::none));    
+    t.add_opcode(make_opcode("INC", opcode::digit0, 0xff, opcode::rm32, opcode::none));
     return t;
     }
 
   opcode_table make_idiv_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("IDIV", opcode::rexw | opcode::digit7, 0xf7, opcode::rm64, opcode::none));    
+    t.add_opcode(make_opcode("IDIV", opcode::rexw | opcode::digit7, 0xf7, opcode::rm64, opcode::none));
     t.add_opcode(make_opcode("IDIV", opcode::digit7, 0xf7, opcode::rm32, opcode::none));
     return t;
     }
@@ -2136,7 +2136,7 @@ namespace
     {
     opcode_table t;
     t.add_opcode(make_opcode("IMUL", opcode::rexw | opcode::digit5, 0xf7, opcode::rm64, opcode::none));
-    t.add_opcode(make_opcode("IMUL", opcode::rexw | opcode::r, 0x0f, 0xaf, opcode::r64, opcode::rm64));    
+    t.add_opcode(make_opcode("IMUL", opcode::rexw | opcode::r, 0x0f, 0xaf, opcode::r64, opcode::rm64));
     t.add_opcode(make_opcode("IMUL", opcode::r, 0x0f, 0xaf, opcode::r32, opcode::rm32));
     return t;
     }
@@ -2346,7 +2346,7 @@ namespace
     opcode_table t;
     //VEX.NDS.256.66.0F3A.W0 06 /r ib VPERM2F128 ymm1, ymm2, ymm3 / m256, imm8
     t.add_opcode(make_vex_opcode("VPERM2F128", opcode::NDS, opcode::_256, opcode::_66, opcode::_0F3A, opcode::W0, 0x06, opcode::r | opcode::ib, opcode::ymm, opcode::ymm, opcode::ymm_m256, opcode::imm8));
-   
+
     return t;
     }
 
@@ -2558,7 +2558,7 @@ namespace
     opcode_table t;
     t.add_opcode(make_opcode("FILD", opcode::digit0, 0xdf, opcode::m16, opcode::none));
     t.add_opcode(make_opcode("FILD", opcode::digit0, 0xdb, opcode::m32, opcode::none));
-    t.add_opcode(make_opcode("FILD", opcode::digit5, 0xdf, opcode::m64, opcode::none));    
+    t.add_opcode(make_opcode("FILD", opcode::digit5, 0xdf, opcode::m64, opcode::none));
     return t;
     }
 
@@ -2619,7 +2619,7 @@ namespace
   opcode_table make_fsubrp_table()
     {
     opcode_table t;
-    t.add_opcode(make_opcode("FSUBRP", 0, 0xde, 0xe1, opcode::none, opcode::none));    
+    t.add_opcode(make_opcode("FSUBRP", 0, 0xde, 0xe1, opcode::none, opcode::none));
     return t;
     }
 
@@ -2741,7 +2741,7 @@ namespace
     table["DIVPS"] = make_divps_table();
 
     table["F2XM1"] = make_f2xm1_table();
-    table["FABS"] = make_fabs_table();    
+    table["FABS"] = make_fabs_table();
     table["FADD"] = make_fadd_table();
     table["FADDP"] = make_faddp_table();
     table["FDIV"] = make_fdiv_table();
@@ -2994,7 +2994,7 @@ namespace
 
     if (op1d == opcode::m32 || op2d == opcode::m32)
       {
-      if (!o.prefix && ((code.operand1 >= asmcode::MEM_EAX && code.operand1 <= asmcode::MEM_EBP) || (code.operand2 >= asmcode::MEM_EAX && code.operand2 <= asmcode::MEM_EBP)))      
+      if (!o.prefix && ((code.operand1 >= asmcode::MEM_EAX && code.operand1 <= asmcode::MEM_EBP) || (code.operand2 >= asmcode::MEM_EAX && code.operand2 <= asmcode::MEM_EBP)))
         o.prefix = 0x67; // 0x67: address size override prefix, because we're compiling for x64 and working with x32 address size
       }
 
@@ -3124,7 +3124,7 @@ namespace
         case opcode::rm32:
         case opcode::imm32: push4byte(stream, (uint32_t)code.operand1_mem); break;
         case opcode::moffs64:
-        case opcode::rm64:        
+        case opcode::rm64:
         case opcode::imm64: push8byte(stream, (uint64_t)code.operand1_mem); break;
         }
       }
@@ -3423,8 +3423,8 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::DEC: return fill(opcode_stream, *this, g_table.find("DEC")->second);
     case asmcode::DIV: return fill(opcode_stream, *this, g_table.find("DIV")->second);
     case asmcode::DIVSD: return fill(opcode_stream, *this, g_table.find("DIVSD")->second);
-    case asmcode::DIVPS: return fill(opcode_stream, *this, g_table.find("DIVPS")->second);    
-    case asmcode::EXTERN: return 0;    
+    case asmcode::DIVPS: return fill(opcode_stream, *this, g_table.find("DIVPS")->second);
+    case asmcode::EXTERN: return 0;
     case asmcode::F2XM1: return fill(opcode_stream, *this, g_table.find("F2XM1")->second);
     case asmcode::FABS: return fill(opcode_stream, *this, g_table.find("FABS")->second);
     case asmcode::FADD: return fill(opcode_stream, *this, g_table.find("FADD")->second);

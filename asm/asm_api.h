@@ -1,15 +1,11 @@
 #pragma once
 
+#ifdef WIN32
 #if defined(asm_EXPORTS)
-#ifdef WIN32
-  #define SKIWI_ASSEMBLER_API __declspec(dllexport)
+#define SKIWI_ASSEMBLER_API __declspec(dllexport)
 #else
-  #define SKIWI_ASSEMBLER_API 
+#define SKIWI_ASSEMBLER_API __declspec(dllimport)
 #endif
 #else
-#ifdef WIN32
-  #define SKIWI_ASSEMBLER_API __declspec(dllimport)
-#else
-  #define SKIWI_ASSEMBLER_API
-#endif
+#define SKIWI_ASSEMBLER_API
 #endif

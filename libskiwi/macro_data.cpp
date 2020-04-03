@@ -11,7 +11,7 @@ macro_data create_macro_data()
 void destroy_macro_data(macro_data& md)
   {
   for (auto& f : md.compiled_macros)
-    free_assembled_function(f);
+    free_assembled_function(f.first, f.second);
   md.compiled_macros.clear();
   }
 

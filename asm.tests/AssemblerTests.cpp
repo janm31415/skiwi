@@ -20,13 +20,13 @@ namespace
   void assembler_add()
     {
     asmcode code;
-  #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-  #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-  #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -54,13 +54,13 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -87,13 +87,13 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label_2");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
     code.add(asmcode::CALL, "L_label_2");
@@ -122,13 +122,13 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -157,13 +157,13 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -190,13 +190,13 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label_2");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
     code.add(asmcode::CALL, "L_label_2");
@@ -225,13 +225,13 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -322,13 +322,13 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -355,13 +355,13 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-    #ifdef WIN32
+#ifdef WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
-    #else
+#else
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDI);
-    #endif
+#endif
     code.add(asmcode::RET);
 
     typedef uint64_t(*fun_ptr)(uint64_t, ...);
@@ -490,8 +490,8 @@ namespace
       }
 
     }
-    
-  }  
+
+  }
 
 SKIWI_END
 
@@ -499,9 +499,9 @@ SKIWI_END
 void run_all_assembler_tests()
   {
   using namespace SKIWI;
-  
+
   assembler_add();
-  
+
   assembler_call();
   assembler_call_2();
   assembler_jmp();
