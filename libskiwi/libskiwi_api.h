@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN32
 #if defined(libskiwi_EXPORTS)
 #  define SKIWI_SCHEME_API __declspec(dllexport)
 #else

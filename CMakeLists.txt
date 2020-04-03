@@ -12,13 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(asm)
 add_subdirectory(asm.tests)
 add_subdirectory(libskiwi)
-
-if (WIN32)
 add_subdirectory(s)
-
 add_subdirectory(libskiwi.tests)
 add_subdirectory(utils)
-endif (WIN32)
-
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

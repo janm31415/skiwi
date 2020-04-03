@@ -286,7 +286,7 @@ void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map
   first_pass(d, code, externals);
 
   void *compiled_func;
-#ifdef WIN32
+#ifdef _WIN32
   compiled_func = VirtualAlloc(0, d.size + d.data_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #else
   compiled_func = mmap(NULL, d.size + d.data_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -313,7 +313,7 @@ void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map
 
   size = d.size + d.data_size;
 
-#ifdef WIN32
+#ifdef _WIN32
   unsigned long i;
   auto success = VirtualProtect((void *)(compiled_func), d.size + d.data_size, 0x40, (unsigned long *)&i);
 
@@ -343,7 +343,7 @@ void* assemble(uint64_t& size, asmcode& code)
 
 void free_assembled_function(void* f, uint64_t size)
   {
-#ifdef WIN32
+#ifdef _WIN32
   (void*)size;
   VirtualFree(f, 0, MEM_RELEASE);
 #else

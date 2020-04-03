@@ -5,7 +5,7 @@
 #include "AssemblerTests.h"
 #include <stdint.h>
 #include <asm/assembler.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 #include <iostream>
@@ -20,7 +20,7 @@ namespace
   void assembler_add()
     {
     asmcode code;
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -54,7 +54,7 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -87,7 +87,7 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label_2");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -122,7 +122,7 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -157,7 +157,7 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -190,7 +190,7 @@ namespace
     code.add(asmcode::CALL, "L_label");
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label_2");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -225,7 +225,7 @@ namespace
     asmcode code;
     code.add(asmcode::JMP, "L_label");
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -322,7 +322,7 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else
@@ -355,7 +355,7 @@ namespace
     code.add(asmcode::CALL, asmcode::RAX);
     code.add(asmcode::RET);
     code.add(asmcode::LABEL_ALIGNED, "L_label");
-#ifdef WIN32
+#ifdef _WIN32
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
     code.add(asmcode::ADD, asmcode::RAX, asmcode::RDX);
 #else

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -464,9 +464,9 @@ namespace
     asmcode code;
     std::string filename = JAM::get_filename(scheme_file);
     std::string folder = JAM::get_folder(scheme_file);
-#ifdef WIN32
+#ifdef _WIN32
     wchar_t buf[4096];
-    GetCurrentDirectoryW(4096, buf);    
+    GetCurrentDirectoryW(4096, buf);
     std::wstring wfolder = JAM::convert_string_to_wstring(folder);
     std::wstring wfilename = JAM::convert_string_to_wstring(filename);
     SetCurrentDirectoryW(wfolder.c_str());
@@ -493,11 +493,11 @@ namespace
       {
       err("cannot open ", filename, "\n");
       }
-  #ifdef WIN32
+#ifdef _WIN32
     SetCurrentDirectoryW(buf);
-  #else
+#else
     chdir(cwd);
-  #endif
+#endif
     return res;
     }
 

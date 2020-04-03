@@ -7,7 +7,7 @@
 #include "inlines.h"
 #include "types.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #include <unistd.h>
@@ -540,7 +540,7 @@ void compile_string_append1(asmcode& code, const compiler_options& ops)
   code.add(asmcode::ADD, ALLOC, asmcode::R11);
   code.add(asmcode::MOV, MEM_ALLOC, asmcode::NUMBER, 0); // ending 0 character
   code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(1));
-  
+
   code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(1)); // skip header string 1
   code.add(asmcode::ADD, asmcode::RDX, asmcode::NUMBER, CELLS(1)); // skip header string 2
 
@@ -4779,22 +4779,22 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   /*
   Next we update the items saved on the stack.
   */
-  
+
   code.add(asmcode::MOV, asmcode::RAX, STACK);
   code.add(asmcode::MOV, asmcode::R11, asmcode::RAX);
   code.add(asmcode::MOV, asmcode::RAX, STACK_TOP);
-  code.add(asmcode::SUB, asmcode::R11, asmcode::RAX);  
+  code.add(asmcode::SUB, asmcode::R11, asmcode::RAX);
   code.add(asmcode::SHR, asmcode::R11, asmcode::NUMBER, 3);
   //code.add(asmcode::SUB, asmcode::R11, asmcode::NUMBER, 2); // r11 and rbx are pushed on the stack at the top of this method
-  auto mark_rsp_rep = label_to_string(label++);    
+  auto mark_rsp_rep = label_to_string(label++);
   code.add(asmcode::LABEL, mark_rsp_rep);
   code.add(asmcode::TEST, asmcode::R11, asmcode::R11);
-  code.add(asmcode::JES, cmp_rsi_rdi_loop);    
-  code.add(asmcode::CALL, "L_mark");  
+  code.add(asmcode::JES, cmp_rsi_rdi_loop);
+  code.add(asmcode::CALL, "L_mark");
   code.add(asmcode::ADD, asmcode::RAX, asmcode::NUMBER, CELLS(1));
   code.add(asmcode::DEC, asmcode::R11);
   code.add(asmcode::JMPS, mark_rsp_rep);
-  
+
 
 
   code.add(asmcode::LABEL, cmp_rsi_rdi_loop);
@@ -4900,7 +4900,7 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   */
   code.add(asmcode::POP, asmcode::RBX); // continue value
   code.add(asmcode::POP, asmcode::R11);
-  
+
   code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
   code.add(asmcode::JGS, no_heap);
 
@@ -4922,13 +4922,13 @@ void compile_structurally_equal(asmcode& code, const compiler_options&, const st
   auto fail = label_to_string(label++);
   auto cleanup = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::RAX, asmcode::R11);
-  code.add(asmcode::JNES, not_equal );
+  code.add(asmcode::JNES, not_equal);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_t);
   code.add(asmcode::RET);
   code.add(asmcode::LABEL, fail);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_f);
   code.add(asmcode::RET);
-  code.add(asmcode::LABEL, not_equal );
+  code.add(asmcode::LABEL, not_equal);
   jump_short_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, fail);
   jump_short_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, fail);
   //get addresses of the blocks
@@ -4985,13 +4985,13 @@ void compile_recursively_equal(asmcode& code, const compiler_options&, const std
   auto cleanup = label_to_string(label++);
   auto simple_type = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::RAX, asmcode::R11);
-  code.add(asmcode::JNES, not_equal );
+  code.add(asmcode::JNES, not_equal);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_t);
   code.add(asmcode::RET);
   code.add(asmcode::LABEL, fail);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, bool_f);
   code.add(asmcode::RET);
-  code.add(asmcode::LABEL, not_equal );
+  code.add(asmcode::LABEL, not_equal);
   jump_short_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, fail);
   jump_short_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, fail);
   //get addresses of the blocks
@@ -5844,7 +5844,7 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef WIN32
+#ifdef _WIN32
     return _close(fd);
 #else
     return close(fd);
@@ -5855,7 +5855,7 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef WIN32
+#ifdef _WIN32
     return _read(fd, buffer, buffer_size);
 #else
     return ::read(fd, buffer, buffer_size);
@@ -5866,7 +5866,7 @@ namespace
     {
     if (fd < 0)
       return 0;
-#ifdef WIN32
+#ifdef _WIN32
     return _write(fd, buffer, count);
 #else
     return write(fd, buffer, count);
@@ -6518,7 +6518,7 @@ void compile_close_file(asmcode& code, const compiler_options& ops)
   rsi
   rdx
   */
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
 #endif
@@ -6538,7 +6538,7 @@ void compile_close_file(asmcode& code, const compiler_options& ops)
   restore_stack(code);
   restore_after_foreign_call(code);
 
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RDI);
 #endif
   code.add(asmcode::SAL, asmcode::RAX, asmcode::NUMBER, 1);
@@ -6570,7 +6570,7 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
 
   code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(1)); // rcx now points to string representing filename
 
-#ifdef WIN32
+#ifdef _WIN32
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, _O_CREAT | O_WRONLY | O_TRUNC | O_BINARY);
 #else
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_CREAT | O_WRONLY | O_TRUNC);
@@ -6578,7 +6578,7 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::RDX, asmcode::NUMBER, bool_t);
   auto is_output = label_to_string(label++);
   code.add(asmcode::JNES, is_output);
-#ifdef WIN32
+#ifdef _WIN32
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_RDONLY | O_BINARY);
 #else
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, O_RDONLY);
@@ -6760,7 +6760,7 @@ void compile_str2num(asmcode& code, const compiler_options& ops)
   // check endptr
   code.add(asmcode::POP, asmcode::R11);
 
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RSI);
   code.add(asmcode::POP, asmcode::RDI);
 #endif
@@ -7838,14 +7838,14 @@ void compile_load(asmcode& code, const compiler_options& ops)
     jump_if_arg_does_not_point_to_string(code, asmcode::RCX, asmcode::R11, error);
     }
   code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(1));
-  
+
   /*
 Windows:
 rcx
 Linux:
 rdi
 */
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
 #endif
@@ -7855,7 +7855,7 @@ rdi
   align_stack(code);
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
-  code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);  
+  code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
@@ -7865,7 +7865,7 @@ rdi
   restore_stack(code);
   restore_after_foreign_call(code);
   code.add(asmcode::MOV, ALLOC, ALLOC_SAVED); // foreign calls should have updated free heap memory if they used some
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RDI);
 #endif
   // now check whether rax contains an error: if so we jump to ERROR
@@ -7907,7 +7907,7 @@ rcx
 Linux:
 rdi
 */
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
 #endif
@@ -7927,7 +7927,7 @@ rdi
   restore_stack(code);
   restore_after_foreign_call(code);
   code.add(asmcode::MOV, ALLOC, ALLOC_SAVED); // foreign calls should have updated free heap memory if they used some
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RDI);
 #endif
   code.add(asmcode::JMP, CONTINUE);
@@ -8018,7 +8018,7 @@ rcx
 Linux:
 rdi
 */
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
 #endif
@@ -8036,7 +8036,7 @@ rdi
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RDI);
 #endif
   std::string false_label = label_to_string(label++);
@@ -8130,15 +8130,15 @@ void compile_putenv(asmcode& code, const compiler_options& ops)
   code.add(asmcode::ADD, asmcode::RDX, asmcode::NUMBER, CELLS(1));
   /*
 Windows:
-rcx: 
-rdx: 
+rcx:
+rdx:
 
 Linux:
-rdi: 
-rsi: 
+rdi:
+rsi:
 */
 
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::PUSH, asmcode::RSI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
@@ -8158,7 +8158,7 @@ rsi:
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RSI);
   code.add(asmcode::POP, asmcode::RDI);
 #endif
@@ -8202,7 +8202,7 @@ Linux:
 rdi:
 */
 
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
 #endif
@@ -8220,7 +8220,7 @@ rdi:
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
-#ifndef _WIN32
+#ifndef WIN32
   code.add(asmcode::POP, asmcode::RDI);
 #endif
 
