@@ -6835,6 +6835,63 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
     }
   code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RCX, CELLS(1));
   code.add(asmcode::MOV, asmcode::R15, GCVT);
+
+  /*
+  Windows:
+  rcx
+  rdx
+  r8
+
+  Linux:
+  rdi
+  rsi
+  rdx
+  */
+#ifdef _WIN32
+  code.add(asmcode::PUSH, asmcode::R8);
+
+  code.add(asmcode::MOV, asmcode::R8, asmcode::RCX);
+  code.add(asmcode::MOVQ, asmcode::XMM2, asmcode::RCX);
+  code.add(asmcode::MOV, asmcode::RDX, asmcode::R15);
+  code.add(asmcode::MOV, asmcode::RCX, BUFFER);
+
+#else
+  code.add(asmcode::PUSH, asmcode::RDI);
+  code.add(asmcode::PUSH, asmcode::RSI);
+
+  code.add(asmcode::MOV, asmcode::RDX, asmcode::RCX);
+  code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::RCX);
+  code.add(asmcode::MOV, asmcode::RSI, asmcode::R15);
+  code.add(asmcode::MOV, asmcode::RDI, BUFFER);
+#endif
+
+  save_before_foreign_call(code);
+  align_stack(code);
+  code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
+#ifdef _WIN32
+  code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+#else
+  code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+#endif  
+  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
+  restore_stack(code);
+  restore_after_foreign_call(code);
+
+#ifdef _WIN32
+  code.add(asmcode::POP, asmcode::R8);
+#else
+  code.add(asmcode::POP, asmcode::RSI);
+  code.add(asmcode::POP, asmcode::RDI);
+#endif
+
+  allocate_buffer_as_string(code);
+
+  code.add(asmcode::JMP, CONTINUE);
+
+
   code.add(asmcode::LABEL, cont); // rcx contains number, r15 contains format
 
   /*

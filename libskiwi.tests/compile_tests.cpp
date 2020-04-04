@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -3884,6 +3884,12 @@ namespace
     void test()
       {
       build_libs();
+
+      char buffer[1024];
+      double d = 3.1415984351384361;
+      sprintf(buffer, "%.20g", d);
+      TEST_EQ("3.1415984351384360629", std::string(buffer));
+
       TEST_EQ("\"3.1415984351384360629\"", run("(num2str 3.1415984351384361 10)"));
       TEST_EQ("\"25\"", run("(num2str 25 10)"));
       TEST_EQ("\"31\"", run("(num2str 25 8)"));
@@ -5507,4 +5513,6 @@ void run_all_compile_tests()
   empty_let_crash().test();  
 #endif  
   
+
+  writetests().test();
   }
