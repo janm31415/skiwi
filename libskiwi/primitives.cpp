@@ -6833,7 +6833,7 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
     {
     jump_if_arg_does_not_point_to_flonum(code, asmcode::RCX, asmcode::R11, error);
     }
-  code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RCX, CELLS(1));
+  code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RCX, CELLS(1));  
   code.add(asmcode::MOV, asmcode::R15, GCVT);
 
   /*
@@ -6859,7 +6859,6 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::PUSH, asmcode::RSI);
 
-  code.add(asmcode::MOV, asmcode::RDX, asmcode::RCX);
   code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::RCX);
   code.add(asmcode::MOV, asmcode::RSI, asmcode::R15);
   code.add(asmcode::MOV, asmcode::RDI, BUFFER);
@@ -6872,7 +6871,7 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
 #else
-  code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 1);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
 #endif  
   code.add(asmcode::CALL, asmcode::R11);
