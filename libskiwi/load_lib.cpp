@@ -48,6 +48,9 @@ namespace
       f.close();
       return ss.str();
       }
+    std::stringstream ss2;
+    ss2 << std::string(filepath.begin(), filepath.end()) << " not found";
+    throw std::runtime_error(ss2.str().c_str());
     return "";
     }
   }

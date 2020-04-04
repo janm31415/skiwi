@@ -505,7 +505,7 @@ namespace
 
 skiwi_parameters::skiwi_parameters()
   {
-  heap_size = 64 * 1024 * 1024;
+  heap_size = 2 * 1024 * 1024;
   globals_stack = 64 * 1024;
   local_stack = 1024;
   scheme_stack = 4096;
