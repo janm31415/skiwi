@@ -108,7 +108,7 @@ namespace
         {
         std::cout << e.what() << " while compiling callcc library\n\n";
         }
-      }            
+      }
 
     void build_apply()
       {
@@ -130,7 +130,7 @@ namespace
         {
         std::cout << e.what() << " while compiling apply library\n\n";
         }
-      }   
+      }
 
     void build_r5rs()
       {
@@ -176,7 +176,7 @@ namespace
         }
       }
 
-    
+
 
     void build_libs()
       {
@@ -373,7 +373,7 @@ namespace
       params.trace = nullptr;
       params.stderror = &std::cout;
       params.stdoutput = nullptr;
-      scheme_with_skiwi(nullptr, nullptr, params);            
+      scheme_with_skiwi(nullptr, nullptr, params);
       }
 
     ~compile_fixture_skiwi()
@@ -1657,14 +1657,14 @@ namespace
     void test()
       {
       TEST_EQ("12", run("(letrec () 12)"));
-      TEST_EQ("10", run("(letrec () (let ([x 5]) (+ x x)))"));      
+      TEST_EQ("10", run("(letrec () (let ([x 5]) (+ x x)))"));
       TEST_EQ("7", run("(letrec ([f (lambda () 5)]) 7)"));
       TEST_EQ("12", run("(letrec () 12)"));
       TEST_EQ("10", run("(letrec () (let ([x 5]) (+ x x)))"));
       TEST_EQ("7", run("(letrec ([f (lambda () 5)]) 7)"));
-      TEST_EQ("12", run("(letrec ([f (lambda () 5)]) (let ([x 12]) x))"));      
-      TEST_EQ("5", run("(letrec ([f (lambda () 5)]) (f))"));      
-      TEST_EQ("5", run("(letrec ([f (lambda () 5)]) (let ([x (f)]) x))"));      
+      TEST_EQ("12", run("(letrec ([f (lambda () 5)]) (let ([x 12]) x))"));
+      TEST_EQ("5", run("(letrec ([f (lambda () 5)]) (f))"));
+      TEST_EQ("5", run("(letrec ([f (lambda () 5)]) (let ([x (f)]) x))"));
       TEST_EQ("11", run("(letrec ([f (lambda () 5)]) (+ (f) 6))"));
       TEST_EQ("11", run("(letrec ([f (lambda () 5)]) (+ 6 (f)))"));
       TEST_EQ("15", run("(letrec ([f (lambda () 5)]) (- 20 (f)))"));
@@ -2606,7 +2606,7 @@ namespace
       TEST_EQ("(1 2 3 4 5 6 7 8 9 10)", run("(cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 8 (cons 9 (cons 10 ()))))))))))"));
       TEST_EQ("runtime error: cons: heap overflow", run("(cons 1 2)"));
 
-      make_new_context((256+32) * 2, global_stack_space, 64, 128); // at least 256 because of the symbol table
+      make_new_context((256 + 32) * 2, global_stack_space, 64, 128); // at least 256 because of the symbol table
       build_string_to_symbol();
       TEST_EQ("abcdefghabcdefghabcdefghabcdefgh1", run("(quote abcdefghabcdefghabcdefghabcdefgh1)"));
       TEST_EQ("runtime error: %allocate-symbol: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh2)"));
@@ -2679,7 +2679,7 @@ namespace
       TEST_EQ("#(1 1 1 1 1)", run("a"));
       TEST_EQ("#(2 2 2 2 2)", run("b"));
 
-      make_new_context(64*2, 512, 64, 128);
+      make_new_context(64 * 2, 512, 64, 128);
       TEST_ASSERT(ctxt.stack == ctxt.stack_top);
       for (int i = 0; i < 30; ++i)
         TEST_EQ("15", run("(let ([a 1] [b 2] [c 3] [d 4] [e 5]) ((lambda () (+ a b c d e))))"));
@@ -4560,15 +4560,15 @@ to /* and */ in c/c++
   struct include_tests : public compile_fixture {
     void test()
       {
-  #ifdef WIN32
+#ifdef _WIN32
       TEST_EQ("9", run("(include \"data\\\\include_test_1.scm\") result"));
       TEST_EQ("2", run("(include \"data\\\\include_test_2.scm\") result"));
       TEST_EQ("300", run("(define x (include \"data\\\\include_test_3.scm\"))"));
-  #else
+#else
       TEST_EQ("9", run("(include \"./data/include_test_1.scm\") result"));
       TEST_EQ("2", run("(include \"./data/include_test_2_linux.scm\") result"));
       TEST_EQ("300", run("(define x (include \"./data/include_test_3.scm\"))"));
-  #endif
+#endif
       }
     };
 
@@ -4611,7 +4611,7 @@ to /* and */ in c/c++
       TEST_EQ("#t", run("(eqv? #\\  #\\space)"));
       TEST_EQ("#t", run("(eqv? '#\\  #\\space)"));
       TEST_EQ("\"a\"", run("(substring \"ab\" 0 1)"));
-#ifdef WIN32      
+#ifdef _WIN32      
       TEST_EQ("(1 2 3 4 5)", run("(include \"data\\\\include_test_4.scm\") (test)"));
 #else
       TEST_EQ("(1 2 3 4 5)", run("(include \"./data/include_test_4_linux.scm\") (test)"));
@@ -4665,7 +4665,7 @@ to /* and */ in c/c++
       TEST_EQ("1e+19", run("(str2num \"1.e19\" 10)"));
       TEST_EQ("1e+19", run("(string->number \"1.e19\")"));
       TEST_EQ("\"10000000000000000000.0\"", run("(number->string (string->number \"1.e19\"))"));
-#ifdef WIN32
+#ifdef _WIN32
       TEST_EQ("-nan(ind)", run("(string->number \"+nan.0\")"));
       TEST_EQ("-nan(ind)", run("(string->number \"-nan.0\")"));
 #else
@@ -5175,7 +5175,7 @@ to /* and */ in c/c++
     params.trace = nullptr;
     params.stderror = &std::cout;
     params.stdoutput = nullptr;
-    scheme_with_skiwi(nullptr, nullptr, params);    
+    scheme_with_skiwi(nullptr, nullptr, params);
 #ifdef _WIN32
     skiwi_run("(load \"data\\\\load_test_1.scm\")");
 #else
@@ -5251,7 +5251,7 @@ to /* and */ in c/c++
     void test()
       {
       TEST_EQ("#f", run("(file-exists? \"asdfjwedsfsde\")"));
-#ifdef WIN32
+#ifdef _WIN32
       TEST_EQ("#t", run("(file-exists?  \"data\\\\include_test_1.scm\")"));
 #else
       TEST_EQ("#t", run("(file-exists?  \"./data/include_test_1.scm\")"));
@@ -5267,7 +5267,7 @@ to /* and */ in c/c++
     params.stderror = &std::cout;
     params.stdoutput = nullptr;
     scheme_with_skiwi(nullptr, nullptr, params);
-    
+
 #ifdef _WIN32
     std::string script = R"(
 (load (string-append "data\\" "load_test_2.scm"))
@@ -5398,7 +5398,7 @@ void run_all_compile_tests()
   add_flonums_optimized().test();
   add_flonums_and_fixnums().test();
   add_flonums_and_fixnums_optimized().test();
-  sub().test();  
+  sub().test();
   sub_optimized().test();
   mul().test();
   mul_optimized().test();
@@ -5465,7 +5465,7 @@ void run_all_compile_tests()
   append().test();
   quote_bug().test();
   quote().test();
-  fibonacci().test();  
+  fibonacci().test();
   set_car_cdr().test();
   when_unless().test();
   fixnum_to_char().test();
@@ -5488,7 +5488,7 @@ void run_all_compile_tests()
   lambda_variable_arity_not_using_rest_arg().test();
   lambda_variable_arity_while_using_rest_arg().test();
   lambda_bug().test();
-  lambda_variable_arity_while_using_rest_arg_and_closure().test();  
+  lambda_variable_arity_while_using_rest_arg_and_closure().test();
   foreign_call_1().test();
   foreign_call_2().test();
   foreign_call_3().test();
@@ -5499,7 +5499,7 @@ void run_all_compile_tests()
   foreign_call_8().test();
   foreign_call_9().test();
   foreign_call_10().test();
-  foreign_call_11().test();  
+  foreign_call_11().test();
   case_examples().test();
   memv().test();
   memq().test();
@@ -5525,7 +5525,7 @@ void run_all_compile_tests()
   string_ops().test();
   symbol_ops().test();
   string_to_symbol_ops().test();
-  control_ops().test();  
+  control_ops().test();
   do_ops().test();
   no_square_brackets().test();
   calcc_extended().test();
@@ -5550,7 +5550,7 @@ void run_all_compile_tests()
   csv().test();
   read_numerics().test();
   srfi1().test();
-  load_simulation().test();  
+  load_simulation().test();
   eval_test().test();
   getenvtest().test();
   filetest().test();
@@ -5559,11 +5559,11 @@ void run_all_compile_tests()
   hex_test().test();
   binary_test().test();
   octal_test().test();
-  
+
   load_error_during_load();
   load_error();
   load_test();
-  empty_let_crash().test();  
+  empty_let_crash().test();
 #endif  
-  
+
   }
