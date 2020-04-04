@@ -35,8 +35,17 @@ add_executable(libskiwi.tests ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
 
+if (WIN32)
 add_custom_command(TARGET libskiwi.tests POST_BUILD 
    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/data" ${CMAKE_CURRENT_BINARY_DIR}/data)
+endif (WIN32)
+
+if (UNIX)
+add_custom_command(TARGET libskiwi.tests POST_BUILD 
+   COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/data" "$<TARGET_FILE_DIR:libskiwi.tests>/data")
+endif (UNIX)
+
+
 
 target_include_directories(libskiwi.tests
     PRIVATE

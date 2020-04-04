@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#define ONLY_LAST
+//#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -4560,9 +4560,15 @@ to /* and */ in c/c++
   struct include_tests : public compile_fixture {
     void test()
       {
+  #ifdef WIN32
       TEST_EQ("9", run("(include \"data\\\\include_test_1.scm\") result"));
       TEST_EQ("2", run("(include \"data\\\\include_test_2.scm\") result"));
       TEST_EQ("300", run("(define x (include \"data\\\\include_test_3.scm\"))"));
+  #else
+      TEST_EQ("9", run("(include \"./data/include_test_1.scm\") result"));
+      TEST_EQ("2", run("(include \"./data/include_test_2_linux.scm\") result"));
+      TEST_EQ("300", run("(define x (include \"./data/include_test_3.scm\"))"));
+  #endif
       }
     };
 
@@ -4605,7 +4611,11 @@ to /* and */ in c/c++
       TEST_EQ("#t", run("(eqv? #\\  #\\space)"));
       TEST_EQ("#t", run("(eqv? '#\\  #\\space)"));
       TEST_EQ("\"a\"", run("(substring \"ab\" 0 1)"));
+#ifdef WIN32      
       TEST_EQ("(1 2 3 4 5)", run("(include \"data\\\\include_test_4.scm\") (test)"));
+#else
+      TEST_EQ("(1 2 3 4 5)", run("(include \"./data/include_test_4_linux.scm\") (test)"));
+#endif      
       }
     };
 
@@ -4655,8 +4665,13 @@ to /* and */ in c/c++
       TEST_EQ("1e+19", run("(str2num \"1.e19\" 10)"));
       TEST_EQ("1e+19", run("(string->number \"1.e19\")"));
       TEST_EQ("\"10000000000000000000.0\"", run("(number->string (string->number \"1.e19\"))"));
+#ifdef WIN32
       TEST_EQ("-nan(ind)", run("(string->number \"+nan.0\")"));
       TEST_EQ("-nan(ind)", run("(string->number \"-nan.0\")"));
+#else
+      TEST_EQ("-nan", run("(string->number \"+nan.0\")"));
+      TEST_EQ("-nan", run("(string->number \"-nan.0\")"));
+#endif
       TEST_EQ("inf", run("(string->number \"+inf.0\")"));
       TEST_EQ("-inf", run("(string->number \"-inf.0\")"));
       }
@@ -5161,14 +5176,25 @@ to /* and */ in c/c++
     params.stderror = &std::cout;
     params.stdoutput = nullptr;
     scheme_with_skiwi(nullptr, nullptr, params);    
+#ifdef _WIN32
     skiwi_run("(load \"data\\\\load_test_1.scm\")");
+#else
+    skiwi_run("(load \"./data/load_test_1.scm\")");
+#endif
     uint64_t res = skiwi_run_raw("result");
     TEST_EQ("9", skiwi_raw_to_string(res));
 
+#ifdef _WIN32
     std::string script = R"(
 (load (string-append "data\\" "load_test_2.scm"))
 (add3 5)
 )";
+#else
+    std::string script = R"(
+(load (string-append "./data/" "load_test_2.scm"))
+(add3 5)
+)";
+#endif
     res = skiwi_run_raw(script);
     TEST_EQ("8", skiwi_raw_to_string(res));
     skiwi_quit();
@@ -5225,7 +5251,11 @@ to /* and */ in c/c++
     void test()
       {
       TEST_EQ("#f", run("(file-exists? \"asdfjwedsfsde\")"));
+#ifdef WIN32
       TEST_EQ("#t", run("(file-exists?  \"data\\\\include_test_1.scm\")"));
+#else
+      TEST_EQ("#t", run("(file-exists?  \"./data/include_test_1.scm\")"));
+#endif
       }
     };
 
@@ -5238,11 +5268,22 @@ to /* and */ in c/c++
     params.stdoutput = nullptr;
     scheme_with_skiwi(nullptr, nullptr, params);
     
+#ifdef _WIN32
     std::string script = R"(
 (load (string-append "data\\" "load_test_2.scm"))
 (add4 5)
 (define x 7)
 )";
+
+#else
+
+    std::string script = R"(
+(load (string-append "./data/" "load_test_2.scm"))
+(add4 5)
+(define x 7)
+)";
+
+#endif
     uint64_t res = skiwi_run_raw(script);
     TEST_EQ("runtime error: closure expected: add4", skiwi_raw_to_string(res));
     skiwi_quit();
@@ -5301,10 +5342,18 @@ to /* and */ in c/c++
     params.stderror = &std::cout;
     params.stdoutput = nullptr;
     scheme_with_skiwi(nullptr, nullptr, params);
+#ifdef _WIN32
     uint64_t res = skiwi_run_raw("(apply load '(\"data\\\\load_test_3.scm\"))");
+#else
+    uint64_t res = skiwi_run_raw("(apply load '(\"./data/load_test_3.scm\"))");
+#endif
     TEST_EQ("runtime error: closure expected: invalid-function", skiwi_raw_to_string(res));
 
+#ifdef _WIN32
     res = skiwi_run_raw("(begin (apply load '(\"data\\\\load_test_3.scm\")) (+ 1 2))");
+#else
+    res = skiwi_run_raw("(begin (apply load '(\"./data/load_test_3.scm\")) (+ 1 2))");
+#endif
     TEST_EQ("runtime error: closure expected: invalid-function", skiwi_raw_to_string(res));
     skiwi_quit();
     }
@@ -5317,7 +5366,11 @@ to /* and */ in c/c++
     params.stderror = &std::cout;
     params.stdoutput = &std::cout;
     scheme_with_skiwi(nullptr, nullptr, params);
+#ifdef _WIN32
     uint64_t res = skiwi_run_raw("(begin (load \"data\\\\load_test_4.scm\") (define equal? +))");
+#else
+    uint64_t res = skiwi_run_raw("(begin (load \"./data/load_test_4.scm\") (define equal? +))");
+#endif
     TEST_EQ("<procedure>", skiwi_raw_to_string(res));
     skiwi_quit();
     }
@@ -5513,6 +5566,4 @@ void run_all_compile_tests()
   empty_let_crash().test();  
 #endif  
   
-
-  writetests().test();
   }
