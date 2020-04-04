@@ -5242,7 +5242,12 @@ to /* and */ in c/c++
       TEST_EQ("\"Dummy\"", run("(getenv \"SkiwiTest\")"));
 
       TEST_EQ("#t", run("(putenv \"SkiwiTest\" \"\")"));
+
+#ifdef _WIN32
       TEST_EQ("#f", run("(getenv \"SkiwiTest\")"));
+#else
+      TEST_EQ("\"\"", run("(getenv \"SkiwiTest\")"));
+#endif
       }
     };
 
@@ -5565,5 +5570,4 @@ void run_all_compile_tests()
   load_test();
   empty_let_crash().test();
 #endif  
-
   }
