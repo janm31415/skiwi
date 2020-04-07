@@ -1268,6 +1268,7 @@ Expression make_expression(std::vector<token>& tokens)
 
 Program make_program(std::vector<token>& tokens)
   {
+  invalidate_popped();
   Program prog;
   while (!tokens.empty())
     prog.expressions.push_back(make_expression(tokens));
