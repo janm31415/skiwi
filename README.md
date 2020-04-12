@@ -8,7 +8,7 @@ Skiwi is a just-in-time Scheme compiler for the x86-64 instruction set. The comp
 converts Scheme source code to assembly, which is then translated to machine code and 
 executed immediately.
 
-I was inspired/have mainly used the following sources for building this compiler:
+I was inspired/have mainly used the following sources when working on this compiler:
 
 [An incremental approach to compiler construction, Abdulaziz ghuloum.](http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf)
 
