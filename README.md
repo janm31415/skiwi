@@ -9,8 +9,11 @@ converts Scheme source code to assembly, which is then translated to machine cod
 executed immediately.
 
 I was inspired/have mainly used the following sources for building this compiler:
-[An incremental approach to compiler construction. Abdulaziz ghuloum.](http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf)
+
+[An incremental approach to compiler construction, Abdulaziz ghuloum.](http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf)
+
 [Bones scheme compiler](http://www.call-with-current-continuation.org/bones/)
+
 [Ken Silverman's evaldraw compiler](http://advsys.net/ken/download.htm)
 
 Building the compiler
