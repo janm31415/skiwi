@@ -23,7 +23,8 @@ The compiler has been tested on Windows 10 using Visual Studio 2017 and on Ubunt
 with gcc 7.5.0.
 
 First you'll need to make sure that Intel's TBB library installed. 
-On Windows you can download TBB's binaries from the its website, and install them preferablyin folder C:\Program Files\TBB. Another folder is also possible, but then you'll need to
+On Windows you can download TBB's binaries from its website, and install them, preferably, in 
+folder C:\Program Files\TBB. Another folder is also possible, but then you'll need to
 adapt the CMakeLists.txt file and make it point to the correct location.
 On Ubuntu you can simply run 
   sudo apt install libtbb-dev 
