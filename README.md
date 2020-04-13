@@ -14,6 +14,8 @@ I was inspired/have mainly used the following sources when working on this compi
 
 [Bones scheme compiler](http://www.call-with-current-continuation.org/bones/)
 
+[Guile](https://www.gnu.org/software/guile/)
+
 [Ken Silverman's evaldraw compiler](http://advsys.net/ken/download.htm)
 
 Building the compiler
