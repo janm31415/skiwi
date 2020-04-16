@@ -22,9 +22,9 @@ compiler_options::compiler_options()
   lsa_algo = lsa_detailed;
   primitives_inlined = true;
   safe_primitives = true;
-  safe_cons = false;
-  safe_flonums = false;
-  safe_promises = false;
+  safe_cons = true;
+  safe_flonums = true;
+  safe_promises = true;
   garbage_collection = true;
   do_handle_include = true;
   do_lambda_to_let_conversion = true;

@@ -4718,8 +4718,11 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
   code.add(asmcode::JG, no_heap);
 
-  code.add(asmcode::PUSH, asmcode::R11);
   code.add(asmcode::PUSH, asmcode::RBX);
+
+  code.add(asmcode::MOV, asmcode::R11, GLOBALS); // run over all registers (in GC_SAVE) and locals. R11 contains the number of items.
+  code.add(asmcode::SUB, asmcode::R11, GC_SAVE);
+  code.add(asmcode::SHR, asmcode::R11, asmcode::NUMBER, 3);
 
   code.add(asmcode::MOV, asmcode::RAX, GC_SAVE);
   code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::RCX);
@@ -4899,7 +4902,6 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   code.add(asmcode::LABEL, make_zero_done);
   */
   code.add(asmcode::POP, asmcode::RBX); // continue value
-  code.add(asmcode::POP, asmcode::R11);
 
   code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
   code.add(asmcode::JGS, no_heap);

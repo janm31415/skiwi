@@ -619,7 +619,6 @@ namespace
         throw_error(primitive_unknown);
 
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, pm_it->second.address);
-      code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, fun.arguments.size() + 1);
       code.add(asmcode::MOV, CONTINUE, asmcode::LABELADDRESS, continue_label);
       code.add(asmcode::JMP, asmcode::RAX);
       error_label(code, garbage_error, re_heap_full);
@@ -1147,7 +1146,6 @@ namespace
         auto pm_it = pm.find("reclaim-garbage");
         if (pm_it == pm.end())
           throw_error(primitive_unknown);
-        code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, prim.arguments.size());
         code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, pm_it->second.address);
         code.add(asmcode::MOV, CONTINUE, asmcode::LABELADDRESS, continue_label2);
         code.add(asmcode::JMP, asmcode::RAX);

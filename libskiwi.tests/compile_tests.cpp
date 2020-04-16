@@ -2609,8 +2609,8 @@ namespace
       make_new_context((256 + 32) * 2, global_stack_space, 64, 128); // at least 256 because of the symbol table
       build_string_to_symbol();
       TEST_EQ("abcdefghabcdefghabcdefghabcdefgh1", run("(quote abcdefghabcdefghabcdefghabcdefgh1)"));
-      TEST_EQ("runtime error: %allocate-symbol: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh2)"));
-      TEST_EQ("runtime error: string: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh3)"));
+      TEST_EQ("runtime error: string: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh2)"));
+      TEST_EQ("runtime error: closure: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh3)"));
       TEST_EQ("runtime error: closure: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh4)"));
       TEST_EQ("runtime error: closure: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh5)"));
       TEST_EQ("runtime error: closure: heap overflow", run("(quote abcdefghabcdefghabcdefghabcdefgh6)"));
