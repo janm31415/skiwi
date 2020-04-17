@@ -582,6 +582,56 @@ std::string skiwi_expand(const std::string& scheme_expression)
   return format(ss.str(), format_ops);
   }
 
+std::string skiwi_assembly(const std::string& scheme_expression)
+  {
+  using namespace SKIWI;
+  if (!cd.initialized)
+    throw std::runtime_error("Skiwi is not initialized");
+  auto env_copy = make_deep_copy(cd.env);
+  auto rd_copy = make_deep_copy(cd.rd);
+  asmcode code;
+  Program prog;
+  try
+    {
+    auto tokens = tokenize(scheme_expression);
+    std::reverse(tokens.begin(), tokens.end());
+    prog = make_program(tokens);
+    }
+  catch (std::logic_error e)
+    {
+    cd.env = env_copy;
+    cd.rd = rd_copy;
+    return e.what();
+    }
+  catch (std::runtime_error e)
+    {
+    cd.env = env_copy;
+    cd.rd = rd_copy;
+    return e.what();
+    }
+  try
+    {
+    compile(cd.env, cd.rd, cd.md, cd.ctxt, code, prog, cd.pm, cd.externals, cd.ops);
+    }
+  catch (std::logic_error e)
+    {
+    cd.env = env_copy;
+    cd.rd = rd_copy;
+    return e.what();
+    }
+  catch (std::runtime_error e)
+    {
+    cd.env = env_copy;
+    cd.rd = rd_copy;
+    return e.what();
+    }
+  cd.env = env_copy;
+  cd.rd = rd_copy;
+  std::stringstream ss;
+  code.stream(ss);
+  return ss.str();
+  }
+
 uint64_t skiwi_run_raw(const std::string& scheme_expression)
   {
   if (!cd.initialized)
@@ -620,6 +670,7 @@ void skiwi_show_help()
   {
   out("This is Skiwi. You are interacting with the REPL.\n");
   out("Enter scheme commands or one of the following:\n\n");
+  out(",asm\n");
   out(",env\n");
   out(",exit\n");
   out(",expand\n");
@@ -633,6 +684,12 @@ void skiwi_show_expand(const std::string& input)
   {
   std::string expanded = skiwi_expand(remove_command(input));
   out(expanded, "\n");
+  }
+
+void skiwi_show_assembly(const std::string& input)
+  {
+  std::string assembly = skiwi_assembly(remove_command(input));
+  out(assembly, "\n");
   }
 
 void skiwi_show_external_primitives()
@@ -730,6 +787,14 @@ void skiwi_repl(int argc, char** argv)
         if (command == ",?")
           {
           skiwi_show_help();
+          }
+        break;
+        }
+        case 'a':
+        {
+        if (command == ",asm")
+          {
+          skiwi_show_assembly(input);
           }
         break;
         }
@@ -1177,6 +1242,7 @@ uint64_t c_prim_load(const char* filename)
   {
   using namespace SKIWI;
 
+  // saving the registers, should we save the locals too??
   void* rbx = cd.ctxt.rbx;
   void* rdi = cd.ctxt.rdi;
   void* rsi = cd.ctxt.rsi;

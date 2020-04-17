@@ -5380,6 +5380,15 @@ to /* and */ in c/c++
     skiwi_quit();
     }
 
+  struct many_vars_in_lambda_test : public compile_fixture
+    {
+    void test()
+      {
+      TEST_EQ("<lambda>", run("(define (add10 a b c d e f g h i j) (+ a b c d e f g h i j))"));
+      TEST_EQ("55", run("(add10 1 2 3 4 5 6 7 8 9 10)"));
+      }
+    };
+
   }
 
 SKIWI_END
@@ -5569,5 +5578,6 @@ void run_all_compile_tests()
   load_error();
   load_test();
   empty_let_crash().test();
-#endif  
+#endif
+  many_vars_in_lambda_test().test();
   }

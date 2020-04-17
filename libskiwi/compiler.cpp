@@ -605,7 +605,7 @@ namespace
     // all arguments are in the registers or locals
     // there are no other local variables due to cps conversion
     if (ops.garbage_collection)
-      {
+      {            
       std::string garbage_error = label_to_string(label++);
       std::string continue_label = label_to_string(label++);
       code.add(asmcode::CMP, asmcode::ALLOC, asmcode::LIMIT);
@@ -1135,7 +1135,25 @@ namespace
     if (prim.primitive_name == "halt")
       {
       if (options.garbage_collection)
-        {
+        {        
+        code.add(asmcode::COMMENT, "clean all locals for gc");
+        //Here we clear all our registers, so that they can be cleaned up by the gc
+        code.add(asmcode::MOV, asmcode::R15, LOCAL);
+        code.add(asmcode::MOV, asmcode::R11, GLOBALS);
+        auto repeat_clean_locals = label_to_string(label++);
+        code.add(asmcode::LABEL, repeat_clean_locals);
+        code.add(asmcode::MOV, asmcode::MEM_R15, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::ADD, asmcode::R15, asmcode::NUMBER, 8);
+        code.add(asmcode::CMP, asmcode::R15, asmcode::R11);
+        code.add(asmcode::JLS, repeat_clean_locals);
+        code.add(asmcode::COMMENT, "clean all registers for gc");
+        code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::RSI, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::RDI, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::R8, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::R9, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::R12, asmcode::NUMBER, unalloc_tag);
+        code.add(asmcode::MOV, asmcode::R14, asmcode::NUMBER, unalloc_tag);
         std::string garbage_error = label_to_string(label++);
         std::string continue_label2 = label_to_string(label++);
         code.add(asmcode::CMP, asmcode::ALLOC, asmcode::LIMIT);
@@ -1715,6 +1733,18 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   code.add(asmcode::AND, asmcode::RSP, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF0);
 
   code.add(asmcode::MOV, ALLOC, ALLOC_SAVED);
+
+  /*
+  Make registers point to unalloc_tag, so that gc cannot crash due to old register content
+  */
+  code.add(asmcode::MOV, asmcode::RCX, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::RSI, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::RDI, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::R8, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::R9, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::R12, asmcode::NUMBER, unalloc_tag);
+  code.add(asmcode::MOV, asmcode::R14, asmcode::NUMBER, unalloc_tag);
 
   /*Call the main procedure*/
   code.add(asmcode::JMP, "L_scheme_entry");

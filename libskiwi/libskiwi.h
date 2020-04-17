@@ -42,6 +42,7 @@ namespace skiwi
 
   SKIWI_SCHEME_API void skiwi_show_help();
   SKIWI_SCHEME_API void skiwi_show_expand(const std::string& input);
+  SKIWI_SCHEME_API void skiwi_show_assembly(const std::string& input);
   SKIWI_SCHEME_API void skiwi_show_unresolved();
   SKIWI_SCHEME_API void skiwi_show_external_primitives();
   SKIWI_SCHEME_API void skiwi_show_memory();
