@@ -141,7 +141,7 @@ namespace
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = id.c_str();
+    wc.lpszClassName = "window";
     wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wc))
@@ -158,7 +158,7 @@ namespace
       {
       hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
-        id.c_str(),
+        "window",
         title.c_str(),
         WS_VISIBLE | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
         x, y, w, h,
@@ -175,7 +175,7 @@ namespace
       {
       hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
-        id.c_str(),
+        "window",
         title.c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, w, h,
