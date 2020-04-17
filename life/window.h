@@ -15,8 +15,8 @@ class IWindowListener
 struct WindowHandleData;
 typedef WindowHandleData* WindowHandle;
 
-WindowHandle create_window(const std::string& id, const std::string& title, int w, int h, bool fullscreen = false, std::ostream* p_stream = nullptr);
-WindowHandle create_window(const std::string& id, const std::string& title, int x, int y, int w, int h, bool fullscreen = false, std::ostream* p_stream = nullptr);
+WindowHandle create_window(const std::string& title, int w, int h, bool fullscreen = false, std::ostream* p_stream = nullptr);
+WindowHandle create_window(const std::string& title, int x, int y, int w, int h, bool fullscreen = false, std::ostream* p_stream = nullptr);
 
 void close_window(WindowHandle& h_wnd);
 

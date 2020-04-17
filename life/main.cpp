@@ -6,7 +6,7 @@ int main(int argc, char** argv)
   {
   const int w = 800;
   const int h = 600;
-  auto wh = create_window("id", "title", w, h);
+  auto wh = create_window("title", w, h);
 
   uint8_t* im = new uint8_t[w*h];
   for (int y = 0; y < h; ++y)

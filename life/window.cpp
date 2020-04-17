@@ -4,7 +4,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-
+#include <unistd.h>
+#include <string.h>
+#include <X11/Xlib.h>
 #endif
 #include <condition_variable>
 
@@ -20,13 +22,14 @@ struct WindowHandleData
 #ifdef _WIN32
   HWND h_wnd;
 #else
-
+  Display* display;
+  Window win;
 #endif
   std::unique_ptr<std::thread> t;
   uint8_t* bytes;
   int w, h, channels;
   int x, y;
-  std::string id;
+  int id;
   std::mutex mt;
   std::condition_variable cv;
   bool initialised;
@@ -123,7 +126,7 @@ namespace
     return 0;
     }
 
-  HWND _create_window(const std::string& id, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
+  HWND _create_window(const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
     {
     HINSTANCE hInstance = GetModuleHandle(0);
 
@@ -191,10 +194,10 @@ namespace
     return hwnd;
     }
 
-  void _create_window_with_message_loop(HWND* h_wnd, WindowHandle user_data, const std::string& id, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
+  void _create_window_with_message_loop(HWND* h_wnd, WindowHandle user_data, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
     {
     user_data->mt.lock();
-    *h_wnd = _create_window(id, title, x, y, w, h, p_stream, fullscreen);
+    *h_wnd = _create_window(title, x, y, w, h, p_stream, fullscreen);
     SetWindowLongPtr(*h_wnd, GWLP_USERDATA, (LONG_PTR)user_data);
     user_data->initialised = true;
     user_data->cv.notify_all();
@@ -210,10 +213,10 @@ namespace
       *p_stream << "Done" << std::endl;
     }
 
-  std::unique_ptr<std::thread> _create_threaded_window(HWND* h_wnd, WindowHandle user_data, const std::string& id, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
+  std::unique_ptr<std::thread> _create_threaded_window(HWND* h_wnd, WindowHandle user_data, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
     {
     user_data->initialised = false;
-    std::unique_ptr<std::thread> res(new std::thread(_create_window_with_message_loop, h_wnd, user_data, id, title, x, y, w, h, p_stream, fullscreen));
+    std::unique_ptr<std::thread> res(new std::thread(_create_window_with_message_loop, h_wnd, user_data, title, x, y, w, h, p_stream, fullscreen));
     std::unique_lock<std::mutex> lk(user_data->mt);
     if (!user_data->initialised)
       user_data->cv.wait(lk, [&] {return user_data->initialised; });
@@ -230,6 +233,39 @@ void resize(WindowHandle h_wnd, int w, int h)
 
 #else
 
+namespace
+  {
+  
+    void _create_window_with_message_loop(Display** p_display, Window* win, WindowHandle user_data, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
+    {
+    user_data->mt.lock();
+    *p_display = XOpenDisplay(0);
+    user_data->id = DefaultScreen(*p_display);
+    
+    *win = XCreateSimpleWindow(*p_display, RootWindow(*p_display, user_data->id),
+    x, y, w, h, 2, BlackPixel(*p_display, user_data->id),
+    WhitePixel(*p_display, user_data->id));
+    
+    XMapWindow(*p_display, *win);
+    XSync(*p_display, False);
+    
+    user_data->initialised = true;
+    user_data->cv.notify_all();
+    user_data->mt.unlock();
+   
+    }
+  
+  std::unique_ptr<std::thread> _create_threaded_window(Display** p_display, Window* win, WindowHandle user_data, const std::string& title, int x, int y, int w, int h, std::ostream* p_stream, bool fullscreen)
+    {
+    user_data->initialised = false;
+    std::unique_ptr<std::thread> res(new std::thread(_create_window_with_message_loop, p_display, win, user_data, title, x, y, w, h, p_stream, fullscreen));
+    std::unique_lock<std::mutex> lk(user_data->mt);
+    if (!user_data->initialised)
+      user_data->cv.wait(lk, [&] {return user_data->initialised; });
+    return res;
+    }
+  }
+
 void resize(WindowHandle h_wnd, int w, int h)
   {
 
@@ -244,7 +280,7 @@ void close_window(WindowHandle& h_wnd)
 #ifdef _WIN32
     PostMessage(h_wnd->h_wnd, WM_CLOSE, NULL, NULL);
 #else
-
+    XCloseDisplay(h_wnd->display);
 #endif
     h_wnd->t->join();
     delete h_wnd;
@@ -252,14 +288,14 @@ void close_window(WindowHandle& h_wnd)
     }
   }
 
-WindowHandle create_window(const std::string& id, const std::string& title, int x, int y, int w, int h, bool fullscreen, std::ostream* p_stream)
+WindowHandle create_window(const std::string& title, int x, int y, int w, int h, bool fullscreen, std::ostream* p_stream)
   {
   WindowHandle handle = new WindowHandleData();
   handle->listener = nullptr;
 #ifdef _WIN32
   handle->h_wnd = nullptr;
 #else
-
+  handle->display = nullptr;
 #endif
   handle->bytes = nullptr;
   handle->w = 0;
@@ -267,18 +303,18 @@ WindowHandle create_window(const std::string& id, const std::string& title, int 
   handle->x = x;
   handle->y = y;
   handle->channels = 0;
-  handle->id = id;
+  handle->id = 0;
 #ifdef _WIN32
-  handle->t = _create_threaded_window(&(handle->h_wnd), handle, id, title, x, y, w, h, p_stream, fullscreen);
+  handle->t = _create_threaded_window(&(handle->h_wnd), handle, title, x, y, w, h, p_stream, fullscreen);
 #else
-
+  handle->t = _create_threaded_window(&(handle->display), &(handle->win), handle, title, x, y, w, h, p_stream, fullscreen);
 #endif
   return handle;
   }
 
-WindowHandle create_window(const std::string& id, const std::string& title, int w, int h, bool fullscreen, std::ostream* p_stream)
+WindowHandle create_window(const std::string& title, int w, int h, bool fullscreen, std::ostream* p_stream)
   {
-  return create_window(id, title, 0, 0, w, h, fullscreen, p_stream);
+  return create_window(title, 0, 0, w, h, fullscreen, p_stream);
   }
 
 namespace
