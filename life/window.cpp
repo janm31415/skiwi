@@ -258,6 +258,10 @@ namespace
     XMapWindow(user_data->display, user_data->win);
     XSync(user_data->display, False);
     XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask);
+    
+    Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
+    
     user_data->quit = false;
     user_data->initialised = true;
     user_data->cv.notify_all();
@@ -265,7 +269,7 @@ namespace
 
     while (!user_data->quit)
       {
-      while (XPending(user_data->display))
+      while (user_data->display && XPending(user_data->display))
         {
           XEvent ev;      
           XNextEvent(user_data->display, &ev);    
@@ -282,6 +286,13 @@ namespace
             user_data->mt.unlock();  
             break;
             } 
+          case ClientMessage:
+            {
+            user_data->quit = true;
+            XCloseDisplay(user_data->display);
+            user_data->display = nullptr;
+            break;
+            }
           default: break;       
           }
         }
