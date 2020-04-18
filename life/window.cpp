@@ -62,6 +62,11 @@ namespace
       DestroyWindow(hwnd);
       break;
       }
+      case WM_SIZE:
+      {
+      InvalidateRect(hwnd, NULL, TRUE);
+      break;
+      }
       case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -208,6 +213,7 @@ void resize(WindowHandle h_wnd, int w, int h)
   RECT rect;
   GetWindowRect(h_wnd->h_wnd, &rect);
   SetWindowPos(h_wnd->h_wnd, NULL, rect.left, rect.top, w, h, NULL);
+  InvalidateRect(h_wnd->h_wnd, NULL, TRUE);
   }
 
 #else
