@@ -16,15 +16,15 @@ struct WindowHandleData
   {
   ~WindowHandleData()
     {
-    #ifdef _WIN32
+#ifdef _WIN32
     if (w != 0 && h != 0)
       free(bytes);
-    #else
+#else
     if (im)
       XDestroyImage(im);
     if (display)
       XCloseDisplay(display);
-    #endif
+#endif
     }
 #ifdef _WIN32
   HWND h_wnd;
@@ -37,7 +37,7 @@ struct WindowHandleData
   GC gc;
   std::atomic<bool> quit;
 #endif
-  std::unique_ptr<std::thread> t;  
+  std::unique_ptr<std::thread> t;
   int w, h, channels;
   int x, y;
   std::mutex mt;
@@ -94,6 +94,10 @@ namespace
             pbmi->bmiColors[i].rgbBlue = BYTE(i);
             pbmi->bmiColors[i].rgbReserved = 0;
             }
+          }
+        else if (wh->channels == 4)
+          {
+          pbmi->bmiHeader.biBitCount = 32;
           }
         else
           pbmi->bmiHeader.biBitCount = 24;
@@ -210,16 +214,16 @@ void resize(WindowHandle h_wnd, int w, int h)
 
 namespace
   {
-  
+
   GC create_gc(Display* display, Window win, int reverse_video)
     {
     GC gc;
     XGCValues values;
     int screen_num = DefaultScreen(display);
     unsigned long valuemask = 0;
-    
+
     gc = XCreateGC(display, win, valuemask, &values);
-    
+
     if (reverse_video)
       {
       XSetForeground(display, gc, WhitePixel(display, screen_num));
@@ -230,15 +234,15 @@ namespace
       XSetForeground(display, gc, BlackPixel(display, screen_num));
       XSetBackground(display, gc, WhitePixel(display, screen_num));
       }
-    
+
     unsigned int line_width = 2;
     int line_style = LineSolid;
     int cap_style = CapButt;
     int join_style = JoinBevel;
-    
+
     XSetLineAttributes(display, gc, line_width, line_style, cap_style, join_style);
     XSetFillStyle(display, gc, FillSolid);
-    
+
     return gc;
     }
 
@@ -253,15 +257,15 @@ namespace
       WhitePixel(user_data->display, screen_num));
 
     user_data->visual = DefaultVisual(user_data->display, screen_num);
-    user_data->gc = create_gc(user_data->display, user_data->win, 0);      
-    
+    user_data->gc = create_gc(user_data->display, user_data->win, 0);
+
     XMapWindow(user_data->display, user_data->win);
     XSync(user_data->display, False);
     XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask);
-    
+
     Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
-    
+
     user_data->quit = false;
     user_data->initialised = true;
     user_data->cv.notify_all();
@@ -271,32 +275,32 @@ namespace
       {
       while (user_data->display && XPending(user_data->display))
         {
-          XEvent ev;      
-          XNextEvent(user_data->display, &ev);    
-          //printf("event type: %d\n", ev.type); 
-          switch (ev.type)
+        XEvent ev;
+        XNextEvent(user_data->display, &ev);
+        //printf("event type: %d\n", ev.type); 
+        switch (ev.type)
           {
           case Expose:
+          {
+          user_data->mt.lock();
+          if (user_data->im)
             {
-            user_data->mt.lock();
-            if (user_data->im)
-              {
-            XPutImage(user_data->display, user_data->win, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->w, user_data->h);        
-              }
-            user_data->mt.unlock();  
-            break;
-            } 
-          case ClientMessage:
-            {
-            user_data->quit = true;
-            XCloseDisplay(user_data->display);
-            user_data->display = nullptr;
-            break;
+            XPutImage(user_data->display, user_data->win, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->w, user_data->h);
             }
-          default: break;       
+          user_data->mt.unlock();
+          break;
+          }
+          case ClientMessage:
+          {
+          user_data->quit = true;
+          XCloseDisplay(user_data->display);
+          user_data->display = nullptr;
+          break;
+          }
+          default: break;
           }
         }
-      }   
+      }
     }
 
   std::unique_ptr<std::thread> _create_threaded_window(WindowHandle user_data, const std::string& title, int x, int y, int w, int h)
@@ -308,7 +312,7 @@ namespace
       user_data->cv.wait(lk, [&] {return user_data->initialised; });
     return res;
     }
-  }  
+  }
 
 void resize(WindowHandle h_wnd, int w, int h)
   {
@@ -339,7 +343,7 @@ void close_window(WindowHandle& h_wnd)
     h_wnd->quit = true;
 #endif
     h_wnd->t->join();
-    delete h_wnd; 
+    delete h_wnd;
     h_wnd = nullptr;
     }
   }
@@ -440,8 +444,8 @@ namespace
       {
       for (int y = 0; y < height; ++y)
         {
-        uint32_t* p_dst = bFlip ? dst + (height - y - 1)*width : dst + y*width;
-        const uint8_t* p_src = src + y*width;
+        uint32_t* p_dst = bFlip ? dst + (height - y - 1)*width : dst + y * width;
+        const uint8_t* p_src = src + y * width;
         for (int x = 0; x < width; ++x)
           {
           uint32_t clr = 0xff000000 | ((uint32_t)*p_src << 16) | ((uint32_t)*p_src << 8) | ((uint32_t)*p_src);
@@ -449,16 +453,16 @@ namespace
           ++p_dst;
           ++p_src;
           }
-        }   
+        }
       }
     else
       throw std::runtime_error("channels other than 1 or 4 are not supported on Linux");
     }
 
   } // namespace
-  
 
-   
+
+
 
 void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   {
@@ -474,7 +478,7 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
     flip_colors = true;
     channels = -channels;
     }
-  #ifdef _WIN32
+#ifdef _WIN32
   h_wnd->mt.lock();
   if (h_wnd->w != w || h_wnd->h != h || h_wnd->channels != channels)
     {
@@ -497,21 +501,21 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   h_wnd->mt.lock();
   if (h_wnd->im)
     XDestroyImage(h_wnd->im);
-    
+
   char* data;
-  data = (char*)malloc(sizeof(uint8_t)*w*h*4);
-  
+  data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
+
   h_wnd->w = w;
   h_wnd->h = h;
   h_wnd->channels = channels;
-  
-  _process_pixels_32((uint32_t*)data, bytes, w, h, channels, flip_colors, flip_topdown);
-  
-  int screen_num = DefaultScreen(h_wnd->display);
-    
-  h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, data, w, h, 32, 0);  
 
-  
+  _process_pixels_32((uint32_t*)data, bytes, w, h, channels, flip_colors, flip_topdown);
+
+  int screen_num = DefaultScreen(h_wnd->display);
+
+  h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, data, w, h, 32, 0);
+
+
   h_wnd->mt.unlock();
 #endif
   }

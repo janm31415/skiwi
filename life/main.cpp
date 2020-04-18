@@ -19,7 +19,21 @@ int main(int argc, char** argv)
       }
     }
 
-  paint(wh, im, w, h, 1);
+  uint32_t* color_im = new uint32_t[w*h];
+  for (int y = 0; y < h; ++y)
+    {
+    uint32_t* p_im = color_im + y * w;
+    for (int x = 0; x < w; ++x)
+      {      
+      uint32_t r = ((x / 20) % 2) | ((y / 20) % 2) ? 255 : 0;
+      uint32_t g = ((y / 20) % 2) ? 255 : 0;
+      uint32_t b = ((x / 20) % 2) ? 255 : 0;
+      *p_im = 0xff000000 | (b << 16) | (g << 8) | r;
+      ++p_im;
+      }
+    }
+
+  paint(wh, (uint8_t*)color_im, w, h, 4);
 
   bool quit = false;
   while (!quit)
@@ -29,8 +43,13 @@ int main(int argc, char** argv)
     std::getline(std::cin, input);
     if (input == "quit" || input == "exit")
       quit = true;
+    if (input == "gray")
+      paint(wh, (uint8_t*)im, w, h, 1);
+    if (input == "color")
+      paint(wh, (uint8_t*)color_im, w, h, 4);
     }
   delete[] im;
+  delete[] color_im;
   close_window(wh);
   return 0;
   }
