@@ -30,7 +30,6 @@ int main(int argc, char** argv)
     if (input == "quit" || input == "exit")
       quit = true;
     }
-
   delete[] im;
   close_window(wh);
   return 0;
