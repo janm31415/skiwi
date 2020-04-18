@@ -214,6 +214,8 @@ void resize(WindowHandle h_wnd, int w, int h)
 
 namespace
   {
+  
+  static bool XThreads_initialized = false;
 
   GC create_gc(Display* display, Window win, int reverse_video)
     {
@@ -316,7 +318,8 @@ namespace
 
 void resize(WindowHandle h_wnd, int w, int h)
   {
-
+  XResizeWindow(h_wnd->display, h_wnd->win, w, h);
+  XFlush(h_wnd->display);
   }
 
 #endif
@@ -350,11 +353,17 @@ void close_window(WindowHandle& h_wnd)
 
 WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
   {
-  WindowHandle handle = new WindowHandleData();
 #ifdef _WIN32
+  WindowHandle handle = new WindowHandleData();
   handle->h_wnd = nullptr;
   handle->bytes = nullptr;
 #else
+  if (!XThreads_initialized)
+    {
+    XInitThreads();
+    XThreads_initialized = true;
+    }
+  WindowHandle handle = new WindowHandleData();
   handle->display = nullptr;
   handle->im = nullptr;
 #endif
@@ -514,8 +523,13 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   int screen_num = DefaultScreen(h_wnd->display);
 
   h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, data, w, h, 32, 0);
-
-
+  
+  XFlush(h_wnd->display);
+  
+  XEvent ev;   
+  ev.type = Expose;
+  int res = XSendEvent(h_wnd->display, h_wnd->win, True, ExposureMask, (XEvent*)&ev);
+  
   h_wnd->mt.unlock();
 #endif
   }

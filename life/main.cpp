@@ -47,6 +47,10 @@ int main(int argc, char** argv)
       paint(wh, (uint8_t*)im, w, h, 1);
     if (input == "color")
       paint(wh, (uint8_t*)color_im, w, h, 4);
+    if (input == "small")
+      resize(wh, 400, 300);
+    if (input == "large")
+      resize(wh, 1000, 750);
     }
   delete[] im;
   delete[] color_im;
