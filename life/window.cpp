@@ -22,6 +22,12 @@ struct WindowHandleData
 #else
     if (im)
       XDestroyImage(im);
+      
+    if (w != 0 && h != 0)
+      free(bytes);
+
+    XFreePixmap(display, pix);
+
     if (display)
       XCloseDisplay(display);
 #endif
@@ -34,6 +40,10 @@ struct WindowHandleData
   Window win;
   Visual* visual;
   XImage* im;
+  char* data;
+  uint32_t* bytes;
+  Pixmap pix;
+  int pix_w, pix_h;
   GC gc;
   std::atomic<bool> quit;
 #endif
@@ -267,10 +277,19 @@ namespace
     user_data->visual = DefaultVisual(user_data->display, screen_num);
     user_data->gc = create_gc(user_data->display, user_data->win, 0);
 
+    XStoreName(user_data->display, user_data->win, title.c_str());
     XMapWindow(user_data->display, user_data->win);
     XSync(user_data->display, False);
     XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask);
-
+    
+    user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), w, h, DefaultDepth(user_data->display, screen_num));
+    user_data->pix_w = w;
+    user_data->pix_h = h;
+    
+    user_data->data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
+    user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, w, h, 32, 0); 
+    
+    
     Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
 
@@ -293,7 +312,7 @@ namespace
           user_data->mt.lock();
           if (user_data->im)
             {
-            XPutImage(user_data->display, user_data->win, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->w, user_data->h);
+            XCopyArea(user_data->display, user_data->pix, user_data->win, user_data->gc, 0, 0, user_data->pix_w, user_data->pix_h, 0, 0);
             }
           user_data->mt.unlock();
           break;
@@ -308,6 +327,7 @@ namespace
           default: break;
           }
         }
+      std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16));
       }
     }
 
@@ -325,6 +345,14 @@ namespace
 void resize(WindowHandle h_wnd, int w, int h)
   {
   XResizeWindow(h_wnd->display, h_wnd->win, w, h);
+  XFreePixmap(h_wnd->display, h_wnd->pix);
+  int screen_num = DefaultScreen(h_wnd->display);
+  XDestroyImage(h_wnd->im);
+  h_wnd->data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
+  h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, h_wnd->data, w, h, 32, 0);   
+  h_wnd->pix = XCreatePixmap(h_wnd->display, DefaultRootWindow(h_wnd->display), w, h, DefaultDepth(h_wnd->display, screen_num));
+  h_wnd->pix_w = w;
+  h_wnd->pix_h = h;
   XFlush(h_wnd->display);
   }
 
@@ -337,18 +365,6 @@ void close_window(WindowHandle& h_wnd)
 #ifdef _WIN32
     PostMessage(h_wnd->h_wnd, WM_CLOSE, NULL, NULL);
 #else
-    //XEvent event;
-    //event.type = 
-    //XSendEvent
-    //XCloseDisplay(h_wnd->display);
-    //XDestroyWindow(h_wnd->display, h_wnd->win);
-    //XEvent ev;   
-    //ev.type = DestroyNotify;
-    //int res = XSendEvent(h_wnd->display, h_wnd->win, True, StructureNotifyMask, (XEvent*)&ev);
-    //if (res != 0)
-    //  printf("Send successfully\n");
-    //else
-    //  printf("sending failed\n");
     h_wnd->quit = true;
 #endif
     h_wnd->t->join();
@@ -372,6 +388,10 @@ WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
   WindowHandle handle = new WindowHandleData();
   handle->display = nullptr;
   handle->im = nullptr;
+  handle->pix_w = 0;
+  handle->pix_h = 0;
+  handle->data = nullptr;
+  handle->bytes = nullptr;
 #endif
   handle->w = 0;
   handle->h = 0;
@@ -453,6 +473,7 @@ namespace
 
   void _process_pixels_32(uint32_t* dst, const uint8_t* src, int width, int height, int channels, bool bFlipColors, bool bFlip)
     {
+    
     if (channels == 4)
       return _process_pixels((uint8_t*)dst, src, width, height, channels, bFlipColors, bFlip);
     else if (channels == 1)
@@ -472,8 +493,58 @@ namespace
       }
     else
       throw std::runtime_error("channels other than 1 or 4 are not supported on Linux");
+      
     }
-
+    
+  void ScaleLine(uint32_t* Target, const uint32_t* Source, int SrcWidth, int TgtWidth)
+    {
+    int NumPixels = TgtWidth;
+    int IntPart = SrcWidth / TgtWidth;
+    int FractPart = SrcWidth % TgtWidth;
+    int E = 0;
+    while (NumPixels-- > 0)
+      {
+      *Target++ = *Source;
+      Source += IntPart;
+      E += FractPart;
+      if (E >= TgtWidth)
+        {
+        E -= TgtWidth;
+        Source++;
+        }
+      }
+    } 
+    
+  void _scale(uint32_t* Target, int TgtWidth, int TgtHeight, const uint32_t* Source, int SrcWidth, int SrcHeight)
+    {    
+    int NumPixels = TgtHeight;
+    int IntPart = (SrcHeight / TgtHeight) * SrcWidth;
+    int FractPart = SrcHeight % TgtHeight;
+    int E = 0;
+    const uint32_t* PrevSource = nullptr;
+    while (NumPixels-- > 0)
+      {
+      
+      if (Source == PrevSource)
+        {
+        memcpy(Target, Target-TgtWidth, TgtWidth*sizeof(uint32_t));
+        }
+      else
+        {
+        ScaleLine(Target, Source, SrcWidth, TgtWidth);
+        PrevSource = Source;
+        }
+      
+      Target += TgtWidth;
+      Source += IntPart;
+      E += FractPart;
+      if (E >= TgtHeight)
+        {
+        E -= TgtHeight;
+        Source += SrcWidth;
+        }        
+      }
+    }
   } // namespace
 
 
@@ -513,22 +584,30 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   h_wnd->mt.unlock();
   InvalidateRect(h_wnd->h_wnd, NULL, TRUE);
 #else
-  h_wnd->mt.lock();
-  if (h_wnd->im)
-    XDestroyImage(h_wnd->im);
+  h_wnd->mt.lock(); 
 
-  char* data;
-  data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
+  if (h_wnd->w != w || h_wnd->h != h)
+    {
+    if (h_wnd->w == 0)
+      {
+      h_wnd->bytes = (uint32_t*)malloc(sizeof(uint32_t)*w*h);
+      }
+    else
+      {
+      h_wnd->bytes = (uint32_t*)realloc(h_wnd->bytes, sizeof(uint32_t)*w*h);
+      }
+    }
 
   h_wnd->w = w;
   h_wnd->h = h;
   h_wnd->channels = channels;
-
-  _process_pixels_32((uint32_t*)data, bytes, w, h, channels, flip_colors, flip_topdown);
-
-  int screen_num = DefaultScreen(h_wnd->display);
-
-  h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, data, w, h, 32, 0);
+  
+  
+  _process_pixels_32((uint32_t*)h_wnd->bytes, bytes, w, h, channels, flip_colors, flip_topdown);   
+  
+  _scale((uint32_t*)h_wnd->data, h_wnd->pix_w, h_wnd->pix_h, (uint32_t*)h_wnd->bytes, w, h);
+  
+  XPutImage(h_wnd->display, h_wnd->pix, h_wnd->gc, h_wnd->im, 0, 0, 0, 0, h_wnd->pix_w, h_wnd->pix_h);
   
   XFlush(h_wnd->display);
   
