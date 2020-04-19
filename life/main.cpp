@@ -6,6 +6,7 @@
 #include <vector>
 #include <cassert>
 #include <random>
+#include <thread>
 
 struct cell_map
   {
@@ -141,8 +142,8 @@ int main()
   std::random_device rd;
   std::mt19937 gen(rd());
 
-  int width = 800;
-  int height = 600;
+  int width = 200;
+  int height = 200;
   cell_map cm(width, height);  
 
   for (int i = 0; i < width*height / 2; ++i)
@@ -153,7 +154,9 @@ int main()
       cm.set_cell(x, y);
     }
 
-  auto wh = create_window("Game of life", width, height);
+  int magnifier = 4;
+  auto wh = create_window("Game of life", width*magnifier, height*magnifier);
+
   std::vector<uint8_t> image(width*height, 0);
 
   listener l;
@@ -173,6 +176,7 @@ int main()
     auto next = next_generation(cm);
     ++generation;
     cm = next;
+    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16));
     }
 
   close_window(wh);
