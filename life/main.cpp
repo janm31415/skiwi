@@ -8,6 +8,8 @@ int main(int argc, char** argv)
   const int h = 600;
   auto wh = create_window("title", w, h);
 
+  auto wh2 = create_window("second window", w, h);
+
   uint8_t* im = new uint8_t[w*h];
   for (int y = 0; y < h; ++y)
     {
@@ -33,7 +35,7 @@ int main(int argc, char** argv)
       }
     }
 
-  //paint(wh, (uint8_t*)color_im, w, h, 4);
+  paint(wh2, (uint8_t*)color_im, w, h, -4);
 
   bool quit = false;
   while (!quit)
@@ -55,5 +57,6 @@ int main(int argc, char** argv)
   delete[] im;
   delete[] color_im;
   close_window(wh);
+  close_window(wh2);
   return 0;
   }

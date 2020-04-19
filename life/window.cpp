@@ -3,6 +3,7 @@
 #include <thread>
 #ifdef _WIN32
 #include <windows.h>
+#include <sstream>
 #else
 #include <unistd.h>
 #include <string.h>
@@ -58,6 +59,8 @@ struct WindowHandleData
 
 namespace
   {
+  static int window_id = 0;
+
   LRESULT CALLBACK _wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
     switch (msg)
@@ -135,6 +138,7 @@ namespace
         DeleteDC(hdcMem);
         EndPaint(hwnd, &ps);
         }
+      std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16)); // wait here, otherwise cpu fills up because of constant WM_PAINT messages
       break;
       }
       default:
@@ -145,6 +149,10 @@ namespace
 
   HWND _create_window(const std::string& title, int x, int y, int w, int h)
     {
+    std::stringstream class_name_ss;
+    class_name_ss << "jam_window_" << window_id++;
+    std::string class_name = class_name_ss.str();
+
     HINSTANCE hInstance = GetModuleHandle(0);
 
     WNDCLASSEX wc;
@@ -158,7 +166,7 @@ namespace
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = "window";
+    wc.lpszClassName = class_name.c_str();
     wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wc))
@@ -172,7 +180,7 @@ namespace
 
     hwnd = CreateWindowEx(
       WS_EX_CLIENTEDGE,
-      "window",
+      class_name.c_str(),
       title.c_str(),
       WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, w, h,
@@ -200,9 +208,9 @@ namespace
 
     MSG Msg;
     while (GetMessage(&Msg, NULL, 0, 0) > 0)
-      {
+      {      
       TranslateMessage(&Msg);
-      DispatchMessage(&Msg);
+      DispatchMessage(&Msg);      
       }
     }
 
