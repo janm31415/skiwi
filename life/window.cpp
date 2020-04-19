@@ -423,8 +423,8 @@ namespace
     XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h); // Draw the XImage on the Pixmap
     
     Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False); // When the close button is pressed, the window manager should send this to us as a event (ClientMessage).
-    XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
-
+    XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);   
+    
     user_data->quit = false;
     user_data->initialised = true;
     user_data->cv.notify_all();
@@ -454,7 +454,22 @@ namespace
           }
           case KeyRelease:
           {
-          if (user_data->listener)
+          unsigned short is_retriggered = 0;
+          
+          if (XEventsQueued(user_data->display, QueuedAfterReading))
+            {
+            XEvent nev;
+            XPeekEvent(user_data->display, &nev);
+            
+            if (nev.type == KeyPress && nev.xkey.time == ev.xkey.time && nev.xkey.keycode == ev.xkey.keycode)
+              {
+              XNextEvent(user_data->display, &ev);
+              is_retriggered = 1;
+              }
+            }
+          
+          
+          if (!is_retriggered && user_data->listener)
             user_data->listener->OnKeyUp(ev.xkey.keycode);
           break;
           }
@@ -575,7 +590,11 @@ WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
 
 WindowHandle create_window(const std::string& title, int w, int h)
   {
+#ifdef _WIN32
   return create_window(title, CW_USEDEFAULT, CW_USEDEFAULT, w, h);
+#else
+  return create_window(title, 0, 0, w, h);
+#endif
   }
 
 namespace
