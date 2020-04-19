@@ -19,31 +19,30 @@ struct WindowHandleData
 #ifdef _WIN32
     if (w != 0 && h != 0)
       free(bytes);
-#else
-    if (im)
-      XDestroyImage(im);
-      
+#else      
     if (w != 0 && h != 0)
       free(bytes);
 
-    XFreePixmap(display, pix);
-
     if (display)
+      {    
+      XDestroyImage(im);
+      XFreePixmap(display, pix);
       XCloseDisplay(display);
+      }
 #endif
     }
 #ifdef _WIN32
   HWND h_wnd;
-  uint8_t* bytes;
+  uint8_t* bytes; // the bitmap currently being painted. Is an array of size w*h*channels (can be gray or rgba or rgb).
 #else
   Display* display;
   Window win;
   Visual* visual;
   XImage* im;
-  char* data;
-  uint32_t* bytes;
+  char* data; // the pixels of the screen to which we need to mipmap bytes. Is an array of size pix_w*pix_h*4 (rgba).
+  uint32_t* bytes; // the bitmap currently being painted, converted to rgba. Is an array of size w*h*4 (rgba).
   Pixmap pix;
-  int pix_w, pix_h;
+  int pix_w, pix_h; // the size of the screen
   GC gc;
   std::atomic<bool> quit;
 #endif
@@ -231,6 +230,56 @@ void resize(WindowHandle h_wnd, int w, int h)
 namespace
   {
   
+  void ScaleLine(uint32_t* Target, const uint32_t* Source, int SrcWidth, int TgtWidth)
+    {
+    int NumPixels = TgtWidth;
+    int IntPart = SrcWidth / TgtWidth;
+    int FractPart = SrcWidth % TgtWidth;
+    int E = 0;
+    while (NumPixels-- > 0)
+      {
+      *Target++ = *Source;
+      Source += IntPart;
+      E += FractPart;
+      if (E >= TgtWidth)
+        {
+        E -= TgtWidth;
+        Source++;
+        }
+      }
+    } 
+    
+  void _scale(uint32_t* Target, int TgtWidth, int TgtHeight, const uint32_t* Source, int SrcWidth, int SrcHeight)
+    {    
+    int NumPixels = TgtHeight;
+    int IntPart = (SrcHeight / TgtHeight) * SrcWidth;
+    int FractPart = SrcHeight % TgtHeight;
+    int E = 0;
+    const uint32_t* PrevSource = nullptr;
+    while (NumPixels-- > 0)
+      {
+      
+      if (Source == PrevSource)
+        {
+        memcpy(Target, Target-TgtWidth, TgtWidth*sizeof(uint32_t));
+        }
+      else
+        {
+        ScaleLine(Target, Source, SrcWidth, TgtWidth);
+        PrevSource = Source;
+        }
+      
+      Target += TgtWidth;
+      Source += IntPart;
+      E += FractPart;
+      if (E >= TgtHeight)
+        {
+        E -= TgtHeight;
+        Source += SrcWidth;
+        }        
+      }
+    }
+  
   static bool XThreads_initialized = false;
 
   GC create_gc(Display* display, Window win, int reverse_video)
@@ -287,8 +336,9 @@ namespace
     user_data->pix_h = h;
     
     user_data->data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
+    memset(user_data->data, 0, sizeof(uint8_t)*w*h * 4);
     user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, w, h, 32, 0); 
-    
+    XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h);
     
     Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
@@ -310,10 +360,7 @@ namespace
           case Expose:
           {
           user_data->mt.lock();
-          if (user_data->im)
-            {
-            XCopyArea(user_data->display, user_data->pix, user_data->win, user_data->gc, 0, 0, user_data->pix_w, user_data->pix_h, 0, 0);
-            }
+          XCopyArea(user_data->display, user_data->pix, user_data->win, user_data->gc, 0, 0, user_data->pix_w, user_data->pix_h, 0, 0);
           user_data->mt.unlock();
           break;
           }
@@ -322,6 +369,27 @@ namespace
           user_data->quit = true;
           XCloseDisplay(user_data->display);
           user_data->display = nullptr;
+          break;
+          }
+          case ConfigureNotify:
+          {
+          XConfigureEvent xce = ev.xconfigure;
+          if (xce.width != user_data->pix_w || xce.height != user_data->pix_h)
+            {
+            XFreePixmap(user_data->display, user_data->pix);  
+            XDestroyImage(user_data->im);
+            user_data->data = (char*)malloc(sizeof(uint8_t)*xce.width*xce.height * 4);
+            user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, xce.width, xce.height, 32, 0);   
+            user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), xce.width, xce.height, DefaultDepth(user_data->display, screen_num));
+            user_data->pix_w = xce.width;
+            user_data->pix_h = xce.height;
+            if (user_data->w && user_data->h)
+              _scale((uint32_t*)user_data->data, user_data->pix_w, user_data->pix_h, (uint32_t*)user_data->bytes, user_data->w, user_data->h);
+            else
+              memset(user_data->data, 0, sizeof(uint8_t)*xce.width*xce.height * 4);
+            XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h);
+            XFlush(user_data->display);
+            }
           break;
           }
           default: break;
@@ -345,15 +413,6 @@ namespace
 void resize(WindowHandle h_wnd, int w, int h)
   {
   XResizeWindow(h_wnd->display, h_wnd->win, w, h);
-  XFreePixmap(h_wnd->display, h_wnd->pix);
-  int screen_num = DefaultScreen(h_wnd->display);
-  XDestroyImage(h_wnd->im);
-  h_wnd->data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
-  h_wnd->im = XCreateImage(h_wnd->display, h_wnd->visual, DefaultDepth(h_wnd->display, screen_num), ZPixmap, 0, h_wnd->data, w, h, 32, 0);   
-  h_wnd->pix = XCreatePixmap(h_wnd->display, DefaultRootWindow(h_wnd->display), w, h, DefaultDepth(h_wnd->display, screen_num));
-  h_wnd->pix_w = w;
-  h_wnd->pix_h = h;
-  XFlush(h_wnd->display);
   }
 
 #endif
@@ -496,55 +555,7 @@ namespace
       
     }
     
-  void ScaleLine(uint32_t* Target, const uint32_t* Source, int SrcWidth, int TgtWidth)
-    {
-    int NumPixels = TgtWidth;
-    int IntPart = SrcWidth / TgtWidth;
-    int FractPart = SrcWidth % TgtWidth;
-    int E = 0;
-    while (NumPixels-- > 0)
-      {
-      *Target++ = *Source;
-      Source += IntPart;
-      E += FractPart;
-      if (E >= TgtWidth)
-        {
-        E -= TgtWidth;
-        Source++;
-        }
-      }
-    } 
-    
-  void _scale(uint32_t* Target, int TgtWidth, int TgtHeight, const uint32_t* Source, int SrcWidth, int SrcHeight)
-    {    
-    int NumPixels = TgtHeight;
-    int IntPart = (SrcHeight / TgtHeight) * SrcWidth;
-    int FractPart = SrcHeight % TgtHeight;
-    int E = 0;
-    const uint32_t* PrevSource = nullptr;
-    while (NumPixels-- > 0)
-      {
-      
-      if (Source == PrevSource)
-        {
-        memcpy(Target, Target-TgtWidth, TgtWidth*sizeof(uint32_t));
-        }
-      else
-        {
-        ScaleLine(Target, Source, SrcWidth, TgtWidth);
-        PrevSource = Source;
-        }
-      
-      Target += TgtWidth;
-      Source += IntPart;
-      E += FractPart;
-      if (E >= TgtHeight)
-        {
-        E -= TgtHeight;
-        Source += SrcWidth;
-        }        
-      }
-    }
+  
   } // namespace
 
 

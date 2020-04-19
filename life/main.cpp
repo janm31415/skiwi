@@ -33,7 +33,7 @@ int main(int argc, char** argv)
       }
     }
 
-  paint(wh, (uint8_t*)color_im, w, h, 4);
+  //paint(wh, (uint8_t*)color_im, w, h, 4);
 
   bool quit = false;
   while (!quit)
