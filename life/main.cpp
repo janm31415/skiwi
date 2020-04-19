@@ -2,83 +2,180 @@
 
 #include "window.h"
 
+#include <stdint.h>
+#include <vector>
+#include <cassert>
+#include <random>
 
-class window_listener : public IWindowListener
+struct cell_map
   {
-  public:
-    virtual void OnClose() 
-      {
-      printf("Window is closing\n");
-      };
-    virtual void OnKeyDown(int k)
-      {
-      printf("Key %d is down\n", k);
-      }
-    virtual void OnKeyUp(int k) 
-      {
-      printf("Key %d is up\n", k);
-      }
+  cell_map(int w, int h) : width(w), height(h)
+    {
+    cells.resize(w*h, 0);
+    }
+
+  void set_cell(int x, int y)
+    {
+    assert(cell_state(x, y) == 0);
+
+    auto cell_ptr = cells.begin() + (y*width) + x;
+    int xoleft, xoright, yoabove, yobelow;
+
+    if (x == 0)
+      xoleft = width - 1;
+    else
+      xoleft = -1;
+    if (y == 0)
+      yoabove = width*(height-1);
+    else
+      yoabove = -width;
+    if (x == (width - 1))
+      xoright = -(width - 1);
+    else
+      xoright = 1;
+    if (y == (height - 1))
+      yobelow = -width * (height - 1);
+    else
+      yobelow = width;
+
+    *(cell_ptr) |= (uint8_t)0x01;
+    *(cell_ptr + (yoabove + xoleft)) += 2;
+    *(cell_ptr + yoabove) += 2;
+    *(cell_ptr + (yoabove + xoright)) += 2;
+    *(cell_ptr + xoleft) += 2;
+    *(cell_ptr + xoright) += 2;
+    *(cell_ptr + (yobelow + xoleft)) += 2;
+    *(cell_ptr + yobelow) += 2;
+    *(cell_ptr + (yobelow + xoright)) += 2;
+    }
+
+  void clear_cell(int x, int y)
+    {
+    assert(cell_state(x, y) == 1);
+
+    auto cell_ptr = cells.begin() + (y*width) + x;
+    int xoleft, xoright, yoabove, yobelow;
+
+    if (x == 0)
+      xoleft = width - 1;
+    else
+      xoleft = -1;
+    if (y == 0)
+      yoabove = width * (height - 1);
+    else
+      yoabove = -width;
+    if (x == (width - 1))
+      xoright = -(width - 1);
+    else
+      xoright = 1;
+    if (y == (height - 1))
+      yobelow = -width * (height - 1);
+    else
+      yobelow = width;
+
+    *(cell_ptr) &= ~((uint8_t)0x01);
+    *(cell_ptr + yoabove + xoleft) -= 2;
+    *(cell_ptr + yoabove) -= 2;
+    *(cell_ptr + yoabove + xoright) -= 2;
+    *(cell_ptr + xoleft) -= 2;
+    *(cell_ptr + xoright) -= 2;
+    *(cell_ptr + yobelow + xoleft) -= 2;
+    *(cell_ptr + yobelow) -= 2;
+    *(cell_ptr + yobelow + xoright) -= 2;
+    }
+
+  int cell_state(int x, int y) const
+    {
+    return cells[y*width+x] & (uint8_t)1;
+    }
+
+  int width;
+  int height;
+  std::vector<uint8_t> cells;  
   };
 
-int main(int argc, char** argv)
+cell_map next_generation(const cell_map& cm)
   {
-  const int w = 800;
-  const int h = 600;
-  auto wh = create_window("title", w, h);
-
-  auto wh2 = create_window("second window", w, h);
-
-  uint8_t* im = new uint8_t[w*h];
-  for (int y = 0; y < h; ++y)
+  cell_map next(cm);  
+  auto it = cm.cells.begin();
+  for (int y = 0; y < cm.height; ++y)
     {
-    uint8_t* p_im = im + y * w;
-    for (int x = 0; x < w; ++x)
+    int x = 0;
+    auto it_row_end = it + cm.width;
+    while (it != it_row_end)
       {
-      *p_im = ((x / 20) % 2 | (y / 20) % 2) ? 255 : 0;
-      ++p_im;
+      if (*it)
+        {
+        uint8_t count = *it >> 1;
+        if (*it & 1)
+          {
+          // Cell is on; turn it off if it doesn't have
+          // 2 or 3 neighbors
+          if ((count != 2) && (count != 3)) 
+            next.clear_cell(x, y);
+          }
+        else
+          {
+          // Cell is off; turn it on if it has exactly 3 neighbors
+          if (count == 3) 
+            next.set_cell(x, y);
+          }
+        }
+      ++it;
+      ++x;
       }
     }
+  return next;
+  }
 
-  uint32_t* color_im = new uint32_t[w*h];
-  for (int y = 0; y < h; ++y)
+struct listener : public IWindowListener
+  {
+  listener() : quit(false) {}
+  virtual void OnClose() { quit = true; };
+
+  bool quit;
+  };
+
+int main()
+  {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  int width = 800;
+  int height = 600;
+  cell_map cm(width, height);  
+
+  for (int i = 0; i < width*height / 2; ++i)
     {
-    uint32_t* p_im = color_im + y * w;
-    for (int x = 0; x < w; ++x)
-      {      
-      uint32_t r = ((x / 20) % 2) | ((y / 20) % 2) ? 255 : 0;
-      uint32_t g = ((y / 20) % 2) ? 255 : 0;
-      uint32_t b = ((x / 20) % 2) ? 255 : 0;
-      *p_im = 0xff000000 | (b << 16) | (g << 8) | r;
-      ++p_im;
+    int x = gen() % width;
+    int y = gen() % height;
+    if (cm.cell_state(x, y) == 0)
+      cm.set_cell(x, y);
+    }
+
+  auto wh = create_window("Game of life", width, height);
+  std::vector<uint8_t> image(width*height, 0);
+
+  listener l;
+  register_listener(wh, &l);
+
+  int generation = 0;
+  while (!l.quit)
+    {    
+    auto it = cm.cells.begin();
+    auto it_end = cm.cells.end();
+    auto im_it = image.begin();
+    for (; it != it_end; ++it, ++im_it)
+      {
+      *im_it = (*it & 1) ? 0 : 255;
       }
+    paint(wh, image.data(), width, height, 1);
+    auto next = next_generation(cm);
+    ++generation;
+    cm = next;
     }
 
-  window_listener wl;
-
-  paint(wh2, (uint8_t*)color_im, w, h, -4);
-
-  register_listener(wh, &wl);
-
-  bool quit = false;
-  while (!quit)
-    {
-    std::cout << "> ";    
-    std::string input;
-    std::getline(std::cin, input);
-    if (input == "quit" || input == "exit")
-      quit = true;
-    if (input == "gray")
-      paint(wh, (uint8_t*)im, w, h, 1);
-    if (input == "color")
-      paint(wh, (uint8_t*)color_im, w, h, 4);
-    if (input == "small")
-      resize(wh, 400, 300);
-    if (input == "large")
-      resize(wh, 1000, 750);
-    }
-  delete[] im;
-  delete[] color_im;
   close_window(wh);
-  close_window(wh2);
+
   return 0;
   }
