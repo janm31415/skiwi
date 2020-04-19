@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <sstream>
+#include <unordered_map>
 #else
 #include <unistd.h>
 #include <string.h>
@@ -12,6 +13,52 @@
 #include <atomic>
 #endif
 #include <condition_variable>
+
+#ifdef _WIN32
+
+class keyboard_handler
+  {
+  enum state
+    {
+    DOWN,
+    UP
+    };
+
+  public:
+
+    void key_down(int key)
+      {
+      keystate[key] = DOWN;
+      }
+
+    void key_up(int key)
+      {
+      keystate[key] = UP;
+      }
+
+    bool is_down(int key) const
+      {
+      auto it = keystate.find(key);
+      if (it != keystate.end())
+        return it->second == DOWN;
+      else
+        return false;
+      }
+
+    bool is_up(int key) const
+      {
+      auto it = keystate.find(key);
+      if (it != keystate.end())
+        return it->second == UP;
+      else
+        return true;
+      }
+
+  private:
+    std::unordered_map<int, state> keystate;
+  };
+
+#endif
 
 struct WindowHandleData
   {
@@ -35,6 +82,7 @@ struct WindowHandleData
 #ifdef _WIN32
   HWND h_wnd;
   uint8_t* bytes; // the bitmap currently being painted. Is an array of size w*h*channels (can be gray or rgba or rgb).
+  keyboard_handler kh;
 #else
   Display* display;
   Window win;
@@ -69,15 +117,21 @@ namespace
       case WM_KEYDOWN:
       {
       WindowHandle wh = (WindowHandle)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-      if (wh && wh->listener)
-        wh->listener->OnKeyDown(wParam);
+      if (wh && wh->listener && !wh->kh.is_down((int)wParam))
+        {
+        wh->kh.key_down((int)wParam);
+        wh->listener->OnKeyDown((int)wParam);
+        }
       break;
       }
       case WM_KEYUP:
       {
       WindowHandle wh = (WindowHandle)GetWindowLongPtr(hwnd, GWLP_USERDATA);
       if (wh && wh->listener)
-        wh->listener->OnKeyUp(wParam);
+        {
+        wh->kh.key_up((int)wParam);
+        wh->listener->OnKeyUp((int)wParam);
+        }
       break;
       }
       case WM_ERASEBKGND:
@@ -201,7 +255,7 @@ namespace
       class_name.c_str(),
       title.c_str(),
       WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, w, h,
+      x, y, w, h,
       NULL, NULL, hInstance, NULL);
 
     if (hwnd == NULL)
@@ -521,7 +575,7 @@ WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
 
 WindowHandle create_window(const std::string& title, int w, int h)
   {
-  return create_window(title, 0, 0, w, h);
+  return create_window(title, CW_USEDEFAULT, CW_USEDEFAULT, w, h);
   }
 
 namespace
