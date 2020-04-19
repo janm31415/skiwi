@@ -43,7 +43,7 @@ struct WindowHandleData
   uint32_t* bytes; // the bitmap currently being painted, converted to rgba. Is an array of size w*h*4 (rgba).
   Pixmap pix;
   int pix_w, pix_h; // the size of the screen
-  GC gc;
+  GC gc; // Graphics context
   std::atomic<bool> quit;
 #endif
   std::unique_ptr<std::thread> t;
@@ -230,8 +230,9 @@ void resize(WindowHandle h_wnd, int w, int h)
 namespace
   {
   
-  void ScaleLine(uint32_t* Target, const uint32_t* Source, int SrcWidth, int TgtWidth)
+  void _scale_line(uint32_t* Target, const uint32_t* Source, int SrcWidth, int TgtWidth)
     {
+    // image scaling with Bresenham, Thiadmer Riemersma, Dr.Dobb's.
     int NumPixels = TgtWidth;
     int IntPart = SrcWidth / TgtWidth;
     int FractPart = SrcWidth % TgtWidth;
@@ -251,6 +252,7 @@ namespace
     
   void _scale(uint32_t* Target, int TgtWidth, int TgtHeight, const uint32_t* Source, int SrcWidth, int SrcHeight)
     {    
+    // image scaling with Bresenham, Thiadmer Riemersma, Dr.Dobb's.    
     int NumPixels = TgtHeight;
     int IntPart = (SrcHeight / TgtHeight) * SrcWidth;
     int FractPart = SrcHeight % TgtHeight;
@@ -265,7 +267,7 @@ namespace
         }
       else
         {
-        ScaleLine(Target, Source, SrcWidth, TgtWidth);
+        _scale_line(Target, Source, SrcWidth, TgtWidth);
         PrevSource = Source;
         }
       
@@ -329,18 +331,18 @@ namespace
     XStoreName(user_data->display, user_data->win, title.c_str());
     XMapWindow(user_data->display, user_data->win);
     XSync(user_data->display, False);
-    XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask);
+    XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask); // Set the events we want to receive
     
-    user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), w, h, DefaultDepth(user_data->display, screen_num));
+    user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), w, h, DefaultDepth(user_data->display, screen_num)); // Pixmap for off-screen rendering
     user_data->pix_w = w;
     user_data->pix_h = h;
     
-    user_data->data = (char*)malloc(sizeof(uint8_t)*w*h * 4);
-    memset(user_data->data, 0, sizeof(uint8_t)*w*h * 4);
-    user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, w, h, 32, 0); 
-    XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h);
+    user_data->data = (char*)malloc(sizeof(uint8_t)*w*h * 4); // Pointer to memory for off-screen rendering
+    memset(user_data->data, 0, sizeof(uint8_t)*w*h * 4); // Initialize to black
+    user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, w, h, 32, 0); // Container for user_data->data
+    XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h); // Draw the XImage on the Pixmap
     
-    Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False);
+    Atom wmDeleteMessage = XInternAtom(user_data->display, "WM_DELETE_WINDOW", False); // When the close button is pressed, the window manager should send this to us as a event (ClientMessage).
     XSetWMProtocols(user_data->display, user_data->win, &wmDeleteMessage, 1);
 
     user_data->quit = false;
@@ -360,7 +362,7 @@ namespace
           case Expose:
           {
           user_data->mt.lock();
-          XCopyArea(user_data->display, user_data->pix, user_data->win, user_data->gc, 0, 0, user_data->pix_w, user_data->pix_h, 0, 0);
+          XCopyArea(user_data->display, user_data->pix, user_data->win, user_data->gc, 0, 0, user_data->pix_w, user_data->pix_h, 0, 0); // Copy the pixmap to the window for on-screen rendering.
           user_data->mt.unlock();
           break;
           }
@@ -376,19 +378,21 @@ namespace
           XConfigureEvent xce = ev.xconfigure;
           if (xce.width != user_data->pix_w || xce.height != user_data->pix_h)
             {
-            XFreePixmap(user_data->display, user_data->pix);  
-            XDestroyImage(user_data->im);
-            user_data->data = (char*)malloc(sizeof(uint8_t)*xce.width*xce.height * 4);
-            user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, xce.width, xce.height, 32, 0);   
-            user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), xce.width, xce.height, DefaultDepth(user_data->display, screen_num));
+            user_data->mt.lock();
+            XFreePixmap(user_data->display, user_data->pix); // Free pixmap  
+            XDestroyImage(user_data->im); // Free XImage (and user_data->data)
+            user_data->data = (char*)malloc(sizeof(uint8_t)*xce.width*xce.height * 4); // Allocate new memory
+            user_data->im = XCreateImage(user_data->display, user_data->visual, DefaultDepth(user_data->display, screen_num), ZPixmap, 0, user_data->data, xce.width, xce.height, 32, 0);   // Create container for user_data->data as XImage.
+            user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), xce.width, xce.height, DefaultDepth(user_data->display, screen_num)); // Create Pixmap
             user_data->pix_w = xce.width;
             user_data->pix_h = xce.height;
             if (user_data->w && user_data->h)
-              _scale((uint32_t*)user_data->data, user_data->pix_w, user_data->pix_h, (uint32_t*)user_data->bytes, user_data->w, user_data->h);
+              _scale((uint32_t*)user_data->data, user_data->pix_w, user_data->pix_h, (uint32_t*)user_data->bytes, user_data->w, user_data->h); // Mipmap user bitmap (user_data->bytes) to screen bitmap
             else
               memset(user_data->data, 0, sizeof(uint8_t)*xce.width*xce.height * 4);
-            XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h);
+            XPutImage(user_data->display, user_data->pix, user_data->gc, user_data->im, 0, 0, 0, 0, user_data->pix_w, user_data->pix_h); // Copy XImage to Pixmap
             XFlush(user_data->display);
+            user_data->mt.unlock();            
             }
           break;
           }
@@ -441,7 +445,7 @@ WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
 #else
   if (!XThreads_initialized)
     {
-    XInitThreads();
+    XInitThreads(); // This should be called exactly once at the beginning of an XLib multithreaded application.
     XThreads_initialized = true;
     }
   WindowHandle handle = new WindowHandleData();
