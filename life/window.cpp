@@ -357,7 +357,7 @@ namespace
     XStoreName(user_data->display, user_data->win, title.c_str());
     XMapWindow(user_data->display, user_data->win);
     XSync(user_data->display, False);
-    XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask); // Set the events we want to receive
+    XSelectInput(user_data->display, user_data->win, ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask); // Set the events we want to receive
     
     user_data->pix = XCreatePixmap(user_data->display, DefaultRootWindow(user_data->display), w, h, DefaultDepth(user_data->display, screen_num)); // Pixmap for off-screen rendering
     user_data->pix_w = w;
@@ -392,11 +392,30 @@ namespace
           user_data->mt.unlock();
           break;
           }
+          case KeyPress:
+          {
+          if (user_data->listener)
+            user_data->listener->OnKeyDown(ev.xkey.keycode);
+          break;
+          }
+          case KeyRelease:
+          {
+          if (user_data->listener)
+            user_data->listener->OnKeyUp(ev.xkey.keycode);
+          break;
+          }
           case ClientMessage:
           {
+          user_data->mt.lock();
           user_data->quit = true;
+          if (user_data->listener)
+            user_data->listener->OnClose();
+          XDestroyImage(user_data->im);
+          XFreePixmap(user_data->display, user_data->pix);
           XCloseDisplay(user_data->display);
           user_data->display = nullptr;
+          user_data->listener = nullptr;
+          user_data->mt.unlock();
           break;
           }
           case ConfigureNotify:
@@ -454,7 +473,11 @@ void close_window(WindowHandle& h_wnd)
 #ifdef _WIN32
     PostMessage(h_wnd->h_wnd, WM_CLOSE, NULL, NULL);
 #else
+    h_wnd->mt.lock();
+    if (h_wnd->listener)
+      h_wnd->listener->OnClose();    
     h_wnd->quit = true;
+    h_wnd->mt.unlock();
 #endif
     h_wnd->t->join();
     delete h_wnd;
