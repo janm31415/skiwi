@@ -210,8 +210,7 @@ namespace
         SelectObject(hdcMem, oldBitmap);
         DeleteDC(hdcMem);
         EndPaint(hwnd, &ps);
-        }
-      std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16)); // wait here, otherwise cpu fills up because of constant WM_PAINT messages
+        }      
       break;
       }
       default:

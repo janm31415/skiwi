@@ -176,7 +176,7 @@ int main()
     auto next = next_generation(cm);
     ++generation;
     cm = next;
-    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16));
+    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(100));
     }
 
   close_window(wh);
