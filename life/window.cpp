@@ -53,6 +53,7 @@ struct WindowHandleData
   std::mutex mt;
   std::condition_variable cv;
   bool initialised;
+  IWindowListener* listener;
   };
 
 #ifdef _WIN32
@@ -65,12 +66,29 @@ namespace
     {
     switch (msg)
       {
+      case WM_KEYDOWN:
+      {
+      WindowHandle wh = (WindowHandle)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+      if (wh && wh->listener)
+        wh->listener->OnKeyDown(wParam);
+      break;
+      }
+      case WM_KEYUP:
+      {
+      WindowHandle wh = (WindowHandle)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+      if (wh && wh->listener)
+        wh->listener->OnKeyUp(wParam);
+      break;
+      }
       case WM_ERASEBKGND:
         // Do not erase the background to avoid flickering
         // We'll redraw the full window anyway
         break;
       case WM_CLOSE:
       {
+      WindowHandle wh = (WindowHandle)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+      if (wh && wh->listener)
+        wh->listener->OnClose();
       DestroyWindow(hwnd);
       break;
       }
@@ -464,6 +482,7 @@ WindowHandle create_window(const std::string& title, int x, int y, int w, int h)
   handle->data = nullptr;
   handle->bytes = nullptr;
 #endif
+  handle->listener = nullptr;
   handle->w = 0;
   handle->h = 0;
   handle->x = x;
@@ -640,4 +659,9 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   
   h_wnd->mt.unlock();
 #endif
+  }
+
+void register_listener(WindowHandle h_wnd, IWindowListener* listener)
+  {
+  h_wnd->listener = listener;
   }

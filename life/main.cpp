@@ -2,6 +2,24 @@
 
 #include "window.h"
 
+
+class window_listener : public IWindowListener
+  {
+  public:
+    virtual void OnClose() 
+      {
+      printf("Window is closing\n");
+      };
+    virtual void OnKeyDown(int k)
+      {
+      printf("Key %d is down\n", k);
+      }
+    virtual void OnKeyUp(int k) 
+      {
+      printf("Key %d is up\n", k);
+      }
+  };
+
 int main(int argc, char** argv)
   {
   const int w = 800;
@@ -35,7 +53,11 @@ int main(int argc, char** argv)
       }
     }
 
+  window_listener wl;
+
   paint(wh2, (uint8_t*)color_im, w, h, -4);
+
+  register_listener(wh, &wl);
 
   bool quit = false;
   while (!quit)

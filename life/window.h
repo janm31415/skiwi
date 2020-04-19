@@ -4,6 +4,14 @@
 #include <string>
 #include <stdint.h>
 
+class IWindowListener
+  {
+  public:
+    virtual void OnClose() {};
+    virtual void OnKeyDown(int) {};
+    virtual void OnKeyUp(int) {};
+  };
+
 struct WindowHandleData;
 typedef WindowHandleData* WindowHandle;
 
@@ -17,3 +25,5 @@ void close_window(WindowHandle& h_wnd);
 void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels);
 
 void resize(WindowHandle h_wnd, int w, int h);
+
+void register_listener(WindowHandle h_wnd, IWindowListener* listener);
