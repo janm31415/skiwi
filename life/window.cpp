@@ -603,10 +603,11 @@ WindowHandle create_window(const std::string& title, int w, int h)
 
 namespace
   {
-  void _process_pixels(uint8_t* dst, const uint8_t* src, int width, int height, int channels, bool bFlipColors, bool bFlip)
+  void _process_pixels(uint8_t* dst, const uint8_t* src, int width, int height, int stride, int channels, bool bFlipColors, bool bFlip)
     {
-    int widthInBytes = width * channels;
-    int numBytes = widthInBytes * height;
+    int SrcWidthInbytes = width * channels;
+    int DstWidthInBytes = stride * channels;
+    int SrcnumBytes = SrcWidthInbytes * height;
 
     if (!bFlipColors)
       {
@@ -614,27 +615,30 @@ namespace
         {
         for (int y = 0; y < height; ++y)
           {
-          memcpy(dst + (y * widthInBytes), src + ((height - y - 1) * widthInBytes), widthInBytes);
+          memcpy(dst + (y * DstWidthInBytes), src + ((height - y - 1) * SrcWidthInbytes), SrcWidthInbytes);
           }
         }
       else {
-        memcpy(dst, src, numBytes);
+        for (int y = 0; y < height; ++y)
+          {
+          memcpy(dst + (y * DstWidthInBytes), src + (y * SrcWidthInbytes), SrcWidthInbytes);
+          }
         }
       }
     else {
       if (bFlip)
         {
-
         int x = 0;
-        int y = (height - 1) * widthInBytes;
+        int y = (height - 1) * SrcWidthInbytes;
         src += y;
 
-        for (int i = 0; i < numBytes; i += channels)
+        for (int i = 0; i < SrcnumBytes; i += channels)
           {
           if (x >= width)
             {
             x = 0;
-            src -= widthInBytes * 2;
+            src -= SrcWidthInbytes * 2;
+            dst += (stride - width);
             }
 
           for (int j = channels - 1; j >= 0; --j)
@@ -647,25 +651,30 @@ namespace
           ++x;
           }
         }
-      else {
-        for (int i = 0; i < numBytes; i += channels)
+      else 
+        {
+        for (int y = 0; y < height; ++y)
           {
-          for (int j = channels - 1; j >= 0; --j)
+          uint8_t* p_dst = dst + y * stride;
+          const uint8_t* p_src = src + y * width;
+          for (int x = 0; x < width; ++x)
             {
-            *dst = *(src + j);
-            ++dst;
+            for (int j = channels - 1; j >= 0; --j)
+              {
+              *p_dst = *(p_src + j);
+              ++p_dst;
+              }
+            p_src += channels;
             }
-          src += channels;
           }
         }
       }
     }
 
   void _process_pixels_32(uint32_t* dst, const uint8_t* src, int width, int height, int channels, bool bFlipColors, bool bFlip)
-    {
-    
+    {    
     if (channels == 4)
-      return _process_pixels((uint8_t*)dst, src, width, height, channels, bFlipColors, bFlip);
+      return _process_pixels((uint8_t*)dst, src, width, height, width, channels, bFlipColors, bFlip);
     else if (channels == 1)
       {
       for (int y = 0; y < height; ++y)
@@ -682,15 +691,11 @@ namespace
         }
       }
     else
-      throw std::runtime_error("channels other than 1 or 4 are not supported on Linux");
-      
+      throw std::runtime_error("channels other than 1 or 4 are not supported on Linux");      
     }
     
   
   } // namespace
-
-
-
 
 void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
   {
@@ -708,21 +713,22 @@ void paint(WindowHandle h_wnd, const uint8_t* bytes, int w, int h, int channels)
     }
 #ifdef _WIN32
   h_wnd->mt.lock();
+  int stride = (w + 3) & ~3;
   if (h_wnd->w != w || h_wnd->h != h || h_wnd->channels != channels)
-    {
+    {    
     if (h_wnd->channels == 0)
       {
-      h_wnd->bytes = (uint8_t*)malloc(sizeof(uint8_t)*w*h*channels);
+      h_wnd->bytes = (uint8_t*)malloc(sizeof(uint8_t)*stride*h*channels);
       }
     else
       {
-      h_wnd->bytes = (uint8_t*)realloc(h_wnd->bytes, sizeof(uint8_t)*w*h*channels);
+      h_wnd->bytes = (uint8_t*)realloc(h_wnd->bytes, sizeof(uint8_t)*stride*h*channels);
       }
     h_wnd->w = w;
     h_wnd->h = h;
     h_wnd->channels = channels;
     }
-  _process_pixels(h_wnd->bytes, bytes, w, h, channels, flip_colors, flip_topdown);
+  _process_pixels(h_wnd->bytes, bytes, w, h, stride, channels, flip_colors, flip_topdown);
   h_wnd->mt.unlock();
   InvalidateRect(h_wnd->h_wnd, NULL, TRUE);
 #else
