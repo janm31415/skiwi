@@ -1,144 +1,85 @@
 #include <iostream>
 
+#include "life.h"
 #include "window.h"
 
-#include <stdint.h>
-#include <vector>
-#include <cassert>
 #include <random>
 #include <thread>
 
-struct cell_map
+#include <libskiwi/libskiwi.h>
+
+int width = 100;
+int height = 100;
+
+cell_map grid;
+std::vector<uint8_t> image;
+WindowHandle wh;
+
+void paint_grid()
   {
-  cell_map(int w, int h) : width(w), height(h)
-    {
-    cells.resize(w*h, 0);
-    }
-
-  void set_cell(int x, int y)
-    {
-    assert(cell_state(x, y) == 0);
-
-    auto cell_ptr = cells.begin() + (y*width) + x;
-    int xoleft, xoright, yoabove, yobelow;
-
-    if (x == 0)
-      xoleft = width - 1;
-    else
-      xoleft = -1;
-    if (y == 0)
-      yoabove = width*(height-1);
-    else
-      yoabove = -width;
-    if (x == (width - 1))
-      xoright = -(width - 1);
-    else
-      xoright = 1;
-    if (y == (height - 1))
-      yobelow = -width * (height - 1);
-    else
-      yobelow = width;
-
-    *(cell_ptr) |= (uint8_t)0x01;
-    *(cell_ptr + (yoabove + xoleft)) += 2;
-    *(cell_ptr + yoabove) += 2;
-    *(cell_ptr + (yoabove + xoright)) += 2;
-    *(cell_ptr + xoleft) += 2;
-    *(cell_ptr + xoright) += 2;
-    *(cell_ptr + (yobelow + xoleft)) += 2;
-    *(cell_ptr + yobelow) += 2;
-    *(cell_ptr + (yobelow + xoright)) += 2;
-    }
-
-  void clear_cell(int x, int y)
-    {
-    assert(cell_state(x, y) == 1);
-
-    auto cell_ptr = cells.begin() + (y*width) + x;
-    int xoleft, xoright, yoabove, yobelow;
-
-    if (x == 0)
-      xoleft = width - 1;
-    else
-      xoleft = -1;
-    if (y == 0)
-      yoabove = width * (height - 1);
-    else
-      yoabove = -width;
-    if (x == (width - 1))
-      xoright = -(width - 1);
-    else
-      xoright = 1;
-    if (y == (height - 1))
-      yobelow = -width * (height - 1);
-    else
-      yobelow = width;
-
-    *(cell_ptr) &= ~((uint8_t)0x01);
-    *(cell_ptr + yoabove + xoleft) -= 2;
-    *(cell_ptr + yoabove) -= 2;
-    *(cell_ptr + yoabove + xoright) -= 2;
-    *(cell_ptr + xoleft) -= 2;
-    *(cell_ptr + xoright) -= 2;
-    *(cell_ptr + yobelow + xoleft) -= 2;
-    *(cell_ptr + yobelow) -= 2;
-    *(cell_ptr + yobelow + xoright) -= 2;
-    }
-
-  int cell_state(int x, int y) const
-    {
-    return cells[y*width+x] & (uint8_t)1;
-    }
-
-  int width;
-  int height;
-  std::vector<uint8_t> cells;  
-  };
-
-cell_map next_generation(const cell_map& cm)
-  {
-  cell_map next(cm);  
-  auto it = cm.cells.begin();
-  for (int y = 0; y < cm.height; ++y)
-    {
-    int x = 0;
-    auto it_row_end = it + cm.width;
-    while (it != it_row_end)
-      {
-      if (*it)
-        {
-        uint8_t count = *it >> 1;
-        if (*it & 1)
-          {
-          // Cell is on; turn it off if it doesn't have
-          // 2 or 3 neighbors
-          if ((count != 2) && (count != 3)) 
-            next.clear_cell(x, y);
-          }
-        else
-          {
-          // Cell is off; turn it on if it has exactly 3 neighbors
-          if (count == 3) 
-            next.set_cell(x, y);
-          }
-        }
-      ++it;
-      ++x;
-      }
-    }
-  return next;
+  const int nr_bytes = grid.width*grid.height;
+  if (image.size() != nr_bytes)
+    image.resize(nr_bytes);
+  auto it = grid.cells.begin();
+  auto it_end = grid.cells.end();
+  auto im_it = image.begin();
+  while (it != it_end)    
+    *im_it++ = (*it++ & 1) ? 0 : 255;    
+  paint(wh, image.data(), grid.width, grid.height, 1);
   }
 
-struct listener : public IWindowListener
+void scm_resize(int64_t w, int64_t h)
   {
-  listener() : quit(false) {}
-  virtual void OnClose() { quit = true; };
+  if (w > 0)
+    width = (int)w;
+  if (h > 0)
+    height = (int)h;
+  grid = cell_map(width, height);
+  paint_grid();
+  }
 
-  bool quit;
-  };
+void scm_randomize()
+  {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  grid = cell_map(width, height);
+
+  for (int i = 0; i < width*height / 2; ++i)
+    {
+    int x = gen() % width;
+    int y = gen() % height;
+    if (grid.cell_state(x, y) == 0)
+      grid.set_cell(x, y);
+    }
+  paint_grid();
+  }
+
+void scm_clear()
+  {
+  grid = cell_map(width, height);
+  paint_grid();
+  }
+
+void* register_functions(void*)
+  {
+  using namespace skiwi;
+  register_external_primitive("resize", &scm_resize, skiwi_void, skiwi_int64, skiwi_int64, "(resize w h) resizes the Game of Life grid to w x h cells.");
+  register_external_primitive("randomize", &scm_randomize, skiwi_void, "(randomize) fills the Game of Life grid with random cells.");
+  register_external_primitive("clear", &scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
+  return nullptr;
+  }
 
 int main()
   {
+  grid = cell_map(width, height);  
+  wh = create_window("Game of life", 512, 512);
+  skiwi::scheme_with_skiwi(&register_functions);
+  skiwi::skiwi_repl();
+  skiwi::skiwi_quit();
+  close_window(wh);
+
+  /*
   std::random_device rd;
   std::mt19937 gen(rd());
 
@@ -176,10 +117,10 @@ int main()
     auto next = next_generation(cm);
     ++generation;
     cm = next;
-    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(100));
+    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(50));
     }
 
   close_window(wh);
-
+  */
   return 0;
   }

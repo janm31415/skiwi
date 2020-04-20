@@ -4,6 +4,13 @@
 #include <string>
 #include <stdint.h>
 
+/*
+Simple window class that works in windows and linux. 
+ - Generates a win32 or x11 window in its own thread.
+ - Can paint a bitmap.
+ - Can listen to the events OnClose, OnKeyDown and OnKeyUp.
+*/
+
 class IWindowListener
   {
   public:

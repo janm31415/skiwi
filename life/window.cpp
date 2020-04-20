@@ -515,9 +515,9 @@ namespace
           }
         }
       auto toc = std::chrono::high_resolution_clock::now();
-      const std::chrono::duration<double, std::milli> time_elapsed = (toc-tic);
-      if (time_elapsed < std::chrono::duration<double, std::milli>(16))
-        std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(16)-time_elapsed);
+      const std::chrono::duration<double, std::micro> time_elapsed = (toc-tic);
+      if (time_elapsed < std::chrono::duration<double, std::micro>(1000))
+        std::this_thread::sleep_for(std::chrono::duration<double, std::micro>(1000)-time_elapsed);
       }
     }
 

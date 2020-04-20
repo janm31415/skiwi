@@ -1,6 +1,7 @@
 
 
 set(HDRS
+life.h
 window.h
     )
 	
