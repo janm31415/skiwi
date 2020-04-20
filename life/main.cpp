@@ -95,17 +95,9 @@ void scm_clear()
   paint_grid();
   }
 
-void scm_game_sleep(skiwi::scm_type s)
+void scm_game_sleep(int64_t s)
   {
-  try
-    {
-    double d = s.get_number();
-    game_sleep_time = d;
-    }
-  catch (std::runtime_error e)
-    {
-    std::cout << e.what();
-    }
+  game_sleep_time = (double)s;
   }
 
 void scm_set_cell(int64_t x, int64_t y)
@@ -297,7 +289,7 @@ void* register_functions(void*)
   register_external_primitive("clear", (void*)&scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
   register_external_primitive("run", (void*)&scm_run, skiwi_void, "(run) starts the Game of Life simulation.");
   register_external_primitive("stop", (void*)&scm_stop, skiwi_void, "(stop) stops the Game of Life simulation.");
-  register_external_primitive("game-sleep", (void*)&scm_game_sleep, skiwi_void, skiwi_scm, "(game-sleep <number>) waits <number> milliseconds between generations.");
+  register_external_primitive("game-sleep", (void*)&scm_game_sleep, skiwi_void, skiwi_int64, "(game-sleep <number>) waits <number> milliseconds between generations.");
   register_external_primitive("set-cell", (void*)&scm_set_cell, skiwi_void, skiwi_int64, skiwi_int64, "(set-cell <x> <y>) sets cell (x,y) on");
   register_external_primitive("clear-cell", (void*)&scm_clear_cell, skiwi_void, skiwi_int64, skiwi_int64, "(clear-cell <x> <y>) sets cell (x,y) off");
   register_external_primitive("gun", (void*)&scm_gun, skiwi_void, "(gun) generates the Gosper glider gun");
