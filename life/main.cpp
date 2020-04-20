@@ -64,9 +64,9 @@ void scm_clear()
 void* register_functions(void*)
   {
   using namespace skiwi;
-  register_external_primitive("resize", &scm_resize, skiwi_void, skiwi_int64, skiwi_int64, "(resize w h) resizes the Game of Life grid to w x h cells.");
-  register_external_primitive("randomize", &scm_randomize, skiwi_void, "(randomize) fills the Game of Life grid with random cells.");
-  register_external_primitive("clear", &scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
+  register_external_primitive("resize", (void*)&scm_resize, skiwi_void, skiwi_int64, skiwi_int64, "(resize w h) resizes the Game of Life grid to w x h cells.");
+  register_external_primitive("randomize", (void*)&scm_randomize, skiwi_void, "(randomize) fills the Game of Life grid with random cells.");
+  register_external_primitive("clear", (void*)&scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
   return nullptr;
   }
 
