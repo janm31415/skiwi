@@ -122,6 +122,13 @@ void scm_clear_cell(int64_t x, int64_t y)
   paint_grid();
   }
 
+void scm_next()
+  {
+  scm_stop();
+  grid = next_generation(grid);
+  paint_grid();
+  }
+
 void scm_gun()
   {
   scm_stop();
@@ -287,6 +294,7 @@ void* register_functions(void*)
   register_external_primitive("resize", (void*)&scm_resize, skiwi_void, skiwi_int64, skiwi_int64, "(resize w h) resizes the Game of Life grid to w x h cells.");
   register_external_primitive("randomize", (void*)&scm_randomize, skiwi_void, "(randomize) fills the Game of Life grid with random cells.");
   register_external_primitive("clear", (void*)&scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
+  register_external_primitive("next", (void*)&scm_next, skiwi_void, "(next) shows the next generation of the Game of Life grid.");
   register_external_primitive("run", (void*)&scm_run, skiwi_void, "(run) starts the Game of Life simulation.");
   register_external_primitive("stop", (void*)&scm_stop, skiwi_void, "(stop) stops the Game of Life simulation.");
   register_external_primitive("game-sleep", (void*)&scm_game_sleep, skiwi_void, skiwi_int64, "(game-sleep <number>) waits <number> milliseconds between generations.");
