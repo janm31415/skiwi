@@ -42,9 +42,26 @@ Using the compiler as a stand-alone repl
 ----------------------------------------
 
 A repl can be started by running the s program. 
+![](images/s_repl.png)
+Simply type your scheme code here and get immediate feedback.
+Any scheme code you type is compiled to machine code and run. All compiled expressions reside in virtual memory until you close the application. 
 
+A very basic module system is implemented that allows you to import additional functionality. Essentially it is a stripped version of the module system of [Chibi scheme](https://github.com/ashinn/chibi-scheme). For the implementation, see modules.scm in subfolder libskiwi/scm/core.
+The module system allows to import additional functionality, e.g.:
 
+    skiwi> (import 'csv)       ;; functionality for reading and writing comma separated value files
+  
+    skiwi> (import 'srfi-1)    ;; load srfi 1 functionality.
+  
+    skiwi> (import 'test-r4rs) ;; run unit tests for r4rs functionality (written by [Aubrey Jaffer](http://people.csail.mit.edu/jaffer/))
+  
+    ...
+  
+See libskiwi/scm/packages.scm for the currently defined modules. You can always add your own modules here.
 
+Integration with slib
+---------------------
+I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaffer/SLIB). There are still issues probably but some slib functionality can be used. First you'll have to install slib. Unpack the slib distribution to your folder of liking and make an environment variable SCHEME_LIBRARY_PATH that points to this folder. Then, start skiwi and type (import 'slib). You should now be able to use the slib functionality.
 
 
 
