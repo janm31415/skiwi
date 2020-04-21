@@ -71,7 +71,11 @@ I assume you are familiar with Conway's Game of Life, if not, take a look at the
 -  If a cell is on and has either two or three neighbors that are on in the current generation, it stays on; otherwise, the cell turns off.
  - If a cell is off and has exactly three “on” neighbors in the current generation, it turns on; otherwise, it stays off. 
  
-When you run the "life" project from the repository, you'll see that the skiwi repl is available in the console window, and one additional window is opened, representing the current state of the Game of Life grid. In the console window, type
+When you run the "life" project from the repository, you'll see that the skiwi repl is available in the console window, and one additional window is opened, representing the current state of the Game of Life grid. 
+
+![](images/life.png)
+
+In the console window, type
 
     skiwi> (run)
 to see the next generations. Similarly type
