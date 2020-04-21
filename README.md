@@ -61,7 +61,10 @@ See libskiwi/scm/packages.scm for the currently defined modules. You can always 
 
 Integration with slib
 ---------------------
-I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaffer/SLIB). There are still issues probably but some slib functionality can be used. First you'll have to install slib. Unpack the slib distribution to your folder of liking and make an environment variable SCHEME_LIBRARY_PATH that points to this folder. Then, start skiwi and type (import 'slib). You should now be able to use the slib functionality.
+I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaffer/SLIB). There are still issues probably but some slib functionality can be used. First you'll have to install slib. Unpack the slib distribution to your folder of liking and make an environment variable SCHEME_LIBRARY_PATH that points to this folder. Then, start skiwi and type 
+
+    skiwi> (import 'slib)
+You should now be able to use the slib functionality.
 
 Integrate skiwi as scripting language in your c/c++ program
 -----------------------------------------------------------
