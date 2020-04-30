@@ -43,12 +43,6 @@ void run_game_loop()
     }
   }
 
-void scm_run()
-  {
-  stop_game_thread = false;
-  game_thread.reset(new std::thread(run_game_loop));
-  }
-
 void scm_stop()
   {
   if (game_thread)
@@ -57,6 +51,13 @@ void scm_stop()
     game_thread->join();
     game_thread.reset(nullptr);
     }
+  }
+
+void scm_run()
+  {
+  scm_stop();
+  stop_game_thread = false;
+  game_thread.reset(new std::thread(run_game_loop));
   }
 
 void scm_resize(int64_t w, int64_t h)
