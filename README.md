@@ -84,12 +84,68 @@ In the console window, type
 to see the next generations. Similarly type
 
     skiwi> (stop)
-to stop computing and visualizing new generations. For an overview of all the extra "Game of Life" related functionality, type
+to stop computing and visualizing new generations. If you want to turn a particular cell on or off, type
+
+    skiwi> (set-cell 4 5)
+or
+
+    skiwi> (clear-cell 9 7)
+Effectively skiwi has made our Game of Life programmable during execution. We can control the game by interacting with it via the skiwi repl.
+For an overview of all the extra "Game of Life" related functionality, type
 
     skiwi> ,external
 
+We'll now go over the steps you need to take to make a c++ application scriptable with skiwi.
 
+First, you need to add skiwi to your code. It is sufficient to `#include <libskiwi.h>` in your code. Then you need to register your custom skiwi functions with your application, start the skiwi repl, and finally, at the end, clean up everything:
 
+    skiwi::scheme_with_skiwi(&register_functions); // start scheme compiler skiwi
+    skiwi::skiwi_repl(); // start the skiwi repl
+    skiwi::skiwi_quit(); // clean up skiwi
+    
+`skiwi::scheme_with_skiwi(&register_functions)` initializes skiwi. Optionally you can provide this method with extra user data as a `void*` pointer, and you can provide custom `skiwi_parameters` if you need more heap memory for instance. We'll focus on `register_functions` more deeply below.
 
+`skiwi:skiwi_repl(int argc, char** argv)` will start a read eval print loop (repl). You can provide parameters 'argc' and 'argv'. Any file that is provided in this way will be read, compiled, and executed.
 
+`skiwi::skiwi_quit()` cleans up everything before closing the application.
+
+`register_functions` will be used to register our custom functions in skiwi. If you don't want to register any functions, you can keep it very simple:
+
+    void* register_functions(void*)
+      {
+      return nullptr;
+      }
+      
+In Game of Life we have however added a couple of functions to skiwi. Here `register_functions` looks like this:
+
+    void* register_functions(void*)
+      {
+      using namespace skiwi;
+      register_external_primitive("resize", (void*)&scm_resize, skiwi_void, skiwi_int64, skiwi_int64, "(resize w h) resizes the Game of Life grid to w x h cells.");
+      register_external_primitive("randomize", (void*)&scm_randomize, skiwi_void, "(randomize) fills the Game of Life grid with random cells.");
+      register_external_primitive("clear", (void*)&scm_clear, skiwi_void, "(clear) clears the Game of Life grid.");
+      register_external_primitive("next", (void*)&scm_next, skiwi_void, "(next) shows the next generation of the Game of Life grid.");
+      register_external_primitive("run", (void*)&scm_run, skiwi_void, "(run) starts the Game of Life simulation.");
+      register_external_primitive("stop", (void*)&scm_stop, skiwi_void, "(stop) stops the Game of Life simulation.");
+      register_external_primitive("game-sleep", (void*)&scm_game_sleep, skiwi_void, skiwi_int64, "(game-sleep <number>) waits <number> milliseconds between generations.");
+      register_external_primitive("set-cell", (void*)&scm_set_cell, skiwi_void, skiwi_int64, skiwi_int64, "(set-cell <x> <y>) sets cell (x,y) on");
+      register_external_primitive("clear-cell", (void*)&scm_clear_cell, skiwi_void, skiwi_int64, skiwi_int64, "(clear-cell <x> <y>) sets cell (x,y) off");
+      register_external_primitive("gun", (void*)&scm_gun, skiwi_void, "(gun) generates the Gosper glider gun");
+      register_external_primitive("space-rake", (void*)&scm_space_rake, skiwi_void, "(space-rake) generates the space-rake");
+      register_external_primitive("spaceship", (void*)&scm_spaceship, skiwi_void, "(spaceship) generates the spaceship or glider");
+      return nullptr;
+      }
+
+Inside `register_functions` we call `skiwi::register_external_primitive` to register a c/c++ function with skiwi.
+The first argument to `skiwi::register_external_primitive` is the scheme name for the procedure that you want to register, then follows the address to the c/cpp function that you want to call from skiwi. The third argument is the return type of the function. The next arguments are the types of the c/c++ function arguments if the c/c++ function has any. Finally, the last argument of `skiwi::register_external_primitive` is a help text that will be shown when you type `,external` in the skiwi prompt.
+
+The available return/argument types are
+
+    skiwi_bool
+    skiwi_char_pointer
+    skiwi_double
+    skiwi_int64
+    skiwi_scm
+    skiwi_void    
+All types should be straightforward, except for `skiwi_scm` which is special. If you use `skiwi_scm` you will receive a `uint64_t` value as input that will represent a skiwi value. To interpret it correctly you need to understand how skiwi stores its information in the registers, see file runtime.cpp for more info. You can also use `skiwi_scm` as return value, allowing to write data from your c/c++ application to the skiwi heap.
 
