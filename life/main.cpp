@@ -314,7 +314,7 @@ int main()
   skiwi::scheme_with_skiwi(&register_functions); // start scheme compiler skiwi
   skiwi::skiwi_repl(); // start the skiwi repl
   skiwi::skiwi_quit(); // clean up skiwi
-  scm_stop(); // stop the game thraed
+  scm_stop(); // stop the game thread
   close_window(wh); // close the visualization window
 
   return 0;
