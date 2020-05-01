@@ -10,7 +10,7 @@
 #include <sys/mman.h>
 #endif
 
-SKIWI_BEGIN
+ASM_BEGIN
 
 namespace
   {
@@ -351,4 +351,4 @@ void free_assembled_function(void* f, uint64_t size)
 #endif
   }
 
-SKIWI_END
+ASM_END

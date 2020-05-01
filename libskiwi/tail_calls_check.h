@@ -2,7 +2,7 @@
 
 #include "libskiwi_api.h"
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include "parse.h"
 
 SKIWI_BEGIN

@@ -8,7 +8,7 @@
 #include "namespace.h"
 #include "asm_api.h"
 
-SKIWI_BEGIN
+ASM_BEGIN
 
 class asmcode
   {
@@ -286,32 +286,32 @@ class asmcode
       uint64_t operand1_mem, operand2_mem, operand3_mem, operand4_mem;
       std::string text;
 
-      SKIWI_ASSEMBLER_API instruction();
-      SKIWI_ASSEMBLER_API instruction(const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, uint64_t op3_mem);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, operand op4, uint64_t op4_mem);
-      SKIWI_ASSEMBLER_API instruction(operation op, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem, const std::string& text);
-      SKIWI_ASSEMBLER_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem, const std::string& text);
+      ASSEMBLER_API instruction();
+      ASSEMBLER_API instruction(const std::string& text);
+      ASSEMBLER_API instruction(operation op);
+      ASSEMBLER_API instruction(operation op, operand op1);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, uint64_t op3_mem);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, operand op4, uint64_t op4_mem);
+      ASSEMBLER_API instruction(operation op, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem, const std::string& text);
+      ASSEMBLER_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem, const std::string& text);
 
-      SKIWI_ASSEMBLER_API void stream(std::ostream& out) const;
-      SKIWI_ASSEMBLER_API uint64_t fill_opcode(uint8_t* opcode_stream) const;
+      ASSEMBLER_API void stream(std::ostream& out) const;
+      ASSEMBLER_API uint64_t fill_opcode(uint8_t* opcode_stream) const;
       };
 
-    SKIWI_ASSEMBLER_API asmcode();
-    SKIWI_ASSEMBLER_API ~asmcode();
+    ASSEMBLER_API asmcode();
+    ASSEMBLER_API ~asmcode();
 
     template <class... T>
     void add(T&&... val)
@@ -320,15 +320,15 @@ class asmcode
       (*instructions_list_stack.back()).push_back(ins);
       }
 
-    SKIWI_ASSEMBLER_API void push();
-    SKIWI_ASSEMBLER_API void pop();
+    ASSEMBLER_API void push();
+    ASSEMBLER_API void pop();
 
-    SKIWI_ASSEMBLER_API const std::list<std::vector<instruction>>& get_instructions_list() const;
-    SKIWI_ASSEMBLER_API std::list<std::vector<instruction>>& get_instructions_list();
+    ASSEMBLER_API const std::list<std::vector<instruction>>& get_instructions_list() const;
+    ASSEMBLER_API std::list<std::vector<instruction>>& get_instructions_list();
 
-    SKIWI_ASSEMBLER_API void stream(std::ostream& out) const;
+    ASSEMBLER_API void stream(std::ostream& out) const;
 
-    SKIWI_ASSEMBLER_API void clear();
+    ASSEMBLER_API void clear();
 
   private:
     std::list<std::vector<instruction>> instructions_list;
@@ -337,4 +337,4 @@ class asmcode
 
   };
 
-SKIWI_END
+ASM_END

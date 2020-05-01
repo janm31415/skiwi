@@ -1,5 +1,5 @@
 #pragma once
 
-#define SKIWI_BEGIN namespace skiwi {
-#define SKIWI_END }
-#define SKIWI ::skiwi
+#define ASM_BEGIN namespace assembler {
+#define ASM_END }
+#define ASM ::assembler

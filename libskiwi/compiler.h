@@ -2,7 +2,7 @@
 
 #include <asm/asmcode.h>
 #include <asm/assembler.h>
-#include <asm/namespace.h>
+#include "namespace.h"
 #include "libskiwi_api.h"
 #include "context.h"
 #include "compile_data.h"
@@ -23,7 +23,7 @@ struct primitive_entry
 
 typedef std::map<std::string, primitive_entry> primitive_map;
 
-typedef void(*fun_ptr)(asmcode&, const compiler_options&);
+typedef void(*fun_ptr)(ASM::asmcode&, const compiler_options&);
 
 typedef std::map<std::string, fun_ptr> function_map;
 
@@ -73,7 +73,7 @@ struct macro_data;
 
 function_map generate_function_map();
 
-SKIWI_SCHEME_API void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, Program& prog, const primitive_map& pm, const std::map<std::string, external_function>& external_functions, const compiler_options& options);
+SKIWI_SCHEME_API void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, Program& prog, const primitive_map& pm, const std::map<std::string, external_function>& external_functions, const compiler_options& options);
 
 
 SKIWI_END

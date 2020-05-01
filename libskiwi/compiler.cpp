@@ -16,6 +16,8 @@
 
 SKIWI_BEGIN
 
+using namespace ASM;
+
 function_map generate_function_map()
   {
   function_map fm;
@@ -447,7 +449,7 @@ namespace
     int end = ((nr_of_args >> 3) + 1) << 3;
     for (int i = nr_of_args; i < end; ++i)
       {
-      code.add(asmcode::MOV, asmcode::BYTE_MEM_ALLOC, asmcode::AL);
+      code.add(asmcode::MOV, BYTE_MEM_ALLOC, asmcode::AL);
       code.add(asmcode::INC, ALLOC);
       }
 
@@ -485,7 +487,7 @@ namespace
     int end = ((nr_of_args >> 3) + 1) << 3;
     for (int i = nr_of_args; i < end; ++i)
       {
-      code.add(asmcode::MOV, asmcode::BYTE_MEM_ALLOC, asmcode::AL);
+      code.add(asmcode::MOV, BYTE_MEM_ALLOC, asmcode::AL);
       code.add(asmcode::INC, ALLOC);
       }
 
@@ -608,9 +610,9 @@ namespace
       {            
       std::string garbage_error = label_to_string(label++);
       std::string continue_label = label_to_string(label++);
-      code.add(asmcode::CMP, asmcode::ALLOC, asmcode::LIMIT);
+      code.add(asmcode::CMP, ALLOC, LIMIT);
       code.add(asmcode::JLES, continue_label);
-      code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
+      code.add(asmcode::CMP, ALLOC, FROM_SPACE_END);
       code.add(asmcode::JGES, garbage_error);
       code.add(asmcode::COMMENT, "jump to reclaim-garbage");
 
@@ -724,16 +726,16 @@ namespace
     uint64_t header = make_block_header(2, T_PAIR);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, header);
 
-    code.add(asmcode::MOV, asmcode::MEM_ALLOC, asmcode::RAX);
+    code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
 
     if (arg_pos < get_argument_registers().size())
       {
-      code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(1), get_argument_registers()[arg_pos]);
+      code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), get_argument_registers()[arg_pos]);
       }
     else
       {
       load_local(code, arg_pos - get_argument_registers().size(), asmcode::RDX, asmcode::RCX);
-      code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(1), asmcode::RDX);
+      code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RDX);
       }
     code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
     code.add(asmcode::JE, done);
@@ -744,18 +746,18 @@ namespace
       code.add(asmcode::MOV, asmcode::RCX, ALLOC);
       code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(3));
       code.add(asmcode::OR, asmcode::RCX, asmcode::NUMBER, block_tag);
-      code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(2), asmcode::RCX);
-      code.add(asmcode::ADD, asmcode::ALLOC, asmcode::NUMBER, CELLS(3));
-      code.add(asmcode::MOV, asmcode::MEM_ALLOC, asmcode::RAX);
+      code.add(asmcode::MOV, MEM_ALLOC, CELLS(2), asmcode::RCX);
+      code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(3));
+      code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
 
       if ((arg_pos + i) < get_argument_registers().size())
         {
-        code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(1), get_argument_registers()[arg_pos + i]);
+        code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), get_argument_registers()[arg_pos + i]);
         }
       else
         {
         load_local(code, arg_pos + i - get_argument_registers().size(), asmcode::RDX, asmcode::RCX);
-        code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(1), asmcode::RDX);
+        code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RDX);
         }
       code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, i + 1);
       code.add(asmcode::JE, done);
@@ -773,10 +775,10 @@ namespace
     code.add(asmcode::MOV, asmcode::RCX, ALLOC);
     code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(3));
     code.add(asmcode::OR, asmcode::RCX, asmcode::NUMBER, block_tag);
-    code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(2), asmcode::RCX);
-    code.add(asmcode::ADD, asmcode::ALLOC, asmcode::NUMBER, CELLS(3));
-    code.add(asmcode::MOV, asmcode::MEM_ALLOC, asmcode::RAX);
-    code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(1), asmcode::RSI);
+    code.add(asmcode::MOV, MEM_ALLOC, CELLS(2), asmcode::RCX);
+    code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(3));
+    code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
+    code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RSI);
     code.add(asmcode::ADD, asmcode::RDX, asmcode::NUMBER, CELLS(1));
     code.add(asmcode::DEC, asmcode::R11);
     code.add(asmcode::JES, done2);
@@ -787,8 +789,8 @@ namespace
 
     code.add(asmcode::LABEL, done);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, nil);
-    code.add(asmcode::MOV, asmcode::MEM_ALLOC, CELLS(2), asmcode::RAX);
-    code.add(asmcode::ADD, asmcode::ALLOC, asmcode::NUMBER, CELLS(3));
+    code.add(asmcode::MOV, MEM_ALLOC, CELLS(2), asmcode::RAX);
+    code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(3));
     code.add(asmcode::MOV, asmcode::RAX, asmcode::R15);
     code.add(asmcode::POP, asmcode::RDX);
     code.add(asmcode::POP, asmcode::RCX);
@@ -1173,9 +1175,9 @@ namespace
         code.add(asmcode::MOV, asmcode::R14, asmcode::NUMBER, unalloc_tag);
         std::string garbage_error = label_to_string(label++);
         std::string continue_label2 = label_to_string(label++);
-        code.add(asmcode::CMP, asmcode::ALLOC, asmcode::LIMIT);
+        code.add(asmcode::CMP, ALLOC, LIMIT);
         code.add(asmcode::JLES, continue_label2);
-        code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
+        code.add(asmcode::CMP, ALLOC, FROM_SPACE_END);
         code.add(asmcode::JGES, garbage_error);
         code.add(asmcode::COMMENT, "jump to reclaim-garbage");
         auto pm_it = pm.find("reclaim-garbage");

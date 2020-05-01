@@ -4,7 +4,7 @@
 
 SKIWI_BEGIN
 
-reg_alloc::reg_alloc(const std::vector<asmcode::operand>& usable_registers, uint32_t number_of_locals) : available_registers(usable_registers),
+reg_alloc::reg_alloc(const std::vector<ASM::asmcode::operand>& usable_registers, uint32_t number_of_locals) : available_registers(usable_registers),
   nr_locals(number_of_locals)
   {  
   make_all_available();
@@ -24,7 +24,7 @@ bool reg_alloc::free_local_available() const
   return !free_locals.empty();
   }
 
-asmcode::operand reg_alloc::get_next_available_register()
+ASM::asmcode::operand reg_alloc::get_next_available_register()
   {
   if (!free_register_available())
     throw std::runtime_error("no register available");
@@ -35,7 +35,7 @@ asmcode::operand reg_alloc::get_next_available_register()
   return available_registers[reg_value];
   }
 
-void reg_alloc::make_register_available(asmcode::operand reg)
+void reg_alloc::make_register_available(ASM::asmcode::operand reg)
   {
   assert(free_registers.find(register_to_index[reg]) == free_registers.end());
   assert(register_to_index.find(reg) != register_to_index.end());
@@ -79,7 +79,7 @@ uint32_t reg_alloc::number_of_available_locals()
   return (uint32_t)free_locals.size();
   }
 
-bool reg_alloc::is_free_register(asmcode::operand reg)
+bool reg_alloc::is_free_register(ASM::asmcode::operand reg)
   {
   auto it = register_to_index.find(reg);
   if (it == register_to_index.end())
@@ -105,7 +105,7 @@ void reg_alloc::make_all_available()
   }
 
 
-void reg_alloc::make_register_unavailable(asmcode::operand reg)
+void reg_alloc::make_register_unavailable(ASM::asmcode::operand reg)
   {
   free_registers.erase(register_to_index[reg]);
   }

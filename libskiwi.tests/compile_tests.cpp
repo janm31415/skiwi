@@ -47,6 +47,8 @@
 
 SKIWI_BEGIN
 
+using namespace ASM;
+
 namespace
   {
 

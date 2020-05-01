@@ -3,7 +3,7 @@
 #include "libskiwi_api.h"
 #include "liveness_range.h"
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include <asm/asmcode.h>
 
 #include <map>
@@ -20,7 +20,7 @@ struct reg_alloc_data
 
   e_register_type type;
   uint32_t local_id;
-  asmcode::operand reg;
+  ASM::asmcode::operand reg;
   liveness_range live_range;
 
 
@@ -45,7 +45,7 @@ inline reg_alloc_data make_reg_alloc_data(reg_alloc_data::e_register_type t, uin
   if (t == reg_alloc_data::t_local)
     rad.local_id = (uint32_t)val;
   else
-    rad.reg = (asmcode::operand)val;
+    rad.reg = (ASM::asmcode::operand)val;
   rad.live_range = lr;
   return rad;
   }

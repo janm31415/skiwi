@@ -11,12 +11,12 @@
 
 SKIWI_BEGIN
 
-void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_map& env, context& ctxt, asmcode& code, const compiler_options& options)
+void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_map& env, context& ctxt, ASM::asmcode& code, const compiler_options& options)
   {
   //std::shared_ptr<environment<alpha_conversion_data>> new_alpha = std::make_shared<environment<alpha_conversion_data>>(rd.alpha_conversion_env);
 
   compile_data data = create_compile_data(ctxt.total_heap_size, ctxt.globals_end - ctxt.globals, (uint32_t)ctxt.number_of_locals, &ctxt);
-  code.add(asmcode::GLOBAL, "scheme_entry");
+  code.add(ASM::asmcode::GLOBAL, "scheme_entry");
   label = 0;
   function_map fm = generate_function_map();
 #ifdef _WIN32
@@ -25,14 +25,14 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
   First parameter (rcx) points to the context.
   We store the pointer to the context in register r10.
   */
-  code.add(asmcode::MOV, CONTEXT, asmcode::RCX);
+  code.add(ASM::asmcode::MOV, CONTEXT, ASM::asmcode::RCX);
 #else
   /*
   Linux parameters calling convention: rdi, rsi, rdx, rcx, r8, r9
   First parameter (rdi) points to the context.
   We store the pointer to the context in register r10.
   */
-  code.add(asmcode::MOV, CONTEXT, asmcode::RDI);
+  code.add(ASM::asmcode::MOV, CONTEXT, ASM::asmcode::RDI);
 #endif
 
   /*
@@ -52,10 +52,10 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
     //new_alpha->push_outer(it->first, it->first);
 
     std::string label_name = "L_" + it->first;
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::LABELADDRESS, label_name);
-    code.add(asmcode::OR, asmcode::RAX, asmcode::NUMBER, procedure_tag);  
-    code.add(asmcode::MOV, asmcode::R11, GLOBALS);
-    code.add(asmcode::MOV, asmcode::MEM_R11, e.pos, asmcode::RAX);
+    code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::LABELADDRESS, label_name);
+    code.add(ASM::asmcode::OR, ASM::asmcode::RAX, ASM::asmcode::NUMBER, procedure_tag);  
+    code.add(ASM::asmcode::MOV, ASM::asmcode::R11, GLOBALS);
+    code.add(ASM::asmcode::MOV, ASM::asmcode::MEM_R11, e.pos, ASM::asmcode::RAX);
 
     // We save the primitive constant twice. The second save has ### in front of its name, and is used during inlining for checking whether the primitive was redefined or not.
     e.pos = (uint64_t)rd.global_index * 8;
@@ -66,14 +66,14 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
     std::stringstream str;
     str << "###" << it->first;
     env->push_outer(str.str(), e);
-    code.add(asmcode::MOV, asmcode::MEM_R11, e.pos, asmcode::RAX);
+    code.add(ASM::asmcode::MOV, ASM::asmcode::MEM_R11, e.pos, ASM::asmcode::RAX);
     }
 
   /*Restore the registers to their original state*/
   //load_registers(code);
 
   /*Return to the caller*/
-  code.add(asmcode::RET);
+  code.add(ASM::asmcode::RET);
 
   code.push();
   for (auto it = fm.begin(); it != fm.end(); ++it)
@@ -82,7 +82,7 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
     pe.label_name = "L_"+it->first;
     pe.address = 0;
     pm.insert(std::pair<std::string, primitive_entry>(it->first, pe));
-    code.add(asmcode::LABEL_ALIGNED, pe.label_name);
+    code.add(ASM::asmcode::LABEL_ALIGNED, pe.label_name);
     it->second(code, options);
     }
   compile_bitwise_and_2(code, options);  
@@ -117,7 +117,7 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
   //rd.alpha_conversion_env = new_alpha;
   }
 
-void assign_primitive_addresses(primitive_map& pm, const first_pass_data& d, uint64_t address_start)
+void assign_primitive_addresses(primitive_map& pm, const ASM::first_pass_data& d, uint64_t address_start)
   {
   for (auto& pe : pm)
     {

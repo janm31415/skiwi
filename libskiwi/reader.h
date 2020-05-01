@@ -5,7 +5,7 @@
 #include <vector>
 #include <array>
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include "libskiwi_api.h"
 #include "tokenize.h"
 

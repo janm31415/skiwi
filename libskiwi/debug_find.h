@@ -1,6 +1,6 @@
 #pragma once
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include "visitor.h"
 #include "parse.h"
 

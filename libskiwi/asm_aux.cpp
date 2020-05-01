@@ -7,6 +7,8 @@
 
 SKIWI_BEGIN
 
+using namespace ASM;
+
 asmcode::operand get_mem_operand(asmcode::operand reg)
   {
   switch (reg)
@@ -416,9 +418,9 @@ void allocate_buffer_as_string(asmcode& code)
 
   code.add(asmcode::LABEL, fill);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R11);
-  code.add(asmcode::MOV, asmcode::MEM_ALLOC, asmcode::RAX);
+  code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
   code.add(asmcode::ADD, asmcode::R11, asmcode::NUMBER, CELLS(1));
-  code.add(asmcode::ADD, asmcode::ALLOC, asmcode::NUMBER, CELLS(1));
+  code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(1));
   code.add(asmcode::DEC, asmcode::RCX);
   code.add(asmcode::TEST, asmcode::RCX, asmcode::RCX);
   code.add(asmcode::JES, done);

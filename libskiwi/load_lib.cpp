@@ -55,7 +55,7 @@ namespace
     }
   }
 
-bool load_lib(const std::string& libname, environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_lib(const std::string& libname, environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   std::string script;
   try
@@ -90,31 +90,31 @@ bool load_lib(const std::string& libname, environment_map& env, repl_data& rd, m
   return true;
   }
 
-bool load_apply(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_apply(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   compiler_options ops = make_baselib_options(options);
   return load_lib("core/apply.scm", env, rd, md, ctxt, code, pm, ops);
   }
 
-bool load_modules(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_modules(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   compiler_options ops = make_baselib_options(options);
   return load_lib("core/modules.scm", env, rd, md, ctxt, code, pm, ops);
   }
 
-bool load_string_to_symbol(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_string_to_symbol(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   compiler_options ops = make_baselib_options(options);
   return load_lib("core/symbol-table.scm", env, rd, md, ctxt, code, pm, ops);
   }
 
-bool load_r5rs(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_r5rs(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   compiler_options ops = make_baselib_options(options);
   return load_lib("core/r5rs.scm", env, rd, md, ctxt, code, pm, ops);
   }
 
-bool load_callcc(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, const primitive_map& pm, const compiler_options& options)
+bool load_callcc(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, const primitive_map& pm, const compiler_options& options)
   {
   compiler_options ops = make_baselib_options(options);
   ops.do_cps_conversion = false;

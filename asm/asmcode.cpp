@@ -7,7 +7,7 @@
 #include <bitset>
 #include <algorithm>
 
-SKIWI_BEGIN
+ASM_BEGIN
 
 namespace
   {
@@ -3544,4 +3544,4 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
   //return 0;
   }
 
-SKIWI_END
+ASM_END

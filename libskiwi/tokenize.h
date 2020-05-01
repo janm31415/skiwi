@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
-#include <asm/namespace.h>
+#include "namespace.h"
 #include "libskiwi_api.h"
 
 SKIWI_BEGIN

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include <stdint.h>
 #include "environment.h"
 #include "reg_alloc.h"

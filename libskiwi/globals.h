@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <asm/namespace.h>
+#include "namespace.h"
 
 SKIWI_BEGIN
 

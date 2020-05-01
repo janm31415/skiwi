@@ -2,7 +2,7 @@
 
 #include "libskiwi_api.h"
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include <asm/asmcode.h>
 #include <stdint.h>
 

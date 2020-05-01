@@ -1,6 +1,6 @@
 #pragma once
 
-#include <asm/namespace.h>
+#include "namespace.h"
 #include <stdint.h>
 #include "libskiwi_api.h"
 #include "linear_scan.h"

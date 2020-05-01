@@ -12,7 +12,7 @@
 
 #include "test_assert.h"
 
-SKIWI_BEGIN
+ASM_BEGIN
 
 
 namespace
@@ -493,12 +493,12 @@ namespace
 
   }
 
-SKIWI_END
+ASM_END
 
 
 void run_all_assembler_tests()
   {
-  using namespace SKIWI;
+  using namespace ASM;
 
   assembler_add();
 

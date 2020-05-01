@@ -19,6 +19,8 @@
 
 SKIWI_BEGIN
 
+using namespace ASM;
+
 namespace
   {
   std::vector<asmcode::operand> compute_argument_registers()
@@ -488,14 +490,14 @@ void compile_string_append1(asmcode& code, const compiler_options& ops)
     jump_if_arg_does_not_point_to_string(code, asmcode::RDX, asmcode::R11, error);
     }
 
-  code.add(asmcode::PUSH, asmcode::asmcode::RBX);
-  code.add(asmcode::PUSH, asmcode::asmcode::RCX);
+  code.add(asmcode::PUSH, asmcode::RBX);
+  code.add(asmcode::PUSH, asmcode::RCX);
   string_length(code, asmcode::RCX);
   code.add(asmcode::MOV, asmcode::RBX, asmcode::R15);
-  code.add(asmcode::POP, asmcode::asmcode::RCX);
-  code.add(asmcode::PUSH, asmcode::asmcode::RDX);
+  code.add(asmcode::POP, asmcode::RCX);
+  code.add(asmcode::PUSH, asmcode::RDX);
   string_length(code, asmcode::RDX);
-  code.add(asmcode::POP, asmcode::asmcode::RDX);
+  code.add(asmcode::POP, asmcode::RDX);
 
   if (ops.safe_primitives) // TO CHECK: string length should be divided by 8 here I thing before heap check
     {
@@ -4704,7 +4706,7 @@ void compile_mark(asmcode& code, const compiler_options&)
 void compile_reclaim(asmcode& code, const compiler_options& ops)
   {
   auto reclaim = label_to_string(label++);
-  code.add(asmcode::CMP, ALLOC, asmcode::LIMIT);
+  code.add(asmcode::CMP, ALLOC, LIMIT);
   code.add(asmcode::JGS, reclaim);
   code.add(asmcode::JMP, CONTINUE);
   code.add(asmcode::LABEL, reclaim);
@@ -4715,7 +4717,7 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   {
   auto no_heap = label_to_string(label++);
 
-  code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
+  code.add(asmcode::CMP, ALLOC, FROM_SPACE_END);
   code.add(asmcode::JG, no_heap);
 
   code.add(asmcode::PUSH, asmcode::RBX);
@@ -4903,7 +4905,7 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
   */
   code.add(asmcode::POP, asmcode::RBX); // continue value
 
-  code.add(asmcode::CMP, asmcode::ALLOC, asmcode::FROM_SPACE_END);
+  code.add(asmcode::CMP, ALLOC, FROM_SPACE_END);
   code.add(asmcode::JGS, no_heap);
 
   code.add(asmcode::JMP, CONTINUE);
@@ -5438,7 +5440,7 @@ void compile_apply(asmcode& code, const compiler_options& ops)
   auto all_args_set_clos = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 0);
   code.add(asmcode::JE, all_args_set_clos);
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::GC_SAVE);
+  code.add(asmcode::MOV, asmcode::RAX, GC_SAVE);
   code.add(asmcode::ADD, asmcode::RAX, asmcode::NUMBER, CELLS(1));
   code.add(asmcode::MOV, asmcode::RSI, asmcode::MEM_RAX);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
@@ -5513,7 +5515,7 @@ void compile_apply(asmcode& code, const compiler_options& ops)
   auto all_args_set = label_to_string(label++);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 0);
   code.add(asmcode::JE, all_args_set);
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::GC_SAVE);
+  code.add(asmcode::MOV, asmcode::RAX, GC_SAVE);
   code.add(asmcode::ADD, asmcode::RAX, asmcode::NUMBER, CELLS(1));
   code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RAX);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
@@ -5575,7 +5577,7 @@ void compile_apply(asmcode& code, const compiler_options& ops)
   code.add(asmcode::POP, asmcode::RCX);
   code.add(asmcode::POP, asmcode::R11);
   code.add(asmcode::LABEL, all_args_set);
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::GC_SAVE);
+  code.add(asmcode::MOV, asmcode::RAX, GC_SAVE);
   code.add(asmcode::MOV, asmcode::R15, asmcode::MEM_RAX);
   code.add(asmcode::AND, asmcode::R15, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8); // get procedure address
   code.add(asmcode::JMP, asmcode::R15); // call primitive
@@ -8101,9 +8103,9 @@ rdi
   code.add(asmcode::CMP, asmcode::RAX, asmcode::NUMBER, 0);
   code.add(asmcode::JE, false_label);
   code.add(asmcode::MOV, asmcode::RCX, asmcode::RAX); // rcx points to string now
-  code.add(asmcode::PUSH, asmcode::asmcode::RCX);
+  code.add(asmcode::PUSH, asmcode::RCX);
   raw_string_length(code, asmcode::RCX); //r15 contains string length
-  code.add(asmcode::POP, asmcode::asmcode::RCX);
+  code.add(asmcode::POP, asmcode::RCX);
   if (ops.safe_primitives)
     {
     code.add(asmcode::MOV, asmcode::R11, asmcode::R15); // save length in r11

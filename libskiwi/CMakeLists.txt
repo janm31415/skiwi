@@ -49,6 +49,7 @@ liveness_range.h
 load_lib.h
 macro_data.h
 macro_expander.h
+namespace.h
 parse.h
 preprocess.h
 primitives.h

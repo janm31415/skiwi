@@ -12,7 +12,7 @@
 #endif
 #include "test_assert.h"
 
-SKIWI_BEGIN
+ASM_BEGIN
 
 
 struct asmcode_fixture
@@ -1541,12 +1541,12 @@ namespace
 
   }
 
-SKIWI_END
+ASM_END
 
 
 void run_all_asm_code_tests()
   {
-  using namespace SKIWI;
+  using namespace ASM;
   asmcode_mov_rax_number();
   asmcode_mov_rax_number_2();
   asmcode_mov_rbx_number();

@@ -17,6 +17,8 @@
 
 SKIWI_BEGIN
 
+using namespace ASM;
+
 namespace
   {
   Variable _make_var(const std::string& name)
