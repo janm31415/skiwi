@@ -35,6 +35,7 @@ compiler_options::compiler_options()
 
   fast_expression_targetting = true;
   parallel = true;
+  keep_variable_stack = true;
   }
 
 SKIWI_END

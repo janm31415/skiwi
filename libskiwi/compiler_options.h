@@ -42,6 +42,7 @@ struct compiler_options
   bool garbage_collection;
   bool fast_expression_targetting;
   bool parallel;
+  bool keep_variable_stack; // default true: adds last used globals to a debug stack for better error reporting
   };
 
 SKIWI_END

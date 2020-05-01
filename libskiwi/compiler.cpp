@@ -906,7 +906,20 @@ namespace
       }
     }
 
-  void compile_variable(registered_functions&, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Variable& var, const compiler_options&, asmcode::operand target)
+  void add_global_variable_to_debug_info(asmcode& code, uint64_t pos, const compiler_options& ops)
+    {
+    if (ops.keep_variable_stack)
+      {
+      for (int i = SKIWI_VARIABLE_DEBUG_STACK_SIZE - 2; i >= 0; --i) // move items on the stack further down
+        {
+        code.add(asmcode::MOV, asmcode::R15, LAST_GLOBAL_VARIABLE_USED+CELLS(i));
+        code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED+CELLS(i+1), asmcode::R15);
+        }
+      code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, pos); // push last item on the stack
+      }
+    }
+
+  void compile_variable(registered_functions&, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Variable& var, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     environment_entry e;
@@ -930,7 +943,8 @@ namespace
 
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, target, asmcode::MEM_R15, ne.pos);
-      code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, ne.pos);
+      //code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, ne.pos);
+      add_global_variable_to_debug_info(code, ne.pos, ops);
       }
     else
       {
@@ -944,7 +958,8 @@ namespace
         case environment_entry::st_global:
           code.add(asmcode::MOV, asmcode::R15, GLOBALS);
           code.add(asmcode::MOV, target, asmcode::MEM_R15, e.pos);
-          code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, e.pos);
+          //code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, e.pos);
+          add_global_variable_to_debug_info(code, e.pos, ops);
           break;
         }
       }
@@ -1214,7 +1229,7 @@ namespace
       compile_prim_call_not_inlined(fns, env, rd, data, code, prim, pm, options);
     }
 
-  void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options&)
+  void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options& ops)
     {
     environment_entry e;
     if (!env->find(e, prim.primitive_name))
@@ -1223,7 +1238,8 @@ namespace
       }
     code.add(asmcode::MOV, asmcode::R15, GLOBALS);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);
-    code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, e.pos);
+    //code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, e.pos);
+    add_global_variable_to_debug_info(code, e.pos, ops);
     }
 
   void compile_prim(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)

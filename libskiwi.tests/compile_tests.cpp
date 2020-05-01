@@ -427,6 +427,15 @@ namespace
       }
     };
 
+  std::string first_line(const std::string& long_string)
+    {
+    auto pos = long_string.find_first_of('\n');
+    if (pos == std::string::npos)
+      return long_string;
+    else
+      return long_string.substr(0, pos-1);
+    }
+
   struct fixnums : public compile_fixture
     {
     void test()
@@ -4492,7 +4501,7 @@ to /* and */ in c/c++
       TEST_EQ("((multiple . values) 1 2 3)", run("(values 1 2 3)"));
 
       TEST_EQ("3", run("(call-with-values (lambda () (values 1 2)) +)"));
-      TEST_EQ("runtime error: <lambda>: invalid number of arguments: call-with-values", run("(call-with-values (lambda () 1) (lambda (x y) (+ x y)))"));
+      TEST_EQ("runtime error: <lambda>: invalid number of arguments:", first_line(run("(call-with-values (lambda () 1) (lambda (x y) (+ x y)))")));
 
       TEST_EQ("5", run("(call-with-values (lambda () (values 4 5)) (lambda (a b) b))"));
       TEST_EQ("-1", run("(call-with-values * -)"));
@@ -5291,7 +5300,7 @@ to /* and */ in c/c++
 
 #endif
     uint64_t res = skiwi_run_raw(script);
-    TEST_EQ("runtime error: closure expected: add4", skiwi_raw_to_string(res));
+    TEST_EQ("runtime error: closure expected:", first_line(skiwi_raw_to_string(res)));
     skiwi_quit();
     }
 
@@ -5353,14 +5362,14 @@ to /* and */ in c/c++
 #else
     uint64_t res = skiwi_run_raw("(apply load '(\"./data/load_test_3.scm\"))");
 #endif
-    TEST_EQ("runtime error: closure expected: invalid-function", skiwi_raw_to_string(res));
+    TEST_EQ("runtime error: closure expected:", first_line(skiwi_raw_to_string(res)));
 
 #ifdef _WIN32
     res = skiwi_run_raw("(begin (apply load '(\"data\\\\load_test_3.scm\")) (+ 1 2))");
 #else
     res = skiwi_run_raw("(begin (apply load '(\"./data/load_test_3.scm\")) (+ 1 2))");
 #endif
-    TEST_EQ("runtime error: closure expected: invalid-function", skiwi_raw_to_string(res));
+    TEST_EQ("runtime error: closure expected:", first_line(skiwi_raw_to_string(res)));
     skiwi_quit();
     }
 
@@ -5579,6 +5588,7 @@ void run_all_compile_tests()
   load_error();
   load_test();
   empty_let_crash().test();
-#endif
+
   many_vars_in_lambda_test().test();
+#endif
   }

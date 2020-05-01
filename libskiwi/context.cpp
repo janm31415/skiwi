@@ -35,6 +35,11 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
 
   c.temporary_flonum[0] = make_block_header(1, T_FLONUM);
 
+  for (int i = 0; i < SKIWI_VARIABLE_DEBUG_STACK_SIZE; ++i)
+    {
+    c.last_global_variable_used[i] = (uint64_t)-1;
+    }
+
   *c.dcvt = (uint64_t)'%' | (((uint64_t)'l') << 8) | (((uint64_t)'l') << 16) | (((uint64_t)'d') << 24);
   *c.ocvt = (uint64_t)'%' | (((uint64_t)'l') << 8) | (((uint64_t)'l') << 16) | (((uint64_t)'o') << 24);
   *c.xcvt = (uint64_t)'%' | (((uint64_t)'l') << 8) | (((uint64_t)'l') << 16) | (((uint64_t)'x') << 24);

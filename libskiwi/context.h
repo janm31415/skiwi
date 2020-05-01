@@ -6,6 +6,8 @@
 #include <asm/asmcode.h>
 #include <stdint.h>
 
+#define SKIWI_VARIABLE_DEBUG_STACK_SIZE 5
+
 SKIWI_BEGIN
 
 struct context {
@@ -37,12 +39,14 @@ struct context {
   uint64_t* dcvt; // offset 200
   uint64_t* ocvt; // offset 208
   uint64_t* xcvt; // offset 216
-  uint64_t* gcvt; // offset 224
-  uint64_t last_global_variable_used; // offset 232
-  uint64_t* stack_top; // offset 240
-  uint64_t* stack; // offset 248
-  uint64_t* stack_save; // offset 256
-  uint64_t* error_label; // offset 264
+  uint64_t* gcvt; // offset 224  
+  uint64_t* stack_top; // offset 232
+  uint64_t* stack; // offset 240
+  uint64_t* stack_save; // offset 248
+  uint64_t* error_label; // offset 256
+
+  uint64_t last_global_variable_used[SKIWI_VARIABLE_DEBUG_STACK_SIZE];
+
   uint64_t* memory_allocated;
   };
 

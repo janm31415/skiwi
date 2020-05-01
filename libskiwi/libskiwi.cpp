@@ -848,14 +848,9 @@ std::string skiwi_last_global_variable_used()
   using namespace SKIWI;
   if (!cd.initialized)
     throw std::runtime_error("Skiwi is not initialized");
-  uint64_t pos = cd.ctxt.last_global_variable_used;
-  std::pair<std::string, environment_entry> res;
-  if (cd.env->find_if(res, [&](const std::pair<std::string, environment_entry>& v) { return v.second.pos == pos; }))
-    {
-    std::string varname = get_variable_name_before_alpha(res.first);
-    return varname;
-    }
-  return "";
+  std::stringstream ss;
+  print_last_global_variable_used(ss, cd.env, cd.rd, &cd.ctxt);
+  return ss.str();
   }
 
 void skiwi_quit()

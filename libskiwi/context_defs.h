@@ -18,7 +18,6 @@ SKIWI_BEGIN
 #define ALLOC asmcode::RBP
 #define MEM_ALLOC asmcode::MEM_RBP
 #define BYTE_MEM_ALLOC asmcode::BYTE_MEM_RBP
-#define ERROR asmcode::MEM_R10, 264
 
 #define ALLOC_SAVED asmcode::MEM_R10, 72
 #define LIMIT asmcode::MEM_R10, 80
@@ -41,16 +40,20 @@ SKIWI_BEGIN
 #define XCVT asmcode::MEM_R10, 216
 #define GCVT asmcode::MEM_R10, 224
 
-#define LAST_GLOBAL_VARIABLE_USED asmcode::MEM_R10, 232
+#define STACK_TOP asmcode::MEM_R10, 232
+#define STACK asmcode::MEM_R10, 240
+#define STACK_SAVE asmcode::MEM_R10, 248
 
-#define STACK_TOP asmcode::MEM_R10, 240
-#define STACK asmcode::MEM_R10, 248
-#define STACK_SAVE asmcode::MEM_R10, 256
+#define ERROR asmcode::MEM_R10, 256
+
+#define LAST_GLOBAL_VARIABLE_USED asmcode::MEM_R10, 264
+
+
 #define STACK_REGISTER asmcode::R13
 #define STACK_REGISTER_MEM asmcode::MEM_R13
 
 #define CONTINUE asmcode::RBX
 
-#define CELLS(n) n*8
+#define CELLS(n) (n)*8
 
 SKIWI_END

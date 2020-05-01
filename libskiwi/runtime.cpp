@@ -60,36 +60,6 @@ namespace
     int second_item_of_pair;
     };
 
-  void print_last_global_variable_used(std::ostream& out, std::shared_ptr<SKIWI::environment<SKIWI::environment_entry>> env, const repl_data& rd, const context* p_ctxt)
-    {
-    if (!p_ctxt)
-      return;
-    if (!env.get())
-      return;
-    uint64_t pos = p_ctxt->last_global_variable_used;
-    std::pair<std::string, SKIWI::environment_entry> res;
-    if (env->find_if(res, [&](const std::pair<std::string, SKIWI::environment_entry>& v) { return v.second.pos == pos; }))
-      {
-      std::string varname = get_variable_name_before_alpha(res.first);
-      if (varname.substr(0, 3) == "#%q")
-        {
-        std::stringstream ss;
-        ss << varname.substr(3);
-        uint64_t ind;
-        ss >> ind;
-        for (const auto& q : rd.quote_to_index)
-          {
-          if (q.second == ind)
-            {
-            out << "(quote " << q.first << ")";
-            }
-          }
-        }
-      else
-        out << varname;      
-      }
-    }
-
   void print_ptr(uint64_t rax2, std::ostream& out, std::shared_ptr<SKIWI::environment<SKIWI::environment_entry>> env, const repl_data& rd, const context* p_ctxt)
     {
     std::vector<std::string> texts;
@@ -449,6 +419,42 @@ namespace
       }
     for (const auto& s : texts)
       out << s;
+    }
+  }
+
+void print_last_global_variable_used(std::ostream& out, std::shared_ptr<SKIWI::environment<SKIWI::environment_entry>> env, const repl_data& rd, const context* p_ctxt)
+  {
+  if (!p_ctxt)
+    return;
+  if (!env.get())
+    return;
+
+  out << "\ncall stack:\n";
+  for (int stack_item = SKIWI_VARIABLE_DEBUG_STACK_SIZE - 1; stack_item >= 0; --stack_item)
+    {
+    uint64_t pos = p_ctxt->last_global_variable_used[stack_item];
+    std::pair<std::string, SKIWI::environment_entry> res;
+    if (env->find_if(res, [&](const std::pair<std::string, SKIWI::environment_entry>& v) { return v.second.pos == pos; }))
+      {
+      out << std::setw(4) << stack_item << ": ";
+      std::string varname = get_variable_name_before_alpha(res.first);
+      if (varname.substr(0, 3) == "#%q")
+        {
+        std::stringstream ss;
+        ss << varname.substr(3);
+        uint64_t ind;
+        ss >> ind;
+        for (const auto& q : rd.quote_to_index)
+          {
+          if (q.second == ind)
+            {
+            out << "(quote " << q.first << ")\n";
+            }
+          }
+        }
+      else
+        out << varname << "\n";
+      }
     }
   }
 
