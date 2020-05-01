@@ -66,9 +66,9 @@ I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaf
     skiwi> (import 'slib)
 You should now be able to use the slib functionality.
 
-Integrate skiwi as scripting language in your c/c++ program
+Integrate skiwi as scripting language in your c++ program
 -----------------------------------------------------------
-In this section I'll explain how skiwi can be integrated in your c or c++ program by looking at the Game of Life example code that is in the repository.
+In this section I'll explain how skiwi can be integrated in your c++ program by looking at the Game of Life example code that is in the repository.
 Skiwi is designed as a library that you can include in your own project. You only have to include the libskiwi.h header file and you're good to go.
 I assume you are familiar with Conway's Game of Life, if not, take a look at the [Wikipedia page](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life). Essentially it is a cellular automaton with the following two rules:
 -  If a cell is on and has either two or three neighbors that are on in the current generation, it stays on; otherwise, the cell turns off.
@@ -136,8 +136,8 @@ In Game of Life we have however added a couple of functions to skiwi. Here `regi
       return nullptr;
       }
 
-Inside `register_functions` we call `skiwi::register_external_primitive` to register a c/c++ function with skiwi.
-The first argument to `skiwi::register_external_primitive` is the scheme name for the procedure that you want to register, then follows the address to the c/cpp function that you want to call from skiwi. The third argument is the return type of the function. The next arguments are the types of the c/c++ function arguments if the c/c++ function has any. Finally, the last argument of `skiwi::register_external_primitive` is a help text that will be shown when you type `,external` in the skiwi prompt.
+Inside `register_functions` we call `skiwi::register_external_primitive` to register a c++ function with skiwi.
+The first argument to `skiwi::register_external_primitive` is the scheme name for the procedure that you want to register, then follows the address to the c/cpp function that you want to call from skiwi. The third argument is the return type of the function. The next arguments are the types of the c++ function arguments if the c++ function has any. Finally, the last argument of `skiwi::register_external_primitive` is a help text that will be shown when you type `,external` in the skiwi prompt.
 
 The available return/argument types are
 
@@ -147,5 +147,5 @@ The available return/argument types are
     skiwi_int64
     skiwi_scm
     skiwi_void    
-All types should be straightforward, except for `skiwi_scm` which is special. If you use `skiwi_scm` you will receive a `uint64_t` value as input that will represent a skiwi value. To interpret it correctly you need to understand how skiwi stores its information in the registers, see file runtime.cpp for more info. You can also use `skiwi_scm` as return value, allowing to write data from your c/c++ application to the skiwi heap.
+All types should be straightforward, except for `skiwi_scm` which is special. If you use `skiwi_scm` you will receive a `uint64_t` value as input that will represent a skiwi value. To interpret it correctly you need to understand how skiwi stores its information in the registers, see file runtime.cpp for more info. You can also use `skiwi_scm` as return value, allowing to write data from your c++ application to the skiwi heap.
 
