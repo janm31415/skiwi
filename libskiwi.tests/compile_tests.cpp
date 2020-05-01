@@ -344,9 +344,9 @@ namespace
         {
         uint64_t res = f(&ctxt);
         if (no_stack_info)
-          scheme_runtime(res, str, env, nullptr);
+          scheme_runtime(res, str, env, rd, nullptr);
         else
-          scheme_runtime(res, str, env, &ctxt);
+          scheme_runtime(res, str, env, rd, &ctxt);
         compiled_functions.emplace_back(f, size);
         }
       return str.str();
@@ -3101,7 +3101,8 @@ namespace
   void print_scheme_variable(uint64_t i)
     {
     std::shared_ptr<SKIWI::environment<SKIWI::environment_entry>> env;
-    scheme_runtime(i, std::cout, env, nullptr);
+    repl_data rd;
+    scheme_runtime(i, std::cout, env, rd, nullptr);
     }
 
   struct foreign_call_11 : public compile_fixture {

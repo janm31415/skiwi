@@ -162,7 +162,7 @@ namespace
                 {
                 auto res = fie(p_ctxt);
                 std::stringstream str;
-                scheme_runtime(res, str, *p_env, p_ctxt);
+                scheme_runtime(res, str, *p_env, *p_rd, p_ctxt);
                 std::string script = str.str();
                 //printf("%s\n", script.c_str());
                 auto tokens = tokenize(script);

@@ -418,7 +418,7 @@ namespace
       }
     }
 
-  void show_environment(const std::shared_ptr<environment<environment_entry>>& env, const repl_data&, const context& ctxt)
+  void show_environment(const std::shared_ptr<environment<environment_entry>>& env, const repl_data& rd, const context& ctxt)
     {
     using namespace SKIWI;
     for (const auto& item : *env)
@@ -429,7 +429,7 @@ namespace
         uint64_t rax = *(ctxt.globals + (item.second.pos >> 3));
         out(" : ");
         std::stringstream ss;
-        scheme_runtime(rax, ss, env, &ctxt);
+        scheme_runtime(rax, ss, env, rd, &ctxt);
         out(ss.str());
         }
       out("\n");
@@ -643,7 +643,7 @@ std::string skiwi_raw_to_string(uint64_t scm_value)
   {
   std::stringstream ss;
   ss << std::setprecision(6);
-  scheme_runtime(scm_value, ss, cd.env, &cd.ctxt);
+  scheme_runtime(scm_value, ss, cd.env, cd.rd, &cd.ctxt);
   return ss.str();
   }
 
