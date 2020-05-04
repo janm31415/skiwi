@@ -296,6 +296,7 @@ namespace
       case asmcode::TEST: return "test";
       case asmcode::UCOMISD: return "ucomisd";
       case asmcode::VADDPS: return "vaddps";
+      case asmcode::VCMPPS: return "vcmpps";
       case asmcode::VDIVPS: return "vdivps";
       case asmcode::VMULPS: return "vmulps";
       case asmcode::VMOVD: return "vmovd";
@@ -2232,6 +2233,13 @@ namespace
     return t;
     }
 
+  opcode_table make_vcmpps_table()
+    {
+    opcode_table t;
+    //VEX.NDS.256.0F.WIG C2 /r ib VCMPPS ymm1, ymm2, ymm3 / m256, imm8
+    t.add_opcode(make_vex_opcode("VCMPPS", opcode::NDS, opcode::_256, opcode::_0F, opcode::WIG, 0xC2, opcode::r | opcode::ib, opcode::ymm, opcode::ymm, opcode::ymm_m256, opcode::imm8));
+    return t;
+    }
 
   opcode_table make_vsubps_table()
     {
@@ -2830,6 +2838,7 @@ namespace
     table["TEST"] = make_test_table();
     table["UCOMISD"] = make_ucomisd_table();
     table["VADDPS"] = make_vaddps_table();
+    table["VCMPPS"] = make_vcmpps_table();
     table["VSUBPS"] = make_vsubps_table();
     table["VDIVPS"] = make_vdivps_table();
     table["VMULPS"] = make_vmulps_table();
@@ -3522,6 +3531,7 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::TEST: return fill(opcode_stream, *this, g_table.find("TEST")->second);
     case asmcode::UCOMISD: return fill(opcode_stream, *this, g_table.find("UCOMISD")->second);
     case asmcode::VADDPS: return fill(opcode_stream, *this, g_table.find("VADDPS")->second);
+    case asmcode::VCMPPS: return fill(opcode_stream, *this, g_table.find("VCMPPS")->second);
     case asmcode::VDIVPS: return fill(opcode_stream, *this, g_table.find("VDIVPS")->second);
     case asmcode::VMULPS: return fill(opcode_stream, *this, g_table.find("VMULPS")->second);
     case asmcode::VMOVD: return fill(opcode_stream, *this, g_table.find("VMOVD")->second);

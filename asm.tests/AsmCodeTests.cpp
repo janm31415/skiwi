@@ -1539,6 +1539,15 @@ namespace
     _check_buffer(buffer, size, { 0x66, 0x0F, 0x2E, 0xC1 });
     }
 
+  void asmcode_vcmpps()
+    {
+    asmcode code; uint8_t buffer[255];
+    code.add(asmcode::VCMPPS, asmcode::YMM0, asmcode::YMM0, asmcode::YMM1, asmcode::NUMBER, 255);
+    uint64_t size;
+    size = code.get_instructions_list().front()[0].fill_opcode(buffer);
+    _check_buffer(buffer, size, { 0xC5, 0xFC, 0xC2, 0xC1, 0xFF });
+    }
+
   }
 
 ASM_END
@@ -1640,4 +1649,5 @@ void run_all_asm_code_tests()
   mov_constant_number();
   test_test();
   test_ucomisd();
+  asmcode_vcmpps();
   }
