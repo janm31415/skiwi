@@ -296,17 +296,24 @@ namespace
       case asmcode::TEST: return "test";
       case asmcode::UCOMISD: return "ucomisd";
       case asmcode::VADDPS: return "vaddps";
+      case asmcode::VORPS: return "vorps";
       case asmcode::VCMPPS: return "vcmpps";
       case asmcode::VDIVPS: return "vdivps";
+      case asmcode::VMAXPS: return "vmaxps";
+      case asmcode::VMINPS: return "vminps";
       case asmcode::VMULPS: return "vmulps";
       case asmcode::VMOVD: return "vmovd";
       case asmcode::VMOVQ: return "vmovq";
+      case asmcode::VMOVMSKPS: return "vmovmskps";
       case asmcode::VSQRTPS: return "vsqrtps";
       case asmcode::VCVTSI2SS: return "vcvtsi2ss";
+      case asmcode::VCVTDQ2PS: return "vcvtsi2ps";
       case asmcode::VCVTSD2SS: return "vcvtsd2ss";
-      case asmcode::VCVTTSS2SI: return "vcvttss2si";
+      case asmcode::VCVTSS2SI: return "vcvtss2si";
+      case asmcode::VCVTPS2DQ: return "vcvtps2dq";
       case asmcode::VSHUFPS: return "vshufps";
       case asmcode::VSUBPS: return "vsubps";
+      case asmcode::VROUNDPS: return "vroundps";
       case asmcode::VXORPS: return "vxorps";
       case asmcode::VBROADCASTSS: return "vbroadcastss";
       case asmcode::VMOVAPS: return "vmovaps";
@@ -1401,6 +1408,74 @@ namespace
     return o;
     }
 
+  opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_1 f1, opcode::vex_field_2 f2, opcode::vex_field_4 f4, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3)
+    {
+    opcode o;
+    o.prefix = 0;
+    o.mnemonic = mnemonic;
+    o.flags = flags;
+    o.opcode_id = opcode_id;
+    o.opcode_id_2 = 0;
+    o.operand_1 = op1;
+    o.operand_2 = op2;
+    o.operand_3 = op3;
+    o.operand_4 = opcode::none;
+    o.use_postfix = false;
+    o.vex = true;
+    o.vex_1 = f1;
+    o.vex_2 = f2;
+    o.vex_3 = opcode::NO_PREFIX;
+    o.vex_4 = f4;
+    o.vex_5 = opcode::W0;
+    o.vex_6 = opcode::NO_WIG;
+    return o;
+    }
+
+  opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_6 f6, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2)
+    {
+    opcode o;
+    o.prefix = 0;
+    o.mnemonic = mnemonic;
+    o.flags = flags;
+    o.opcode_id = opcode_id;
+    o.opcode_id_2 = 0;
+    o.operand_1 = op1;
+    o.operand_2 = op2;
+    o.operand_3 = opcode::none;
+    o.operand_4 = opcode::none;
+    o.use_postfix = false;
+    o.vex = true;
+    o.vex_1 = opcode::vvvv_must_be_1111;
+    o.vex_2 = f2;
+    o.vex_3 = f3;
+    o.vex_4 = f4;
+    o.vex_5 = opcode::W0;
+    o.vex_6 = f6;
+    return o;
+    }
+
+  opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_6 f6, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2, opcode::opcode_operand_type op3)
+    {
+    opcode o;
+    o.prefix = 0;
+    o.mnemonic = mnemonic;
+    o.flags = flags;
+    o.opcode_id = opcode_id;
+    o.opcode_id_2 = 0;
+    o.operand_1 = op1;
+    o.operand_2 = op2;
+    o.operand_3 = op3;
+    o.operand_4 = opcode::none;
+    o.use_postfix = false;
+    o.vex = true;
+    o.vex_1 = opcode::vvvv_must_be_1111;
+    o.vex_2 = f2;
+    o.vex_3 = f3;
+    o.vex_4 = f4;
+    o.vex_5 = opcode::W0;
+    o.vex_6 = f6;
+    return o;
+    }
 
   opcode make_vex_opcode(std::string mnemonic, opcode::vex_field_2 f2, opcode::vex_field_3 f3, opcode::vex_field_4 f4, opcode::vex_field_5 f5, uint8_t opcode_id, uint64_t flags, opcode::opcode_operand_type op1, opcode::opcode_operand_type op2)
     {
@@ -2233,11 +2308,44 @@ namespace
     return t;
     }
 
+  opcode_table make_vandps_table()
+    {
+    opcode_table t;
+    //VEX.NDS.256.0F 54 /r VANDPS ymm1, ymm2, ymm3 / m256
+    t.add_opcode(make_vex_opcode("VANDPS", opcode::NDS, opcode::_256, opcode::_0F, 0x54, opcode::r, opcode::ymm, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
+  opcode_table make_vandnps_table()
+    {
+    opcode_table t;
+    //VEX.NDS.256.0F 55 /r VANDNPS ymm1, ymm2, ymm3 / m256
+    t.add_opcode(make_vex_opcode("VANDNPS", opcode::NDS, opcode::_256, opcode::_0F, 0x55, opcode::r, opcode::ymm, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
+  opcode_table make_vorps_table()
+    {
+    opcode_table t;
+    //VEX.NDS.256.0F 56 /r VORPS ymm1, ymm2, ymm3 / m256
+    t.add_opcode(make_vex_opcode("VORPS", opcode::NDS, opcode::_256, opcode::_0F, 0x56, opcode::r, opcode::ymm, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
   opcode_table make_vcmpps_table()
     {
     opcode_table t;
     //VEX.NDS.256.0F.WIG C2 /r ib VCMPPS ymm1, ymm2, ymm3 / m256, imm8
     t.add_opcode(make_vex_opcode("VCMPPS", opcode::NDS, opcode::_256, opcode::_0F, opcode::WIG, 0xC2, opcode::r | opcode::ib, opcode::ymm, opcode::ymm, opcode::ymm_m256, opcode::imm8));
+    return t;
+    }
+
+
+  opcode_table make_vroundps_table()
+    {
+    opcode_table t;
+    //VEX.256.66.0F3A.WIG 08 /r ib VROUNDPS ymm1, ymm2 / m256, imm8
+    t.add_opcode(make_vex_opcode("VROUNDPS", opcode::_256, opcode::_66, opcode::_0F3A, opcode::WIG, 0x08, opcode::r | opcode::ib, opcode::ymm, opcode::ymm_m256, opcode::imm8));
     return t;
     }
 
@@ -2268,6 +2376,15 @@ namespace
     return t;
     }
 
+  opcode_table make_vmovmskps_table()
+    {
+    opcode_table t;
+    //VEX.256.0F.WIG 50 /r VMOVMSKPS reg, ymm2
+
+    //HACK: actually the last opcode should be ymm instead of ymm_m256, but then the modrm byte is wrong. So to make the rule work, I replaced ymm by ymm_m256
+    t.add_opcode(make_vex_opcode("VMOVMSKPS", opcode::_256, opcode::_0F, opcode::WIG, 0x50, opcode::r, opcode::r64, opcode::ymm_m256));
+    return t;
+    }
 
   opcode_table make_vmovq_table()
     {
@@ -2296,6 +2413,14 @@ namespace
     return t;
     }
 
+  opcode_table make_vcvtdq2ps_table()
+    {
+    opcode_table t;
+    //VEX.256.0F.WIG 5B /r VCVTDQ2PS ymm1, ymm2 / m256
+    t.add_opcode(make_vex_opcode("VCVTDQ2PS", opcode::_256, opcode::_0F, opcode::WIG, 0x5B, opcode::r, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
   opcode_table make_vcvtsd2ss_table()
     {
     opcode_table t;
@@ -2304,11 +2429,35 @@ namespace
     return t;
     }
 
-  opcode_table make_vcvttss2si_table()
+  opcode_table make_vcvtss2si_table()
     {
     opcode_table t;
-    //VEX.LIG.F3.0F.W1 2C /r VCVTTSS2SI r64, xmm1 / m32
-    t.add_opcode(make_vex_opcode("VCVTTSS2SI", opcode::LIG, opcode::_F3, opcode::_0F, opcode::W1, 0x2C, opcode::r, opcode::r64, opcode::xmm_m32));
+    //VEX.LIG.F3.0F.W1 2C /r VCVTSS2SI r64, xmm1 / m32
+    t.add_opcode(make_vex_opcode("VCVTSS2SI", opcode::LIG, opcode::_F3, opcode::_0F, opcode::W1, 0x2C, opcode::r, opcode::r64, opcode::xmm_m32));
+    return t;
+    }
+
+  opcode_table make_vcvtps2dq_table()
+    {
+    opcode_table t;
+    //VEX.256.66.0F.WIG 5B /r VCVTPS2DQ ymm1, ymm2 / m256
+    t.add_opcode(make_vex_opcode("VCVTPS2DQ", opcode::_256, opcode::_66, opcode::_0F, opcode::WIG, 0x5B, opcode::r, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
+  opcode_table make_vminps_table()
+    {
+    opcode_table t;
+    // VEX.NDS.256.0F.WIG 5D / r VMINPS ymm1, ymm2, ymm3 / m256
+    t.add_opcode(make_vex_opcode("VMINPS", opcode::NDS, opcode::_256, opcode::_0F, opcode::WIG, 0x5D, opcode::r, opcode::ymm, opcode::ymm, opcode::ymm_m256));
+    return t;
+    }
+
+  opcode_table make_vmaxps_table()
+    {
+    opcode_table t;
+    //VEX.NDS.256.0F.WIG 5F /r VMAXPS ymm1, ymm2, ymm3 / m256
+    t.add_opcode(make_vex_opcode("VMAXPS", opcode::NDS, opcode::_256, opcode::_0F, opcode::WIG, 0x5F, opcode::r, opcode::ymm, opcode::ymm, opcode::ymm_m256));
     return t;
     }
 
@@ -2838,20 +2987,29 @@ namespace
     table["TEST"] = make_test_table();
     table["UCOMISD"] = make_ucomisd_table();
     table["VADDPS"] = make_vaddps_table();
+    table["VANDPS"] = make_vandps_table();
+    table["VANDNPS"] = make_vandnps_table();
     table["VCMPPS"] = make_vcmpps_table();
     table["VSUBPS"] = make_vsubps_table();
     table["VDIVPS"] = make_vdivps_table();
     table["VMULPS"] = make_vmulps_table();
+    table["VMAXPS"] = make_vmaxps_table();
+    table["VMINPS"] = make_vminps_table();
+    table["VMOVMSKPS"] = make_vmovmskps_table();
     table["VMOVD"] = make_vmovd_table();
     table["VMOVQ"] = make_vmovq_table();
+    table["VORPS"] = make_vorps_table();
     table["VSQRTPS"] = make_vsqrtps_table();
     table["VCVTSI2SS"] = make_vcvtsi2ss_table();
+    table["VCVTDQ2PS"] = make_vcvtdq2ps_table();
     table["VCVTSD2SS"] = make_vcvtsd2ss_table();
-    table["VCVTTSS2SI"] = make_vcvttss2si_table();
+    table["VCVTSS2SI"] = make_vcvtss2si_table();
+    table["VCVTPS2DQ"] = make_vcvtps2dq_table();
     table["VSHUFPS"] = make_vshufps_table();
     table["VBROADCASTSS"] = make_vbroadcastss_table();
     table["VMOVAPS"] = make_vmovaps_table();
     table["VPERM2F128"] = make_vperm2f128_table();
+    table["VROUNDPS"] = make_vroundps_table();
     table["VXORPS"] = make_vxorps_table();
     table["XOR"] = make_xor_table();
     table["XORPD"] = make_xorpd_table();
@@ -3531,20 +3689,29 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::TEST: return fill(opcode_stream, *this, g_table.find("TEST")->second);
     case asmcode::UCOMISD: return fill(opcode_stream, *this, g_table.find("UCOMISD")->second);
     case asmcode::VADDPS: return fill(opcode_stream, *this, g_table.find("VADDPS")->second);
+    case asmcode::VANDPS: return fill(opcode_stream, *this, g_table.find("VANDPS")->second);
+    case asmcode::VANDNPS: return fill(opcode_stream, *this, g_table.find("VANDNPS")->second);
     case asmcode::VCMPPS: return fill(opcode_stream, *this, g_table.find("VCMPPS")->second);
     case asmcode::VDIVPS: return fill(opcode_stream, *this, g_table.find("VDIVPS")->second);
+    case asmcode::VMAXPS: return fill(opcode_stream, *this, g_table.find("VMAXPS")->second);
+    case asmcode::VMINPS: return fill(opcode_stream, *this, g_table.find("VMINPS")->second);
     case asmcode::VMULPS: return fill(opcode_stream, *this, g_table.find("VMULPS")->second);
     case asmcode::VMOVD: return fill(opcode_stream, *this, g_table.find("VMOVD")->second);
+    case asmcode::VMOVMSKPS: return fill(opcode_stream, *this, g_table.find("VMOVMSKPS")->second);
     case asmcode::VMOVQ: return fill(opcode_stream, *this, g_table.find("VMOVQ")->second);
+    case asmcode::VORPS: return fill(opcode_stream, *this, g_table.find("VORPS")->second);
     case asmcode::VSQRTPS: return fill(opcode_stream, *this, g_table.find("VSQRTPS")->second);
     case asmcode::VCVTSI2SS: return fill(opcode_stream, *this, g_table.find("VCVTSI2SS")->second);
+    case asmcode::VCVTDQ2PS: return fill(opcode_stream, *this, g_table.find("VCVTDQ2PS")->second);
     case asmcode::VCVTSD2SS: return fill(opcode_stream, *this, g_table.find("VCVTSD2SS")->second);
-    case asmcode::VCVTTSS2SI: return fill(opcode_stream, *this, g_table.find("VCVTTSS2SI")->second);
+    case asmcode::VCVTSS2SI: return fill(opcode_stream, *this, g_table.find("VCVTSS2SI")->second);
+    case asmcode::VCVTPS2DQ: return fill(opcode_stream, *this, g_table.find("VCVTPS2DQ")->second);
     case asmcode::VSHUFPS: return fill(opcode_stream, *this, g_table.find("VSHUFPS")->second);
     case asmcode::VSUBPS: return fill(opcode_stream, *this, g_table.find("VSUBPS")->second);
     case asmcode::VBROADCASTSS: return fill(opcode_stream, *this, g_table.find("VBROADCASTSS")->second);
     case asmcode::VMOVAPS: return fill(opcode_stream, *this, g_table.find("VMOVAPS")->second);
     case asmcode::VPERM2F128: return fill(opcode_stream, *this, g_table.find("VPERM2F128")->second);
+    case asmcode::VROUNDPS: return fill(opcode_stream, *this, g_table.find("VROUNDPS")->second);
     case asmcode::VXORPS: return fill(opcode_stream, *this, g_table.find("VXORPS")->second);
     case asmcode::XOR: return fill(opcode_stream, *this, g_table.find("XOR")->second);
     case asmcode::XORPD: return fill(opcode_stream, *this, g_table.find("XORPD")->second);
