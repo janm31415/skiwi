@@ -95,6 +95,7 @@ class asmcode
       JGS, // JG short
       JGES, // JGE short
       JNES, // JNE short
+      KMOVW,
       LABEL,
       LABEL_ALIGNED,
       MOV,
@@ -146,6 +147,7 @@ class asmcode
       VDIVPS,
       VMULPS,
       VMOVD,
+      VMOVSS,
       VMOVMSKPS,
       VMOVQ,
       VORPS,
@@ -157,6 +159,7 @@ class asmcode
       VMOVAPS,
       VPERM2F128,
       VROUNDPS,
+      VRNDSCALEPS,
       VSHUFPS,
       VXORPS,
       XOR,
@@ -279,6 +282,14 @@ class asmcode
       XMM5,
       XMM6,
       XMM7,
+      XMM8,
+      XMM9,
+      XMM10,
+      XMM11,
+      XMM12,
+      XMM13,
+      XMM14,
+      XMM15,
       YMM0,
       YMM1,
       YMM2,
@@ -286,7 +297,52 @@ class asmcode
       YMM4,
       YMM5,
       YMM6,
-      YMM7
+      YMM7,
+      YMM8,
+      YMM9,
+      YMM10,
+      YMM11,
+      YMM12,
+      YMM13,
+      YMM14,
+      YMM15,
+      ZMM0,
+      ZMM1,
+      ZMM2,
+      ZMM3,
+      ZMM4,
+      ZMM5,
+      ZMM6,
+      ZMM7,
+      ZMM8,
+      ZMM9,
+      ZMM10,
+      ZMM11,
+      ZMM12,
+      ZMM13,
+      ZMM14,
+      ZMM15,
+      K0,
+      K1,
+      K2,
+      K3,
+      K4,
+      K5,
+      K6,
+      K7
+      };
+
+    enum optional_modifier
+      {
+      z,
+      k0,
+      k1,
+      k2,
+      k3,
+      k4,
+      k5,
+      k6,
+      k7
       };
 
     struct instruction
@@ -294,6 +350,7 @@ class asmcode
       operation oper;
       operand operand1, operand2, operand3, operand4;
       uint64_t operand1_mem, operand2_mem, operand3_mem, operand4_mem;
+      optional_modifier opt1;
       std::string text;
 
       ASSEMBLER_API instruction();
@@ -301,10 +358,13 @@ class asmcode
       ASSEMBLER_API instruction(operation op);
       ASSEMBLER_API instruction(operation op, operand op1);
       ASSEMBLER_API instruction(operation op, operand op1, operand op2);
+      ASSEMBLER_API instruction(operation op, operand op1, optional_modifier m, operand op2);
       ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3);
       ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem);
       ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2);
+      ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, optional_modifier m, operand op2);
       ASSEMBLER_API instruction(operation op, operand op1, uint64_t op1_mem, operand op2, uint64_t op2_mem);
+      ASSEMBLER_API instruction(operation op, operand op1, optional_modifier m, operand op2, uint64_t op2_mem);
       ASSEMBLER_API instruction(operation op, operand op1, operand op2, uint64_t op2_mem);
       ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, uint64_t op3_mem);
       ASSEMBLER_API instruction(operation op, operand op1, operand op2, operand op3, operand op4, uint64_t op4_mem);
