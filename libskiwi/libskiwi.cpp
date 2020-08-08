@@ -60,6 +60,7 @@ namespace
     std::string help_text;
     };
 
+  static std::string prompt = "skiwi> ";
   static compiler_data cd;
   static std::vector<external_primitive> external_primitives;
 
@@ -90,7 +91,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling primitives library...\n");
+      log(prompt.c_str(), "compiling primitives library...\n");
       compile_primitives_library(cd.pm, cd.rd, cd.env, cd.ctxt, code, cd.ops);
       first_pass_data d;
       uint64_t size;
@@ -116,7 +117,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling string-to-symbol...\n");
+      log(prompt.c_str(), "compiling string-to-symbol...\n");
       if (load_string_to_symbol(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
@@ -145,7 +146,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling apply...\n");
+      log(prompt.c_str(), "compiling apply...\n");
       if (load_apply(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
@@ -174,7 +175,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling call/cc library...\n");
+      log(prompt.c_str(), "compiling call/cc library...\n");
       if (load_callcc(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
@@ -203,7 +204,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling r5rs library...\n");
+      log(prompt.c_str(), "compiling r5rs library...\n");
       if (load_r5rs(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
@@ -232,7 +233,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling modules...\n");
+      log(prompt.c_str(), "compiling modules...\n");
       if (load_modules(cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
         {
         first_pass_data d;
@@ -261,7 +262,7 @@ namespace
     asmcode code;
     try
       {
-      log("skiwi> compiling ", path, " library\n");
+      log(prompt.c_str(), "compiling ", path, " library\n");
       compiler_options ops = cd.ops;
       ops.do_alpha_conversion = false;
       if (load_lib(path, cd.env, cd.rd, cd.md, cd.ctxt, code, cd.pm, cd.ops))
@@ -488,7 +489,7 @@ namespace
       ss << input_file.rdbuf();
       file_in_chars = ss.str();
       input_file.close();
-      log("skiwi> compiling ", filename, "...\n");
+      log(prompt.c_str(), "compiling ", filename, "...\n");
       res = skiwi_run_raw(file_in_chars, env, rd);
       }
     else
@@ -772,7 +773,7 @@ void skiwi_repl(int argc, char** argv)
   bool quit = false;
   while (!quit)
     {
-    out("skiwi> ");
+    out(prompt.c_str());
 
     std::getline(std::cin, input);
 
@@ -1231,6 +1232,11 @@ scm_type make_vector(const std::vector<scm_type>& vec)
     }
   cd.ctxt.alloc = alloc;
   return scm_value;
+  }
+
+void set_prompt(const std::string& prompt_text)
+  {
+  prompt = prompt_text;
   }
 
 SKIWI_END
