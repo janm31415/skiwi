@@ -65,6 +65,9 @@ void throw_error(int line_nr, int column_nr, const std::string& filename, error_
     case unsupported_number_syntax:
       str << "Unsupported number syntax";
       break;
+    case invalid_c_input_syntax:
+      str << "Invalid c-input syntax";
+      break;
     }
   if (!extra.empty())
     str << ": " << extra;

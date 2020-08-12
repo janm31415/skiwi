@@ -2,6 +2,7 @@
 #include "alpha_conversion.h"
 #include "assignable_var_conversion.h"
 #include "cps_conversion.h"
+#include "cinput_conversion.h"
 #include "closure_conversion.h"
 #include "constant_folding.h"
 #include "constant_propagation.h"
@@ -21,7 +22,7 @@
 #include "single_begin_conversion.h"
 #include "tail_call_analysis.h"
 #include "tail_calls_check.h"
-
+#include "cinput_data.h"
 
 #include <ctime>
 
@@ -81,7 +82,7 @@ namespace
     }
   }
 
-void preprocess(environment_map& env, repl_data& data, macro_data& md, context& ctxt, Program& prog, const primitive_map& pm, const compiler_options& options)
+void preprocess(environment_map& env, repl_data& data, macro_data& md, context& ctxt, cinput_data& cinput, Program& prog, const primitive_map& pm, const compiler_options& options)
   {
   tic();
   debug_string("start handle_include_command");
@@ -101,6 +102,14 @@ void preprocess(environment_map& env, repl_data& data, macro_data& md, context& 
     quasiquote_conversion(prog);
   debug_string("done quasiquote_conversion");
   toc();
+
+  tic();
+  debug_string("start c-input conversion");
+  if (options.do_cinput_conversion)
+    cinput_conversion(cinput, prog, env, data, ctxt);
+  debug_string("done c-input conversion");
+  toc();
+
   tic();
   debug_string("start define_conversion");
   if (options.do_define_conversion)

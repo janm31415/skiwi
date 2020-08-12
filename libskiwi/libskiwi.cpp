@@ -16,6 +16,7 @@
 #include "context.h"
 #include "load_lib.h"
 #include "macro_data.h"
+#include "cinput_data.h"
 #include "parse.h"
 #include "preprocess.h"
 #include "primitives_lib.h"
@@ -40,7 +41,7 @@ namespace
     compiler_data() : initialized(false), trace(nullptr) {}
 
     bool initialized;
-    typedef uint64_t(*fptr)(void*);
+    typedef uint64_t(*fptr)(void*, ...);
     compiler_options ops;
     context ctxt;
     repl_data rd;
@@ -53,6 +54,24 @@ namespace
     std::ostream* stderror;
     std::ostream* stdoutput;
     };
+
+  struct compiler_data_memento
+    {
+    void* rbx;
+    void* rdi;
+    void* rsi;
+    void* rsp;
+    void* rbp;
+    void* r12;
+    void* r13;
+    void* r14;
+    void* r15;
+    uint64_t* rsp_save; // state of RSP should be preserved, as it might contain RET information and so on
+    uint64_t* stack_save; // stack_save contains the stack position at the beginning of the scheme call. After the scheme call the stack should be at this position again. Therefore this value needs to be preserved.
+    uint64_t* error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
+    };
+
+  static std::vector< compiler_data_memento> compiler_data_memento_vector;
 
   struct external_primitive
     {
@@ -453,7 +472,6 @@ namespace
     return external_function::T_VOID;
     }
 
-
   uint64_t skiwi_run_raw(const std::string& scheme_expression, environment_map& env, repl_data& rd)
     {
     return compile_and_run(scheme_expression, env, rd);
@@ -573,7 +591,8 @@ std::string skiwi_expand(const std::string& scheme_expression)
     cd.rd = rd_copy;
     return e.what();
     }
-  preprocess(cd.env, cd.rd, cd.md, cd.ctxt, prog, cd.pm, cd.ops);
+  cinput_data cinput;
+  preprocess(cd.env, cd.rd, cd.md, cd.ctxt, cinput, prog, cd.pm, cd.ops);
   cd.env = env_copy;
   cd.rd = rd_copy;
   std::stringstream ss;
@@ -633,6 +652,23 @@ std::string skiwi_assembly(const std::string& scheme_expression)
   std::stringstream ss;
   code.stream(ss);
   return ss.str();
+  }
+
+skiwi_compiled_function_ptr skiwi_compile(const std::string& scheme_expression)
+  {
+  using namespace SKIWI;
+  uint64_t size;
+  compiler_data::fptr f = compile(size, scheme_expression, cd.env, cd.rd);
+  if (f)
+    {    
+    cd.compiled_functions.emplace_back(f, size);
+    }
+  return (skiwi_compiled_function_ptr)f;
+  }
+
+void* skiwi_get_context()
+  {
+  return (void*)(&cd.ctxt);
   }
 
 uint64_t skiwi_run_raw(const std::string& scheme_expression)
@@ -1141,6 +1177,31 @@ std::vector<scm_type> scm_type::get_list() const
   return out;
   }
 
+std::string scm_type::get_closure_name() const
+  {
+  assert(is_closure());
+  uint64_t* p_glob = cd.ctxt.globals;
+  for (; p_glob < cd.ctxt.globals_end; ++p_glob)
+    {
+    if (*p_glob == scm_value)
+      break;
+    }
+  if (p_glob >= cd.ctxt.globals_end)
+    return std::string("");
+  uint64_t pos = (p_glob - cd.ctxt.globals) << 3;
+  std::pair<std::string, environment_entry> out;
+  if (cd.env->find_if(out, [&](const std::pair<std::string, environment_entry>& v)
+    {
+    if (v.second.st != environment_entry::st_global)
+      return false;
+    return v.second.pos == pos;
+    }))
+    {
+    return get_variable_name_before_alpha(out.first);
+    }
+    return std::string("");
+  }
+
 scm_type make_fixnum(int64_t value)
   {
   return (uint64_t)int2fixnum(value);
@@ -1239,12 +1300,50 @@ void set_prompt(const std::string& prompt_text)
   prompt = prompt_text;
   }
 
+void save_compiler_data()
+  {
+  compiler_data_memento cdm;
+  // saving the registers, should we save the locals too??
+  cdm.rbx = cd.ctxt.rbx;
+  cdm.rdi = cd.ctxt.rdi;
+  cdm.rsi = cd.ctxt.rsi;
+  cdm.rsp = cd.ctxt.rsp;
+  cdm.rbp = cd.ctxt.rbp;
+  cdm.r12 = cd.ctxt.r12;
+  cdm.r13 = cd.ctxt.r13;
+  cdm.r14 = cd.ctxt.r14;
+  cdm.r15 = cd.ctxt.r15;
+  cdm.rsp_save = cd.ctxt.rsp_save; // state of RSP should be preserved, as it might contain RET information and so on
+  cdm.stack_save = cd.ctxt.stack_save; // stack_save contains the stack position at the beginning of the scheme call. After the scheme call the stack should be at this position again. Therefore this value needs to be preserved.
+  cdm.error_label = cd.ctxt.error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
+
+  compiler_data_memento_vector.push_back(cdm);
+  }
+
+void restore_compiler_data()
+  {
+  compiler_data_memento cdm = compiler_data_memento_vector.back();
+  compiler_data_memento_vector.pop_back();
+  cd.ctxt.rbx = cdm.rbx;
+  cd.ctxt.rdi = cdm.rdi;
+  cd.ctxt.rsi = cdm.rsi;
+  cd.ctxt.rsp = cdm.rsp;
+  cd.ctxt.rbp = cdm.rbp;
+  cd.ctxt.r12 = cdm.r12;
+  cd.ctxt.r13 = cdm.r13;
+  cd.ctxt.r14 = cdm.r14;
+  cd.ctxt.r15 = cdm.r15;
+  cd.ctxt.rsp_save = cdm.rsp_save;
+  cd.ctxt.stack_save = cdm.stack_save;
+  cd.ctxt.error_label = cdm.error_label;
+  }
+
 SKIWI_END
 
 uint64_t c_prim_load(const char* filename)
   {
   using namespace SKIWI;
-
+  /*
   // saving the registers, should we save the locals too??
   void* rbx = cd.ctxt.rbx;
   void* rdi = cd.ctxt.rdi;
@@ -1258,6 +1357,9 @@ uint64_t c_prim_load(const char* filename)
   uint64_t* rsp_save = cd.ctxt.rsp_save; // state of RSP should be preserved, as it might contain RET information and so on
   uint64_t* stack_save = cd.ctxt.stack_save; // stack_save contains the stack position at the beginning of the scheme call. After the scheme call the stack should be at this position again. Therefore this value needs to be preserved.
   uint64_t* error_label = cd.ctxt.error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
+  */
+
+  save_compiler_data();
 
   /*
   Before loading the script, we first make a list of global variables that are still dangling.
@@ -1358,6 +1460,7 @@ uint64_t c_prim_load(const char* filename)
     cd.env->push(reserved.acd.name, reserved.e);
     }
 
+  /*
   cd.ctxt.rbx = rbx;
   cd.ctxt.rdi = rdi;
   cd.ctxt.rsi = rsi;
@@ -1370,6 +1473,8 @@ uint64_t c_prim_load(const char* filename)
   cd.ctxt.rsp_save = rsp_save;
   cd.ctxt.stack_save = stack_save;
   cd.ctxt.error_label = error_label;
+  */
+  restore_compiler_data();
   return res;
   }
 
@@ -1378,6 +1483,7 @@ uint64_t c_prim_eval(const char* script)
   {
   uint64_t return_value = undefined;
   using namespace skiwi;
+  /*
   void* rbx = cd.ctxt.rbx;
   void* rdi = cd.ctxt.rdi;
   void* rsi = cd.ctxt.rsi;
@@ -1390,6 +1496,8 @@ uint64_t c_prim_eval(const char* script)
   uint64_t* rsp_save = cd.ctxt.rsp_save; // state of RSP should be preserved, as it might contain RET information and so on
   uint64_t* stack_save = cd.ctxt.stack_save; // stack_save contains the stack position at the beginning of the scheme call. After the scheme call the stack should be at this position again. Therefore this value needs to be preserved.
   uint64_t* error_label = cd.ctxt.error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
+  */
+  save_compiler_data();
 
   if (!cd.initialized)
     throw std::runtime_error("Skiwi is not initialized");
@@ -1400,7 +1508,7 @@ uint64_t c_prim_eval(const char* script)
     return_value = f(&cd.ctxt);
     cd.compiled_functions.emplace_back(f, size);
     }
-
+  /*
   cd.ctxt.rbx = rbx;
   cd.ctxt.rdi = rdi;
   cd.ctxt.rsi = rsi;
@@ -1413,5 +1521,7 @@ uint64_t c_prim_eval(const char* script)
   cd.ctxt.rsp_save = rsp_save;
   cd.ctxt.stack_save = stack_save;
   cd.ctxt.error_label = error_label;
+  */
+  restore_compiler_data();
   return return_value;
   }

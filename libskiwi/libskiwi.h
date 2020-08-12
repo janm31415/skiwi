@@ -6,10 +6,14 @@
 #include <ostream>
 #include <vector>
 
+#include "types.h"
+
 namespace skiwi
   {
 
   class scm_type;
+
+  typedef uint64_t(*skiwi_compiled_function_ptr)(void*, ...);
 
   struct skiwi_parameters
     {
@@ -32,6 +36,21 @@ namespace skiwi
   SKIWI_SCHEME_API void skiwi_repl(int argc = 0, char** argv = nullptr);
 
   SKIWI_SCHEME_API void skiwi_quit();
+
+  SKIWI_SCHEME_API skiwi_compiled_function_ptr skiwi_compile(const std::string& scheme_expression);  
+
+  SKIWI_SCHEME_API void* skiwi_get_context();
+
+  template <typename... Args>
+  uint64_t skiwi_run_raw(skiwi_compiled_function_ptr fun, Args... args)
+    {
+    uint64_t result = undefined;
+    if (fun)
+      {
+      result = fun(skiwi_get_context(), args...);
+      }
+    return result;
+    }
 
   SKIWI_SCHEME_API uint64_t skiwi_run_raw(const std::string& scheme_expression);
   SKIWI_SCHEME_API uint64_t skiwi_runf_raw(const std::string& scheme_file);
@@ -105,6 +124,7 @@ namespace skiwi
       SKIWI_SCHEME_API std::pair<scm_type, scm_type> get_pair() const;
       SKIWI_SCHEME_API std::vector<scm_type> get_list() const;
       SKIWI_SCHEME_API double* flonum_address() const;
+      SKIWI_SCHEME_API std::string get_closure_name() const;
 
       SKIWI_SCHEME_API uint64_t value() const { return scm_value; }
     private:
@@ -124,4 +144,7 @@ namespace skiwi
   
 
   SKIWI_SCHEME_API void set_prompt(const std::string& prompt_text);
+
+  SKIWI_SCHEME_API void save_compiler_data();
+  SKIWI_SCHEME_API void restore_compiler_data();  
   }

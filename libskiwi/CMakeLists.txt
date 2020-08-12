@@ -17,6 +17,8 @@ asm_aux.h
 assignable_var_conversion.h
 c_prim_decl.h
 closure_conversion.h
+cinput_conversion.h
+cinput_data.h
 compiler_options.h
 compile_data.h
 compile_error.h
@@ -77,6 +79,7 @@ alpha_conversion.cpp
 asm_aux.cpp
 assignable_var_conversion.cpp
 closure_conversion.cpp
+cinput_conversion.cpp
 compiler_options.cpp
 compile_data.cpp
 compile_error.cpp

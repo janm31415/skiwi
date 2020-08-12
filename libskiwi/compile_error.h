@@ -23,7 +23,8 @@ enum error_type
   too_many_globals,
   division_by_zero,
   macro_invalid_pattern,
-  unsupported_number_syntax
+  unsupported_number_syntax,
+  invalid_c_input_syntax
   };
 
 void throw_error(int line_nr, int column_nr, const std::string& filename, error_type t, std::string extra = std::string(""));

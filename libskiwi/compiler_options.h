@@ -17,6 +17,7 @@ struct compiler_options
   bool do_lambda_to_let_conversion;
   bool do_define_conversion;
   bool do_closure_conversion;
+  bool do_cinput_conversion;
   bool do_cps_conversion;
   bool do_free_variables_analysis;
   bool do_linear_scan;

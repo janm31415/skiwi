@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -23,6 +23,7 @@
 #include <fcntl.h>
 
 #include <libskiwi/alpha_conversion.h>
+#include <libskiwi/cinput_data.h>
 #include <libskiwi/compiler_options.h>
 #include <libskiwi/compile_data.h>
 #include <libskiwi/compiler.h>
@@ -55,7 +56,7 @@ namespace
   struct compile_fixture
     {
     compiler_options ops;
-    typedef uint64_t(*fun_ptr)(void*);
+    typedef uint64_t(*fun_ptr)(void*, ...);
     context ctxt;
     repl_data rd;
     macro_data md;
@@ -232,7 +233,8 @@ namespace
       auto tokens = tokenize(script);
       std::reverse(tokens.begin(), tokens.end());
       auto prog = make_program(tokens);
-      preprocess(env, rd, md, ctxt, prog, pm, ops);
+      cinput_data cinput;
+      preprocess(env, rd, md, ctxt, cinput, prog, pm, ops);
       return prog;
       }
 
@@ -304,7 +306,8 @@ namespace
       auto tokens = tokenize(script);
       std::reverse(tokens.begin(), tokens.end());
       auto prog = make_program(tokens);
-      preprocess(env, rd, md, ctxt, prog, pm, ops);
+      cinput_data cinput;
+      preprocess(env, rd, md, ctxt, cinput, prog, pm, ops);
       SKIWI::dump(out, prog);
       out << "\n";
       }
@@ -5401,6 +5404,90 @@ to /* and */ in c/c++
       }
     };
 
+
+  struct c_input_test_2doubles : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(double a, double b) " )
+
+(+ a b)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);        
+        if (f)
+          {
+          uint64_t res = f(&ctxt, 3.4, 6.7);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, 101.123, 4.5);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("10.1", str.str());
+      TEST_EQ("105.623", str2.str());
+      }
+    };
+
+  struct c_input_test_2ints : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(int a, int b) " )
+
+(+ a b)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          uint64_t res = f(&ctxt, 3, 6);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, 101, 4);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("9", str.str());
+      TEST_EQ("105", str2.str());
+      }
+    };
   }
 
 SKIWI_END
@@ -5593,4 +5680,7 @@ void run_all_compile_tests()
 
   many_vars_in_lambda_test().test();
 #endif
+
+  c_input_test_2doubles().test();
+  c_input_test_2ints().test();
   }

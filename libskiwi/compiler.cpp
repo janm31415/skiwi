@@ -9,6 +9,7 @@
 #include "primitives.h"
 #include "types.h"
 #include "globals.h"
+#include "cinput_data.h"
 #include <map>
 #include <string>
 #include <sstream>
@@ -92,7 +93,7 @@ function_map generate_function_map()
   fm.insert(std::pair<std::string, fun_ptr>("fxsub1", &compile_fx_sub1));
   fm.insert(std::pair<std::string, fun_ptr>("fxzero?", &compile_fx_is_zero));
   fm.insert(std::pair<std::string, fun_ptr>("getenv", &compile_getenv));
-  fm.insert(std::pair<std::string, fun_ptr>("halt", &compile_halt));  
+  fm.insert(std::pair<std::string, fun_ptr>("halt", &compile_halt));
   fm.insert(std::pair<std::string, fun_ptr>("ieee754-sign", &compile_ieee754_sign));
   fm.insert(std::pair<std::string, fun_ptr>("ieee754-exponent", &compile_ieee754_exponent));
   fm.insert(std::pair<std::string, fun_ptr>("ieee754-mantissa", &compile_ieee754_mantissa));
@@ -607,7 +608,7 @@ namespace
     // all arguments are in the registers or locals
     // there are no other local variables due to cps conversion
     if (ops.garbage_collection)
-      {            
+      {
       std::string garbage_error = label_to_string(label++);
       std::string continue_label = label_to_string(label++);
       code.add(asmcode::CMP, ALLOC, LIMIT);
@@ -916,8 +917,8 @@ namespace
       code.add(asmcode::COMMENT, "\tCycling the call stack");
       for (int i = SKIWI_VARIABLE_DEBUG_STACK_SIZE - 2; i >= 0; --i) // move items on the stack further down
         {
-        code.add(asmcode::MOV, asmcode::R15, LAST_GLOBAL_VARIABLE_USED+CELLS(i));
-        code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED+CELLS(i+1), asmcode::R15);
+        code.add(asmcode::MOV, asmcode::R15, LAST_GLOBAL_VARIABLE_USED + CELLS(i));
+        code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED + CELLS(i + 1), asmcode::R15);
         }
       code.add(asmcode::COMMENT, "\tAdding the latest item to the call stack");
       code.add(asmcode::MOV, LAST_GLOBAL_VARIABLE_USED, asmcode::NUMBER, pos); // push last item on the stack
@@ -930,7 +931,7 @@ namespace
     assert(target_is_valid(target));
     environment_entry e;
     if (!env->find(e, var.name))
-      {      
+      {
       /*
       This variable was not found in the environment. However: it is possible that this variable will be defined by a load at runtime.
       Therefore we now allocate a global position for this variable. It might be filled in later by load.
@@ -948,7 +949,7 @@ namespace
       *addr = unresolved_tag; // This is a new address, previously equal to unalloc_tag. To avoid that gc stops here when cleaning, we change its value to unresolved_tag.
 
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
-      code.add(asmcode::MOV, target, asmcode::MEM_R15, ne.pos);      
+      code.add(asmcode::MOV, target, asmcode::MEM_R15, ne.pos);
       add_global_variable_to_debug_info(code, ne.pos, ops);
       }
     else
@@ -962,7 +963,7 @@ namespace
             code.add(asmcode::MOV, target, (asmcode::operand)e.pos); break;
         case environment_entry::st_global:
           code.add(asmcode::MOV, asmcode::R15, GLOBALS);
-          code.add(asmcode::MOV, target, asmcode::MEM_R15, e.pos);          
+          code.add(asmcode::MOV, target, asmcode::MEM_R15, e.pos);
           add_global_variable_to_debug_info(code, e.pos, ops);
           break;
         }
@@ -1154,7 +1155,7 @@ namespace
     if (prim.primitive_name == "halt")
       {
       if (options.garbage_collection)
-        {        
+        {
         code.add(asmcode::COMMENT, "clean all locals for gc");
         //Here we clear all our registers, so that they can be cleaned up by the gc
         code.add(asmcode::MOV, asmcode::R15, LOCAL);
@@ -1241,7 +1242,7 @@ namespace
       throw_error(prim.line_nr, prim.column_nr, prim.filename, primitive_unknown, prim.primitive_name);
       }
     code.add(asmcode::MOV, asmcode::R15, GLOBALS);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);    
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);
     add_global_variable_to_debug_info(code, e.pos, ops);
     }
 
@@ -1329,24 +1330,24 @@ namespace
         }
       }
 
-  #ifndef _WIN32
-      std::vector<asmcode::operand> arg_regs;
-      int regular_arg_id = 0;
-      int floating_arg_id = 0;
-      for (size_t i = 0; i < foreign.arguments.size(); ++i)
+#ifndef _WIN32
+    std::vector<asmcode::operand> arg_regs;
+    int regular_arg_id = 0;
+    int floating_arg_id = 0;
+    for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
-        if (ext.arguments[i] == external_function::T_DOUBLE)
+      if (ext.arguments[i] == external_function::T_DOUBLE)
         {
-          arg_regs.push_back(arg_float_reg[floating_arg_id]);
-          ++floating_arg_id;
+        arg_regs.push_back(arg_float_reg[floating_arg_id]);
+        ++floating_arg_id;
         }
-        else
+      else
         {
-          arg_regs.push_back(arg_reg[regular_arg_id]);
-          ++regular_arg_id;
+        arg_regs.push_back(arg_reg[regular_arg_id]);
+        ++regular_arg_id;
         }
       }
-  #endif
+#endif
 
     for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
@@ -1361,11 +1362,11 @@ namespace
         {
         case external_function::T_BOOL:
         {
-        #ifdef _WIN32
+#ifdef _WIN32
         auto reg = arg_reg[i];
-        #else
+#else
         auto reg = arg_regs[i];
-        #endif
+#endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         code.add(asmcode::CMP, reg, asmcode::NUMBER, bool_f);
@@ -1376,11 +1377,11 @@ namespace
         }
         case external_function::T_INT64:
         {
-        #ifdef _WIN32
+#ifdef _WIN32
         auto reg = arg_reg[i];
-        #else
+#else
         auto reg = arg_regs[i];
-        #endif
+#endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         if (ops.safe_primitives)
@@ -1393,22 +1394,22 @@ namespace
         }
         case external_function::T_SCM:
         {
-        #ifdef _WIN32
+#ifdef _WIN32
         auto reg = arg_reg[i];
-        #else
+#else
         auto reg = arg_regs[i];
-        #endif
+#endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
         break;
         }
         case external_function::T_DOUBLE:
         {
-        #ifdef _WIN32
+#ifdef _WIN32
         auto reg = arg_float_reg[i];
-        #else
+#else
         auto reg = arg_regs[i];
-        #endif
+#endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
         if (ops.safe_primitives)
@@ -1421,11 +1422,11 @@ namespace
         }
         case external_function::T_CHAR_POINTER:
         {
-        #ifdef _WIN32
+#ifdef _WIN32
         auto reg = arg_reg[i];
-        #else
+#else
         auto reg = arg_regs[i];
-        #endif
+#endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
         if (ops.safe_primitives)
@@ -1693,8 +1694,67 @@ namespace
     }
   }
 
+void compile_cinput_parameters(cinput_data& cinput, environment_map& env, context& ctxt, asmcode& code)
+  {
+#ifdef _WIN32
+  for (int j = 0; j < (int)cinput.parameters.size(); ++j)
+    {
+    asmcode::operand op;
+    if (cinput.parameters[j].second == cinput_data::cin_int)
+      {
+      std::string name = cinput.parameters[j].first;
+
+      environment_entry e;
+      if (!env->find(e, name) || e.st != environment_entry::st_global)
+        throw_error(invalid_c_input_syntax);
+      uint64_t* addr = ctxt.globals + (e.pos >> 3);
+      uint64_t location = (uint64_t)addr;
+      code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, location);
+      if (j == 0)
+        {
+        code.add(asmcode::SHL, asmcode::RDX, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::RDX);
+        }
+      else if (j == 1)
+        {
+        code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::R8);
+        }
+      else if (j == 2)
+        {
+        code.add(asmcode::SHL, asmcode::R9, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::R9);
+        }
+      }
+    else if (cinput.parameters[j].second == cinput_data::cin_double)
+      {
+      std::string name = cinput.parameters[j].first;
+
+      environment_entry e;
+      if (!env->find(e, name) || e.st != environment_entry::st_global)
+        throw_error(invalid_c_input_syntax);
+      uint64_t* addr = ctxt.globals + (e.pos >> 3);
+      uint64_t location = (uint64_t)addr;
+      code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, location);
+      code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R11);
+      code.add(asmcode::AND, asmcode::RAX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
+      if (j == 0)
+        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM1);
+      else if (j == 1)
+        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM2);
+      else if (j == 2)
+        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM3);
+      else
+        throw_error(invalid_c_input_syntax);
+      }
+    }
+#else 
+  throw_error(invalid_c_input_syntax);
+#endif
+  }
+
 void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, asmcode& code, Program& prog, const primitive_map& pm, const std::map<std::string, external_function>& external_functions, const compiler_options& options)
-  {  
+  {
   static function_map prims = generate_function_map();
   static function_map inlined_prims = generate_inlined_primitives();
   registered_functions fns;
@@ -1702,17 +1762,19 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   fns.inlined_primitives = &inlined_prims;
   fns.externals = &external_functions;
 
-  preprocess(env, rd, md, ctxt, prog, pm, options);
+  cinput_data cinput;
+
+  preprocess(env, rd, md, ctxt, cinput, prog, pm, options);
 
   label = 0;
 
   compile_data data = create_compile_data(ctxt.total_heap_size, ctxt.globals_end - ctxt.globals, (uint32_t)ctxt.number_of_locals, &ctxt);
-  
+
   data.ra->make_all_available();
   data.ra_map.clear();
   data.first_ra_map_time_point_to_elapse = (uint64_t)-1;
 
-  
+
 
   if (rd.global_index > data.globals_stack) // too many globals declared
     throw_error(too_many_globals);
@@ -1726,6 +1788,7 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   We store the pointer to the context in register r10.
   */
   code.add(asmcode::MOV, CONTEXT, asmcode::RCX);
+  
 #else
   /*
   Linux parameters calling convention: rdi, rsi, rdx, rcx, r8, r9
@@ -1734,11 +1797,14 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   */
   code.add(asmcode::MOV, CONTEXT, asmcode::RDI);
 #endif
+
+  compile_cinput_parameters(cinput, env, ctxt, code);
+
   /*
   Save the current content of the registers in the context
   */
   store_registers(code);
-  
+
   code.add(asmcode::MOV, asmcode::R11, asmcode::LABELADDRESS, "L_error");
   code.add(asmcode::MOV, ERROR, asmcode::R11); // store the error label in the context
 

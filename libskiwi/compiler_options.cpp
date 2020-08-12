@@ -8,6 +8,7 @@ compiler_options::compiler_options()
   do_assignable_variables_conversion = true;
   do_define_conversion = true;
   do_closure_conversion = true;
+  do_cinput_conversion = true;
   do_cps_conversion = true;  
   do_free_variables_analysis = true;
   do_linear_scan = true;

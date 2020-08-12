@@ -11,6 +11,8 @@
 
 SKIWI_BEGIN
 
-SKIWI_SCHEME_API void preprocess(environment_map& env, repl_data& data, macro_data& md, context& ctxt, Program& prog, const primitive_map& pm, const compiler_options& options);
+struct cinput_data;
+
+SKIWI_SCHEME_API void preprocess(environment_map& env, repl_data& data, macro_data& md, context& ctxt, cinput_data& cinput, Program& prog, const primitive_map& pm, const compiler_options& options);
 
 SKIWI_END
