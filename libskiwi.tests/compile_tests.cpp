@@ -5447,6 +5447,49 @@ to /* and */ in c/c++
       }
     };
 
+  struct c_input_test_8doubles : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(double a, double b, double c, double d, double e, double f, double g, double h) " )
+
+(+ a b c d e f g h)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          uint64_t res = f(&ctxt, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 101.123, 4.5);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("39.6", str.str());
+      TEST_EQ("105.623", str2.str());
+      }
+    };
+
+
   struct c_input_test_2ints : public compile_fixture
     {
     void test()
@@ -5486,6 +5529,49 @@ to /* and */ in c/c++
         }
       TEST_EQ("9", str.str());
       TEST_EQ("105", str2.str());
+      }
+    };
+
+  struct c_input_test_8ints : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(int a, int b, int c, int d, int e, int f, int g, int h) " )
+
+(+ a b c d e f g h)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          // important to cast to int64_t. Otherwise 32-bit version dword [rsp] is used to pass parameters, and there will be bagger in the upper half of the 64-bit register.
+          uint64_t res = f(&ctxt, (int64_t)1, (int64_t)2, (int64_t)3, (int64_t)4, (int64_t)5, (int64_t)6, (int64_t)7, (int64_t)8);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, (int64_t)0, (int64_t)1, (int64_t)3, (int64_t)4, (int64_t)0, (int64_t)0, (int64_t)0, (int64_t)8);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("36", str.str());
+      TEST_EQ("16", str2.str());
       }
     };
   }
@@ -5682,5 +5768,7 @@ void run_all_compile_tests()
 #endif
 
   c_input_test_2doubles().test();
+  c_input_test_8doubles().test();
   c_input_test_2ints().test();
+  c_input_test_8ints().test();
   }

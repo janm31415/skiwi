@@ -1694,7 +1694,7 @@ namespace
     }
   }
 
-void compile_cinput_parameters(cinput_data& cinput, environment_map& env, context& ctxt, asmcode& code)
+void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcode& code)
   {
 #ifdef _WIN32
   for (int j = 0; j < (int)cinput.parameters.size(); ++j)
@@ -1707,23 +1707,28 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, contex
       environment_entry e;
       if (!env->find(e, name) || e.st != environment_entry::st_global)
         throw_error(invalid_c_input_syntax);
-      uint64_t* addr = ctxt.globals + (e.pos >> 3);
-      uint64_t location = (uint64_t)addr;
-      code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, location);
+      code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
       if (j == 0)
         {
         code.add(asmcode::SHL, asmcode::RDX, asmcode::NUMBER, 1);
-        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::RDX);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RDX);
         }
       else if (j == 1)
         {
         code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1);
-        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::R8);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R8);
         }
       else if (j == 2)
         {
         code.add(asmcode::SHL, asmcode::R9, asmcode::NUMBER, 1);
-        code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::R9);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R9);
+        }
+      else
+        {
+        int addr = j - 3;
+        code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RSP, (40 + addr * 8));
+        code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
         }
       }
     else if (cinput.parameters[j].second == cinput_data::cin_double)
@@ -1733,19 +1738,29 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, contex
       environment_entry e;
       if (!env->find(e, name) || e.st != environment_entry::st_global)
         throw_error(invalid_c_input_syntax);
-      uint64_t* addr = ctxt.globals + (e.pos >> 3);
-      uint64_t location = (uint64_t)addr;
-      code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, location);
-      code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R11);
-      code.add(asmcode::AND, asmcode::RAX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
+
+      uint64_t header = make_block_header(1, T_FLONUM);
+      code.add(asmcode::MOV, asmcode::R15, ALLOC);
+      code.add(asmcode::OR, asmcode::R15, asmcode::NUMBER, block_tag);
+      code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, header);
+      code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
+
       if (j == 0)
-        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM1);
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM1);
       else if (j == 1)
-        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM2);
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM2);
       else if (j == 2)
-        code.add(asmcode::MOVQ, asmcode::MEM_RAX, CELLS(1), asmcode::XMM3);
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM3);
       else
-        throw_error(invalid_c_input_syntax);
+        {
+        int addr = j - 3;
+        code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::MEM_RSP, (40 + addr * 8));
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM0);
+        }
+
+      code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(2));
+      code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
+      code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R15);
       }
     }
 #else 
@@ -1796,9 +1811,7 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   We store the pointer to the context in register r10.
   */
   code.add(asmcode::MOV, CONTEXT, asmcode::RDI);
-#endif
-
-  compile_cinput_parameters(cinput, env, ctxt, code);
+#endif  
 
   /*
   Save the current content of the registers in the context
@@ -1812,12 +1825,14 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   code.add(asmcode::MOV, STACK_SAVE, STACK_REGISTER);  // save the current stack position. At the end of this method we'll restore STACK to STACK_SAVE, as scheme
                                                        // does not pop every stack position that was pushed due to continuation passing style.
 
+  code.add(asmcode::MOV, ALLOC, ALLOC_SAVED);
+
+  compile_cinput_parameters(cinput, env, code);
+
   /*
   Align stack with 16 byte boundary
   */
   code.add(asmcode::AND, asmcode::RSP, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF0);
-
-  code.add(asmcode::MOV, ALLOC, ALLOC_SAVED);
 
   /*
   Make registers point to unalloc_tag, so that gc cannot crash due to old register content

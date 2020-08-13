@@ -106,7 +106,7 @@ void preprocess(environment_map& env, repl_data& data, macro_data& md, context& 
   tic();
   debug_string("start c-input conversion");
   if (options.do_cinput_conversion)
-    cinput_conversion(cinput, prog, env, data, ctxt);
+    cinput_conversion(cinput, prog, env, data);
   debug_string("done c-input conversion");
   toc();
 

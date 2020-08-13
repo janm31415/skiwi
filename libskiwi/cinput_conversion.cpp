@@ -215,26 +215,7 @@ namespace
     return str.str();
     }
 
-  uint64_t make_flonum(double value, context& ctxt)
-    {
-    uint64_t* alloc = ctxt.alloc;
-    int64_t header = make_block_header(1, T_FLONUM);
-    uint64_t scm_value = (uint64_t)alloc;
-    scm_value |= block_tag;
-    *alloc = header;
-    ++alloc;
-    *alloc = *(reinterpret_cast<uint64_t*>(&value));
-    ++alloc;
-    ctxt.alloc = alloc;
-    return scm_value;
-    }
-
-  uint64_t make_fixnum(uint64_t i)
-    {
-    return (i << fixnum_shift) | fixnum_tag;
-    }
-
-  void read_c_input(cinput_data& cinput, const Expression& expr, environment_map& env, repl_data& rd, context& ctxt)
+  void read_c_input(cinput_data& cinput, const Expression& expr, environment_map& env, repl_data& rd)
     {
     const Expression& pars = std::get<FunCall>(expr).arguments.front();
     const Literal& lit = std::get<Literal>(pars);
@@ -255,14 +236,11 @@ namespace
         std::string name = std::get<c_int>(p).name;
         std::string newname = make_name(name, rd.alpha_conversion_index++);
         alpha_env->push(name, newname);
-        uint64_t value = make_fixnum(0);
         environment_entry ne;
         ne.st = environment_entry::st_global;
         ne.pos = rd.global_index * 8;
         ++(rd.global_index);
         env->push(newname, ne);
-        uint64_t* addr = ctxt.globals + (ne.pos >> 3);
-        *addr = value; 
         cinput.parameters.emplace_back(newname, cinput_data::cin_int);
         }
       else if (std::holds_alternative<c_real>(p))
@@ -270,14 +248,11 @@ namespace
         std::string name = std::get<c_real>(p).name;
         std::string newname = make_name(name, rd.alpha_conversion_index++);
         alpha_env->push(name, newname);
-        uint64_t value = make_flonum(0.0, ctxt);
         environment_entry ne;
         ne.st = environment_entry::st_global;
         ne.pos = rd.global_index * 8;
         ++(rd.global_index);
         env->push(newname, ne);
-        uint64_t* addr = ctxt.globals + (ne.pos >> 3);
-        *addr = value;
         cinput.parameters.emplace_back(newname, cinput_data::cin_double);
         }
       }
@@ -285,14 +260,14 @@ namespace
     }
   }
 
-void cinput_conversion(cinput_data& cinput, Program& prog, environment_map& env, repl_data& rd, context& ctxt)
+void cinput_conversion(cinput_data& cinput, Program& prog, environment_map& env, repl_data& rd)
   {
   cinput.parameters.clear();
   if (!prog.expressions.empty())
     {
     if (is_c_input(prog.expressions.front()))
       {
-      read_c_input(cinput, prog.expressions.front(), env, rd, ctxt);
+      read_c_input(cinput, prog.expressions.front(), env, rd);
       prog.expressions.erase(prog.expressions.begin());
       }
     }
