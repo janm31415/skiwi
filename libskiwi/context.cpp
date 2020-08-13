@@ -23,6 +23,7 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
   c.globals_end = c.globals + globals_stack;
   c.stack_top = c.globals + globals_stack;
   c.stack = c.stack_top;
+  c.stack_end = c.stack + scheme_stack;
   c.from_space = c.globals + globals_stack + scheme_stack;
   c.to_space = c.from_space + (heap_size / 2);
   c.total_heap_size = heap_size;
@@ -51,6 +52,22 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
 void destroy_context(const context& ctxt)
   {
   delete[] ctxt.memory_allocated;
+  }
+
+context clone_context(const context& ctxt)
+  {
+  uint64_t heap_size = ctxt.total_heap_size;
+  uint64_t globals_stack = ctxt.globals_end - ctxt.globals;
+  uint64_t local_stack = ctxt.globals - ctxt.locals;
+  uint64_t scheme_stack = ctxt.stack_end - ctxt.stack_top;
+  context c = create_context(heap_size, globals_stack, (uint32_t)local_stack, scheme_stack);
+  
+  uint64_t total_size = (uint64_t)5 + (uint64_t)256 + (uint64_t)3 + (uint64_t)8 + (uint64_t)local_stack + globals_stack + heap_size + scheme_stack;
+
+  for (uint64_t i = 0; i < total_size; ++i)
+    c.memory_allocated[i] = ctxt.memory_allocated[i];
+
+  return c;
   }
 
 SKIWI_END

@@ -44,6 +44,7 @@ namespace
     typedef uint64_t(*fptr)(void*, ...);
     compiler_options ops;
     context ctxt;
+    std::list<context> ctxt_clones;
     repl_data rd;
     macro_data md;
     std::shared_ptr<environment<environment_entry>> env;
@@ -54,6 +55,13 @@ namespace
     std::ostream* stderror;
     std::ostream* stdoutput;
     };
+
+  void destroy_contexts(compiler_data& cd)
+    {
+    destroy_context(cd.ctxt);
+    for (auto& ctxt : cd.ctxt_clones)
+      destroy_context(ctxt);
+    }
 
   struct compiler_data_memento
     {
@@ -123,7 +131,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling primitives library";
       throw std::logic_error(ss.str().c_str());
@@ -152,7 +160,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling string-to-symbol";
       throw std::logic_error(ss.str().c_str());
@@ -181,7 +189,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling apply";
       throw std::logic_error(ss.str().c_str());
@@ -210,7 +218,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling call/cc library";
       throw std::logic_error(ss.str().c_str());
@@ -239,7 +247,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling r5rs library";
       throw std::logic_error(ss.str().c_str());
@@ -268,7 +276,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling modules";
       throw std::logic_error(ss.str().c_str());
@@ -299,7 +307,7 @@ namespace
       {
       for (auto& f : cd.compiled_functions)
         free_assembled_function((void*)f.first, f.second);
-      destroy_context(cd.ctxt);
+      destroy_contexts(cd);
       std::stringstream ss;
       ss << e.what() << " while compiling " << path << " library";
       throw std::logic_error(ss.str().c_str());
@@ -671,6 +679,13 @@ void* skiwi_get_context()
   return (void*)(&cd.ctxt);
   }
 
+void* skiwi_clone_context(void* ctxt)
+  {
+  context* p_ctxt = (context*)ctxt;
+  auto it = cd.ctxt_clones.insert(cd.ctxt_clones.end(), clone_context(*p_ctxt));
+  return &(*it);
+  }
+
 uint64_t skiwi_run_raw(const std::string& scheme_expression)
   {
   if (!cd.initialized)
@@ -900,7 +915,7 @@ void skiwi_quit()
   destroy_macro_data(cd.md);
   for (auto& f : cd.compiled_functions)
     free_assembled_function((void*)f.first, f.second);
-  destroy_context(cd.ctxt);
+  destroy_contexts(cd);
   cd.initialized = false;
   }
 

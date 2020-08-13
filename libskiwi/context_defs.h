@@ -46,7 +46,7 @@ SKIWI_BEGIN
 
 #define ERROR ASM::asmcode::MEM_R10, 256
 
-#define LAST_GLOBAL_VARIABLE_USED ASM::asmcode::MEM_R10, 264
+#define LAST_GLOBAL_VARIABLE_USED ASM::asmcode::MEM_R10, 272
 
 
 #define STACK_REGISTER ASM::asmcode::R13

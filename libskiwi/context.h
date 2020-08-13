@@ -44,8 +44,8 @@ struct context {
   uint64_t* stack; // offset 240
   uint64_t* stack_save; // offset 248
   uint64_t* error_label; // offset 256
-
-  uint64_t last_global_variable_used[SKIWI_VARIABLE_DEBUG_STACK_SIZE];
+  uint64_t* stack_end; // offset 264
+  uint64_t last_global_variable_used[SKIWI_VARIABLE_DEBUG_STACK_SIZE]; // offset 272
 
   uint64_t* memory_allocated;
   };
@@ -53,5 +53,5 @@ struct context {
 
 SKIWI_SCHEME_API context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t local_stack, uint64_t scheme_stack);
 SKIWI_SCHEME_API void destroy_context(const context& ctxt);
-
+SKIWI_SCHEME_API context clone_context(const context& ctxt);
 SKIWI_END

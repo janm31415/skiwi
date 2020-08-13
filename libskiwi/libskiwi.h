@@ -41,13 +41,15 @@ namespace skiwi
 
   SKIWI_SCHEME_API void* skiwi_get_context();
 
+  SKIWI_SCHEME_API void* skiwi_clone_context(void* ctxt);
+
   template <typename... Args>
-  uint64_t skiwi_run_raw(skiwi_compiled_function_ptr fun, Args... args)
+  uint64_t skiwi_run_raw(skiwi_compiled_function_ptr fun, void* ctxt, Args... args)
     {
     uint64_t result = undefined;
     if (fun)
       {
-      result = fun(skiwi_get_context(), args...);
+      result = fun(ctxt, args...);
       }
     return result;
     }
