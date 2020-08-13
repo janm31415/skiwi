@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -5699,6 +5699,45 @@ struct c_input_test_5ints : public compile_fixture
       TEST_EQ("16", str2.str());
       }
     };
+
+  struct c_input_test_mix_ints_doubles : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str;
+      std::string script = R"(
+(c-input "(int a, double b, int c, double d, int e, double f, int g, double h, int i, double j) " )
+
+(+ a b c d e f g h i j)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          // important to cast to int64_t. Otherwise 32-bit version dword [rsp] is used to pass parameters, and there will be bagger in the upper half of the 64-bit register.
+          uint64_t res = f(&ctxt, (int64_t)1, (double)2.1, (int64_t)3, (double)4.1, (int64_t)5, (double)6.1, (int64_t)7, (double)8.1, (int64_t)9, (double)10.1);
+          scheme_runtime(res, str, env, rd, nullptr);        
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("55.5", str.str());
+      }
+    };
   }
 
 SKIWI_END
@@ -5899,4 +5938,5 @@ void run_all_compile_tests()
   c_input_test_2ints().test();
   c_input_test_5ints().test();
   c_input_test_8ints().test();
+  c_input_test_mix_ints_doubles().test();
   }

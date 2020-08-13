@@ -1699,7 +1699,6 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
 #ifdef _WIN32
   for (int j = 0; j < (int)cinput.parameters.size(); ++j)
     {
-    asmcode::operand op;
     if (cinput.parameters[j].second == cinput_data::cin_int)
       {
       std::string name = cinput.parameters[j].first;
@@ -1766,7 +1765,6 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
 #else 
   for (int j = 0; j < (int)cinput.parameters.size(); ++j)
     {
-    asmcode::operand op;
     if (cinput.parameters[j].second == cinput_data::cin_int)
       {
       std::string name = cinput.parameters[j].first;
