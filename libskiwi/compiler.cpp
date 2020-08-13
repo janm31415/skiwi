@@ -1763,6 +1763,9 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       }
     }
 #else 
+  int int_index = 0;
+  int double_index = 0;
+  int rsp_index = 1;
   for (int j = 0; j < (int)cinput.parameters.size(); ++j)
     {
     if (cinput.parameters[j].second == cinput_data::cin_int)
@@ -1773,38 +1776,40 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       if (!env->find(e, name) || e.st != environment_entry::st_global)
         throw_error(invalid_c_input_syntax);
       code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
-      if (j == 0)
+      if (int_index == 0)
         {
         code.add(asmcode::SHL, asmcode::RSI, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RSI);
         }
-      else if (j == 1)
+      else if (int_index == 1)
         {
         code.add(asmcode::SHL, asmcode::RDX, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RDX);
         }
-      else if (j == 2)
+      else if (int_index == 2)
         {
         code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
         }
-      else if (j == 3)
+      else if (int_index == 3)
         {
         code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1); 
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R8);
         }
-      else if (j == 4)
+      else if (int_index == 4)
         {
         code.add(asmcode::SHL, asmcode::R9, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R9);
         }
       else
         {
-        int addr = j-4;
+        int addr = rsp_index;
         code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RSP, 8*addr);
         code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
+        ++rsp_index;
         }
+      ++int_index;
       }
     else if (cinput.parameters[j].second == cinput_data::cin_double)
       {
@@ -1820,32 +1825,34 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, header);
       code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
 
-      if (j == 0)
+      if (double_index == 0)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM0);
-      else if (j == 1)
+      else if (double_index == 1)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM1);
-      else if (j == 2)
+      else if (double_index == 2)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM2);
-      else if (j == 3)
+      else if (double_index == 3)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM3);
-      else if (j == 4)
+      else if (double_index == 4)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM4);
-      else if (j == 5)
+      else if (double_index == 5)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM5);
-      else if (j == 6)
+      else if (double_index == 6)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM6);
-      else if (j == 7)
+      else if (double_index == 7)
         code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM7);
       else
         {
-        int addr = j - 7;
+        int addr = rsp_index;
         code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RSP, 8 * addr);
         code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RAX);
+        ++rsp_index;
         }
 
       code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(2));
       code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
       code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R15);
+      ++double_index;
       }
     }
 #endif
