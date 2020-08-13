@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#define ONLY_LAST
+//#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -5446,6 +5446,48 @@ to /* and */ in c/c++
       TEST_EQ("105.623", str2.str());
       }
     };
+    
+  struct c_input_test_5doubles : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(double a, double b, double c, double d, double e) " )
+
+(+ a b c d e)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);        
+        if (f)
+          {
+          uint64_t res = f(&ctxt, 3.4, 6.7, 1.1, 2.2, 3.3);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, 0.0, 0.0, 0.0, 101.123, 4.5);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("16.7", str.str());
+      TEST_EQ("105.623", str2.str());
+      }
+    };    
 
   struct c_input_test_8doubles : public compile_fixture
     {
@@ -5489,7 +5531,48 @@ to /* and */ in c/c++
       }
     };
 
+  struct c_input_test_10doubles : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(double a, double b, double c, double d, double e, double f, double g, double h, double i, double j) " )
 
+(+ a b c d e f g h i j)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          uint64_t res = f(&ctxt, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.0);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 101.123, 4.5);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("59.5", str.str());
+      TEST_EQ("105.623", str2.str());
+      }
+    };
+    
   struct c_input_test_2ints : public compile_fixture
     {
     void test()
@@ -5518,10 +5601,10 @@ to /* and */ in c/c++
         fun_ptr f = (fun_ptr)assemble(size, d, code);
         if (f)
           {
-          uint64_t res = f(&ctxt, 3, 6);
+          uint64_t res = f(&ctxt, (int64_t)3, (int64_t)6);
           scheme_runtime(res, str, env, rd, nullptr);
 
-          uint64_t res2 = f(&ctxt, 101, 4);
+          uint64_t res2 = f(&ctxt, (int64_t)101, (int64_t)4);
           scheme_runtime(res2, str2, env, rd, nullptr);
 
           compiled_functions.emplace_back(f, size);
@@ -5531,6 +5614,48 @@ to /* and */ in c/c++
       TEST_EQ("105", str2.str());
       }
     };
+    
+struct c_input_test_5ints : public compile_fixture
+    {
+    void test()
+      {
+      std::stringstream str, str2;
+      std::string script = R"(
+(c-input "(int a, int b, int c, int d, int e) " )
+
+(+ a b c d e)
+)";
+      bool error = false;
+      asmcode code;
+      try
+        {
+        code = get_asmcode(script);
+        }
+      catch (std::logic_error e)
+        {
+        error = true;
+        str << e.what();
+        }
+      if (!error)
+        {
+        first_pass_data d;
+        uint64_t size;
+        fun_ptr f = (fun_ptr)assemble(size, d, code);
+        if (f)
+          {
+          uint64_t res = f(&ctxt, (int64_t)3, (int64_t)4, (int64_t)5, (int64_t)6, (int64_t)7);
+          scheme_runtime(res, str, env, rd, nullptr);
+
+          uint64_t res2 = f(&ctxt, (int64_t)101, (int64_t)4, (int64_t)0, (int64_t)0, (int64_t)1);
+          scheme_runtime(res2, str2, env, rd, nullptr);
+
+          compiled_functions.emplace_back(f, size);
+          }
+        }
+      TEST_EQ("25", str.str());
+      TEST_EQ("106", str2.str());
+      }
+    };    
 
   struct c_input_test_8ints : public compile_fixture
     {
@@ -5768,7 +5893,10 @@ void run_all_compile_tests()
 #endif
 
   c_input_test_2doubles().test();
+  c_input_test_5doubles().test();
   c_input_test_8doubles().test();
+  c_input_test_10doubles().test();
   c_input_test_2ints().test();
+  c_input_test_5ints().test();
   c_input_test_8ints().test();
   }

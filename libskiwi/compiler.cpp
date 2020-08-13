@@ -1754,8 +1754,8 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       else
         {
         int addr = j - 3;
-        code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::MEM_RSP, (40 + addr * 8));
-        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM0);
+        code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RSP, (40 + addr * 8));
+        code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RAX);
         }
 
       code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(2));
@@ -1764,7 +1764,92 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       }
     }
 #else 
-  throw_error(invalid_c_input_syntax);
+  for (int j = 0; j < (int)cinput.parameters.size(); ++j)
+    {
+    asmcode::operand op;
+    if (cinput.parameters[j].second == cinput_data::cin_int)
+      {
+      std::string name = cinput.parameters[j].first;
+
+      environment_entry e;
+      if (!env->find(e, name) || e.st != environment_entry::st_global)
+        throw_error(invalid_c_input_syntax);
+      code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
+      if (j == 0)
+        {
+        code.add(asmcode::SHL, asmcode::RSI, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RSI);
+        }
+      else if (j == 1)
+        {
+        code.add(asmcode::SHL, asmcode::RDX, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RDX);
+        }
+      else if (j == 2)
+        {
+        code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
+        }
+      else if (j == 3)
+        {
+        code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1); 
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R8);
+        }
+      else if (j == 4)
+        {
+        code.add(asmcode::SHL, asmcode::R9, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R9);
+        }
+      else
+        {
+        int addr = j-4;
+        code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RSP, 8*addr);
+        code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
+        code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
+        }
+      }
+    else if (cinput.parameters[j].second == cinput_data::cin_double)
+      {
+      std::string name = cinput.parameters[j].first;
+
+      environment_entry e;
+      if (!env->find(e, name) || e.st != environment_entry::st_global)
+        throw_error(invalid_c_input_syntax);
+
+      uint64_t header = make_block_header(1, T_FLONUM);
+      code.add(asmcode::MOV, asmcode::R15, ALLOC);
+      code.add(asmcode::OR, asmcode::R15, asmcode::NUMBER, block_tag);
+      code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, header);
+      code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
+
+      if (j == 0)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM0);
+      else if (j == 1)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM1);
+      else if (j == 2)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM2);
+      else if (j == 3)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM3);
+      else if (j == 4)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM4);
+      else if (j == 5)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM5);
+      else if (j == 6)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM6);
+      else if (j == 7)
+        code.add(asmcode::MOVQ, MEM_ALLOC, CELLS(1), asmcode::XMM7);
+      else
+        {
+        int addr = j - 7;
+        code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RSP, 8 * addr);
+        code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RAX);
+        }
+
+      code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(2));
+      code.add(asmcode::MOV, asmcode::RAX, GLOBALS);
+      code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R15);
+      }
+    }
 #endif
   }
 
