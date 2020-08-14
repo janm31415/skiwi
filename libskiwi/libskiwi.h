@@ -43,6 +43,8 @@ namespace skiwi
 
   SKIWI_SCHEME_API void* skiwi_clone_context(void* ctxt);
 
+  SKIWI_SCHEME_API void skiwi_destroy_clone_context(void* ctxt);
+
   template <typename... Args>
   uint64_t skiwi_run_raw(skiwi_compiled_function_ptr fun, void* ctxt, Args... args)
     {

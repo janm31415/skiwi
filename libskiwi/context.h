@@ -52,6 +52,6 @@ struct context {
 
 
 SKIWI_SCHEME_API context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t local_stack, uint64_t scheme_stack);
-SKIWI_SCHEME_API void destroy_context(const context& ctxt);
+SKIWI_SCHEME_API void destroy_context(context& ctxt);
 SKIWI_SCHEME_API context clone_context(const context& ctxt);
 SKIWI_END

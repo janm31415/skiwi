@@ -686,6 +686,12 @@ void* skiwi_clone_context(void* ctxt)
   return &(*it);
   }
 
+void skiwi_destroy_clone_context(void* ctxt)
+  {
+  context* p_ctxt = (context*)ctxt;
+  destroy_context(*p_ctxt);
+  }
+
 uint64_t skiwi_run_raw(const std::string& scheme_expression)
   {
   if (!cd.initialized)

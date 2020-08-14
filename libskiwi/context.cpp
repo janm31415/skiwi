@@ -49,9 +49,10 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
   }
 
 
-void destroy_context(const context& ctxt)
+void destroy_context(context& ctxt)
   {
   delete[] ctxt.memory_allocated;
+  ctxt.memory_allocated = nullptr;
   }
 
 context clone_context(const context& ctxt)
