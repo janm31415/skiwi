@@ -46,6 +46,8 @@
 
 #include <libskiwi/libskiwi.h>
 
+#include <chrono>
+
 SKIWI_BEGIN
 
 using namespace ASM;
@@ -5780,6 +5782,68 @@ struct c_input_test_5ints : public compile_fixture
       TEST_EQ("5556", str.str());
       }
     };    
+
+  struct current_seconds_test : public compile_fixture
+    {
+    void test()
+      {
+      uint64_t secondsUTC = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();      
+
+      asmcode code;
+      uint64_t res = 0;
+      try
+        {
+        code = get_asmcode("(current-seconds)");
+        }
+      catch (std::logic_error e)
+        {
+        std::cout << e.what();
+        }
+      first_pass_data d;
+      uint64_t size;
+      fun_ptr f = (fun_ptr)assemble(size, d, code);
+      if (f)
+        {
+        res = f(&ctxt);
+        compiled_functions.emplace_back(f, size);
+        res >>= 1;
+        }
+      TEST_ASSERT(secondsUTC <= res);
+      secondsUTC = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      TEST_ASSERT(res <= secondsUTC);
+      }
+    };
+
+  struct current_milliseconds_test : public compile_fixture
+    {
+    void test()
+      {      
+      uint64_t millisecondsUTC = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+      asmcode code;
+      uint64_t res = 0;
+      try
+        {
+        code = get_asmcode("(current-milliseconds)");
+        }
+      catch (std::logic_error e)
+        {
+        std::cout << e.what();
+        }
+      first_pass_data d;
+      uint64_t size;
+      fun_ptr f = (fun_ptr)assemble(size, d, code);
+      if (f)
+        {
+        res = f(&ctxt);
+        compiled_functions.emplace_back(f, size);
+        res >>= 1;
+        }
+      TEST_ASSERT(millisecondsUTC <= res);
+      millisecondsUTC = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      TEST_ASSERT(res <= millisecondsUTC);
+      }
+    };
   }
 
 SKIWI_END
@@ -5971,7 +6035,6 @@ void run_all_compile_tests()
   empty_let_crash().test();
 
   many_vars_in_lambda_test().test();
-#endif
 
   c_input_test_2doubles().test();
   c_input_test_5doubles().test();
@@ -5982,4 +6045,7 @@ void run_all_compile_tests()
   c_input_test_8ints().test();
   c_input_test_mix_ints_doubles().test();
   c_input_test_mix_ints_doubles_2().test();
+#endif
+  current_seconds_test().test();
+  current_milliseconds_test().test();
   }
