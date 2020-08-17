@@ -17,6 +17,8 @@ void compile_sub1(ASM::asmcode& code, const compiler_options& options);
 
 void compile_file_exists(ASM::asmcode& code, const compiler_options& options);
 void compile_getenv(ASM::asmcode& code, const compiler_options& options);
+void compile_current_seconds(ASM::asmcode& code, const compiler_options& options);
+void compile_current_milliseconds(ASM::asmcode& code, const compiler_options& options);
 void compile_putenv(ASM::asmcode& code, const compiler_options& options);
 void compile_eval(ASM::asmcode& code, const compiler_options& options);
 void compile_load(ASM::asmcode& code, const compiler_options& options);

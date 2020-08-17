@@ -64,6 +64,8 @@ function_map generate_function_map()
   fm.insert(std::pair<std::string, fun_ptr>("cons", &compile_cons));
   fm.insert(std::pair<std::string, fun_ptr>("compare-strings", &compile_compare_strings));
   fm.insert(std::pair<std::string, fun_ptr>("compare-strings-ci", &compile_compare_strings_ci));
+  fm.insert(std::pair<std::string, fun_ptr>("current-seconds", &compile_current_seconds));
+  fm.insert(std::pair<std::string, fun_ptr>("current-milliseconds", &compile_current_milliseconds));
   fm.insert(std::pair<std::string, fun_ptr>("eof-object?", &compile_is_eof_object));
   fm.insert(std::pair<std::string, fun_ptr>("eq?", &compile_is_eq));
   fm.insert(std::pair<std::string, fun_ptr>("eqv?", &compile_is_eqv));

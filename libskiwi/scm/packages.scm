@@ -14,6 +14,7 @@
 ;; srfi
 (define-module srfi-1 (srfi srfi1))
 (define-module srfi-6 (srfi srfi6))
+(define-module srfi-27 (srfi srfi27))
 (define-module srfi-28 (srfi srfi28))
 
 ;; slib

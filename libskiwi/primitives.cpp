@@ -16,6 +16,7 @@
 #include <fstream>
 
 #include <encoding.h>
+#include <chrono>
 
 SKIWI_BEGIN
 
@@ -8053,6 +8054,56 @@ namespace
     return res;
 #endif
     }
+
+  uint64_t _current_seconds()
+    {
+    uint64_t secondsUTC = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return secondsUTC;
+    }
+
+  uint64_t _current_milliseconds()
+    {
+    uint64_t millisecondsUTC = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return millisecondsUTC;
+    }
+  }
+
+void compile_current_seconds(ASM::asmcode& code, const compiler_options& options)
+  {
+  save_before_foreign_call(code);
+  align_stack(code);
+  code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
+#ifdef _WIN32
+  code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
+#else
+  code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
+#endif  
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_current_seconds);
+  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
+  restore_stack(code);
+  restore_after_foreign_call(code);
+  code.add(asmcode::SHL, asmcode::RAX, asmcode::NUMBER, 1);
+  code.add(asmcode::JMP, CONTINUE);
+  }
+
+void compile_current_milliseconds(ASM::asmcode& code, const compiler_options& options)
+  {
+  save_before_foreign_call(code);
+  align_stack(code);
+  code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
+#ifdef _WIN32
+  code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
+#else
+  code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
+#endif  
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_current_milliseconds);
+  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
+  restore_stack(code);
+  restore_after_foreign_call(code);
+  code.add(asmcode::SHL, asmcode::RAX, asmcode::NUMBER, 1);
+  code.add(asmcode::JMP, CONTINUE);
   }
 
 void compile_getenv(asmcode& code, const compiler_options& ops)

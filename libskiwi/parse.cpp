@@ -155,6 +155,8 @@ std::map<std::string, expression_type> generate_expression_map()
   m.insert(std::pair<std::string, expression_type>("cons", et_primitive_call));
   m.insert(std::pair<std::string, expression_type>("compare-strings", et_primitive_call));
   m.insert(std::pair<std::string, expression_type>("compare-strings-ci", et_primitive_call));
+  m.insert(std::pair<std::string, expression_type>("current-seconds", et_primitive_call));
+  m.insert(std::pair<std::string, expression_type>("current-milliseconds", et_primitive_call));
   m.insert(std::pair<std::string, expression_type>("define", et_primitive_call));
   m.insert(std::pair<std::string, expression_type>("defmacro", et_primitive_call));
   m.insert(std::pair<std::string, expression_type>("define-macro", et_primitive_call));
