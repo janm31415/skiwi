@@ -29,6 +29,8 @@
 
 #include <filename.h>
 
+#include <tbb/combinable.h>
+
 SKIWI_BEGIN
 
 using namespace ASM;
@@ -79,7 +81,7 @@ namespace
     uint64_t* error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
     };
 
-  static std::vector< compiler_data_memento> compiler_data_memento_vector;
+  static tbb::combinable<std::vector< compiler_data_memento>> compiler_data_memento_vector;
 
   struct external_primitive
     {
@@ -1338,13 +1340,13 @@ void save_compiler_data()
   cdm.stack_save = cd.ctxt.stack_save; // stack_save contains the stack position at the beginning of the scheme call. After the scheme call the stack should be at this position again. Therefore this value needs to be preserved.
   cdm.error_label = cd.ctxt.error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
 
-  compiler_data_memento_vector.push_back(cdm);
+  compiler_data_memento_vector.local().push_back(cdm);
   }
 
 void restore_compiler_data()
   {
-  compiler_data_memento cdm = compiler_data_memento_vector.back();
-  compiler_data_memento_vector.pop_back();
+  compiler_data_memento cdm = compiler_data_memento_vector.local().back();
+  compiler_data_memento_vector.local().pop_back();
   cd.ctxt.rbx = cdm.rbx;
   cd.ctxt.rdi = cdm.rdi;
   cd.ctxt.rsi = cdm.rsi;
