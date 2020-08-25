@@ -15,7 +15,11 @@ set_property(CACHE THREADING PROPERTY STRINGS tbb ppl std none)
 
 add_subdirectory(asm)
 add_subdirectory(asm.tests)
+
+if (NOT TARGET jtk)
 add_subdirectory(jtk)
+endif()
+
 add_subdirectory(libskiwi)
 add_subdirectory(life)
 add_subdirectory(s)
