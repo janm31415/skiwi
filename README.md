@@ -21,18 +21,14 @@ I was inspired/have mainly used the following sources when working on this compi
 Building the compiler
 ---------------------
 
-The compiler has been tested on Windows 10 using Visual Studio 2017 and on Ubuntu 18.04.4
+The compiler has been tested on Windows 10 using Visual Studio 2017/2019 and on Ubuntu 18.04.4
 with gcc 7.5.0.
 
-First you'll need to make sure that Intel's TBB library installed. 
-On Windows you can download TBB's binaries from its website, and install them, preferably, in 
-folder C:\Program Files\TBB. Another folder is also possible, but then you'll need to
-adapt the CMakeLists.txt file and make it point to the correct location.
-On Ubuntu you can simply run 
-  sudo apt install libtbb-dev 
-to install TBB.
+A solution file / makefile can be generated with CMake. Use Visual Studio or make to build the code.
 
-Next a solution file / makefile can be generated with CMake. Use Visual Studio or make to build the code.
+The scheme compiler uses multithreading when building scheme code. Via the CMake GUI (variable name JTK_THREADING) you can choose between Intel's TBB library, Microsoft's Concurrency library (ppl), std::thread, or single threaded building. If you choose TBB, you'll need to make sure that Intel's TBB library is installed. On Windows you can download TBB's binaries from its website, and install them, preferably, in folder C:\Program Files\TBB. Another folder is also possible, but then you'll need to adapt the CMakeLists.txt file in subfolder libksiwi and make it point to the correct location. On Ubuntu you can simply run 
+  sudo apt install libtbb-dev 
+to install TBB. Any other multithreading choice (ppl, std::threads) do not require an extra install, however ppl will not work on Linux.
 
 When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program that you've just built) the compiler will still need to build some basic functionality. This functionality is written in scheme, and the code resides in the scm subfolder of the libskiwi folder. The compiler expects that the environment variable SKIWI_MODULE_PATH exists and points to this folder. The scm folder can be placed anywhere on your harddrive as long as SKIWI_MODULE_PATH points to it. Make sure that you use only slashes (/) and not backslashes (\\) when entering the path in the SKIWI_MODULE_PATH variable. Also make sure that you end the path with a slash, e.g. "C:/skiwi/scm/".
 
