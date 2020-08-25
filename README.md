@@ -26,16 +26,16 @@ with gcc 7.5.0.
 
 A solution file / makefile can be generated with CMake. Use Visual Studio or make to build the code.
 
-The scheme compiler uses multithreading when building scheme code. Via the CMake GUI (variable name JTK_THREADING) you can choose between Intel's TBB library, Microsoft's Concurrency library (ppl), std::thread, or single threaded building. If you choose TBB, you'll need to make sure that Intel's TBB library is installed. On Windows you can download TBB's binaries from its website, and install them, preferably, in folder C:\Program Files\TBB. Another folder is also possible, but then you'll need to adapt the CMakeLists.txt file in subfolder libksiwi and make it point to the correct location. On Ubuntu you can simply run `sudo apt install libtbb-dev` to install TBB. Any other multithreading choice (ppl, std::threads) do not require an extra install, however ppl will not work on Linux.
+The scheme compiler uses multithreading when building scheme code. Via the CMake GUI (variable name `JTK_THREADING`) you can choose between Intel's TBB library, Microsoft's Concurrency library (ppl), `std::thread`, or single threaded building. If you choose TBB, you'll need to make sure that Intel's TBB library is installed. On Windows you can download TBB's binaries from its website, and install them, preferably, in folder "C:\Program Files\TBB". Another folder is also possible, but then you'll need to adapt the CMakeLists.txt file in subfolder libksiwi and make it point to the correct location. On Ubuntu you can simply run `sudo apt install libtbb-dev` to install TBB. Any other multithreading choice (ppl, `std::threads`) do not require an extra install, however ppl will not work on Linux.
 
-When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program that you've just built) the compiler will still need to build some basic functionality. This functionality is written in scheme, and the code resides in the scm subfolder of the libskiwi folder. The compiler expects that the environment variable SKIWI_MODULE_PATH exists and points to this folder. The scm folder can be placed anywhere on your harddrive as long as SKIWI_MODULE_PATH points to it. Make sure that you use only slashes (/) and not backslashes (\\) when entering the path in the SKIWI_MODULE_PATH variable. Also make sure that you end the path with a slash, e.g. "C:/skiwi/scm/".
+When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program that you've just built) the compiler will still need to build some basic functionality. This functionality is written in scheme, and the code resides in the scm subfolder of the libskiwi folder. The compiler expects that the environment variable `SKIWI_MODULE_PATH` exists and points to this folder. The scm folder can be placed anywhere on your harddrive as long as `SKIWI_MODULE_PATH` points to it. Make sure that you use only slashes (/) and not backslashes (\\) when entering the path in the `SKIWI_MODULE_PATH` variable. Also make sure that you end the path with a slash, e.g. "C:/skiwi/scm/".
 
 As soon as SKIWI_MODULE_PATH is correctly initialised you are ready to go.
 
 Using the compiler as a stand-alone repl
 ----------------------------------------
 
-A repl can be started by running the s program. 
+A repl can be started by running the `s` program. 
 ![](images/s_repl.png)
 Simply type your scheme code here and get immediate feedback.
 Any scheme code you type is compiled to machine code and run. All compiled expressions reside in virtual memory until you close the application. 
@@ -55,7 +55,7 @@ See libskiwi/scm/packages.scm for the currently defined modules. You can always 
 
 Integration with slib
 ---------------------
-I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaffer/SLIB). There are still issues probably but some slib functionality can be used. First you'll have to install slib. Unpack the slib distribution to your folder of liking and make an environment variable SCHEME_LIBRARY_PATH that points to this folder. Then, start skiwi and type 
+I've been working to integrate skiwi with [slib](http://people.csail.mit.edu/jaffer/SLIB). There are still issues probably but some slib functionality can be used. First you'll have to install slib. Unpack the slib distribution to your folder of liking and make an environment variable `SCHEME_LIBRARY_PATH` that points to this folder. Then, start skiwi and type 
 
     skiwi> (import 'slib)
 You should now be able to use the slib functionality.
