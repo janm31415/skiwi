@@ -136,6 +136,19 @@ endif (WIN32)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
+if (${THREADING} STREQUAL "tbb")
+add_definitions(-D_ENABLE_TBB)
+endif (${THREADING} STREQUAL "tbb")
+
+if (${THREADING} STREQUAL "ppl")
+add_definitions(-D_ENABLE_PPL)
+endif (${THREADING} STREQUAL "ppl")
+
+if (${THREADING} STREQUAL "std")
+add_definitions(-D_ENABLE_THREADS)
+endif (${THREADING} STREQUAL "std")
+
+
 add_library(libskiwi SHARED ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
@@ -143,16 +156,24 @@ source_group("Source Files" FILES ${srcs})
 target_include_directories(libskiwi
     PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils
-    ${TBB_INCLUDE_DIR}
-    )	
-    
-	
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jtk   
+    )	    
+
 target_link_libraries(libskiwi
     PRIVATE	
     asm
-    ${TBB_LIBRARIES}
     )	
+
+if (${THREADING} STREQUAL "tbb")
+  target_include_directories(libskiwi
+      PRIVATE
+      ${TBB_INCLUDE_DIR}
+      )
+  target_link_libraries(libskiwi
+      PRIVATE	
+      ${TBB_LIBRARIES}
+      )	
+endif (${THREADING} STREQUAL "tbb")
 
 add_custom_command(TARGET libskiwi POST_BUILD 
    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scm" "${CMAKE_CURRENT_BINARY_DIR}/scm")

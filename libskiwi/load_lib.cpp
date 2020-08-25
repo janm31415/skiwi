@@ -3,7 +3,7 @@
 #include "exepath.h"
 #include <iostream>
 
-#include <encoding.h>
+#include <jtk/file_utils.h>
 
 SKIWI_BEGIN
 
@@ -69,7 +69,7 @@ bool load_lib(const std::string& libname, environment_map& env, repl_data& rd, m
     std::wstring w_environment_location = get_folder(get_exe_path());
     std::replace(w_environment_location.begin(), w_environment_location.end(), '\\', '/');
     w_environment_location.append(L"scm/");
-    std::string environment = JAM::convert_wstring_to_string(w_environment_location);
+    std::string environment = jtk::convert_wstring_to_string(w_environment_location);
 #else
     std::string environment_location = get_folder(get_exe_path());
     std::string environment = environment_location.append("scm/");

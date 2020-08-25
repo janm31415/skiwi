@@ -1,4 +1,7 @@
 #include "primitives.h"
+
+#include <jtk/file_utils.h>
+
 #include "asm_aux.h"
 #include "c_prim_decl.h"
 #include "context.h"
@@ -15,7 +18,6 @@
 #include <fcntl.h>
 #include <fstream>
 
-#include <encoding.h>
 #include <chrono>
 
 SKIWI_BEGIN
@@ -8005,12 +8007,12 @@ namespace
     static std::string env_value;
 #ifdef _WIN32
     std::string s(name);
-    std::wstring ws = JAM::convert_string_to_wstring(s);
+    std::wstring ws = jtk::convert_string_to_wstring(s);
     wchar_t* path = _wgetenv(ws.c_str());
     if (!path)
       return nullptr;
     std::wstring wresult(path);
-    env_value = JAM::convert_wstring_to_string(wresult);
+    env_value = jtk::convert_wstring_to_string(wresult);
     return env_value.c_str();
 #else
     return getenv(name);
@@ -8022,8 +8024,8 @@ namespace
 #ifdef _WIN32
     std::string sname(name);
     std::string svalue(value);
-    std::wstring wname = JAM::convert_string_to_wstring(sname);
-    std::wstring wvalue = JAM::convert_string_to_wstring(svalue);
+    std::wstring wname = jtk::convert_string_to_wstring(sname);
+    std::wstring wvalue = jtk::convert_string_to_wstring(svalue);
     return (int)_wputenv_s(wname.c_str(), wvalue.c_str());
 #else
     return setenv(name, value, 1);
@@ -8035,7 +8037,7 @@ namespace
 #ifdef _WIN32
     int res = 0;
     std::string sname(filename);
-    std::wstring wname = JAM::convert_string_to_wstring(sname);
+    std::wstring wname = jtk::convert_string_to_wstring(sname);
     std::ifstream f(wname);
     if (f.is_open())
       {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tbb/parallel_for.h>
+#include <jtk/concurrency.h>
 
 #include "compiler_options.h"
 
@@ -11,7 +11,7 @@ void parallel_for(_Type first, _Type last, TFunctor fun, const compiler_options&
   {
   if (ops.parallel)
     {
-    tbb::parallel_for(first, last, fun);
+    jtk::parallel_for(first, last, fun);
     }
   else
     {

@@ -27,9 +27,8 @@
 #include "dump.h"
 #include "format.h"
 
-#include <filename.h>
-
-#include <tbb/combinable.h>
+#include <jtk/concurrency.h>
+#include <jtk/file_utils.h>
 
 SKIWI_BEGIN
 
@@ -81,7 +80,7 @@ namespace
     uint64_t* error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
     };
 
-  static tbb::combinable<std::vector< compiler_data_memento>> compiler_data_memento_vector;
+  static jtk::combinable<std::vector< compiler_data_memento>> compiler_data_memento_vector;
 
   struct external_primitive
     {
@@ -493,13 +492,13 @@ namespace
     if (!cd.initialized)
       throw std::runtime_error("Skiwi is not initialized");
     asmcode code;
-    std::string filename = JAM::get_filename(scheme_file);
-    std::string folder = JAM::get_folder(scheme_file);
+    std::string filename = jtk::get_filename(scheme_file);
+    std::string folder = jtk::get_folder(scheme_file);
 #ifdef _WIN32
     wchar_t buf[4096];
     GetCurrentDirectoryW(4096, buf);
-    std::wstring wfolder = JAM::convert_string_to_wstring(folder);
-    std::wstring wfilename = JAM::convert_string_to_wstring(filename);
+    std::wstring wfolder = jtk::convert_string_to_wstring(folder);
+    std::wstring wfilename = jtk::convert_string_to_wstring(filename);
     SetCurrentDirectoryW(wfolder.c_str());
 
     auto input_file = std::ifstream{ wfilename };
