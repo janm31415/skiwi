@@ -15,6 +15,10 @@ SKIWI_BEGIN
 namespace
   {
 
+//#define USE_VISITOR_FOR_SIMPLE_ALGO
+//both algorithms seem to be equally fast
+#ifdef USE_VISITOR_FOR_SIMPLE_ALGO
+
   struct is_simple_helper
     {
     bool is_simple;
@@ -121,10 +125,6 @@ namespace
         }
       }
     };
-
-//#define USE_VISITOR_FOR_SIMPLE_ALGO
-//both algorithms seem to be equally fast
-#ifdef USE_VISITOR_FOR_SIMPLE_ALGO
 
   bool is_simple(Expression& expr)
     {
@@ -317,8 +317,8 @@ namespace
       ccv.continuation = Lambda();
       std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
-      visitor<Expression, cps_conversion_visitor>::visit(e1, &ccv);
       e.swap(e1);
+      visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);      
       index = ccv.index;
       }
 
