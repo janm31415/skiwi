@@ -21,17 +21,18 @@ I was inspired/have mainly used the following sources when working on this compi
 Building the compiler
 ---------------------
 
-The compiler has been tested on Windows 10 using Visual Studio 2017/2019 and on Ubuntu 18.04.4
-with gcc 7.5.0.
+The compiler has been tested on Windows 10 using Visual Studio 2017/2019, on Ubuntu 18.04.4 with gcc 7.5.0, and on MacOS 10.15.6 with XCode 11.7.
 
-A solution file / makefile can be generated with CMake. Use Visual Studio or make to build the code.
+A solution file / makefile can be generated with CMake. Use Visual Studio, make, or XCode to build the code.
 Don't forget to also update the git submodule jtk, which points to https://github.com/janm31415/jtk.
 
 The scheme compiler uses multithreading when building scheme code. Via the CMake GUI (variable name `JTK_THREADING`) you can choose between Intel's TBB library, Microsoft's Concurrency library (ppl), `std::thread`, or single threaded building. If you choose TBB, you'll need to make sure that Intel's TBB library is installed. On Windows you can download TBB's binaries from its website, and install them, preferably, in folder "C:\Program Files\TBB". Another folder is also possible, but then you'll need to adapt the CMakeLists.txt file in subfolder libksiwi and make it point to the correct location. On Ubuntu you can simply run `sudo apt install libtbb-dev` to install TBB. Any other multithreading choice (ppl, `std::thread`) do not require an extra install, however ppl will not work on Linux.
 
-When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program that you've just built) the compiler will still need to build some basic functionality. This functionality is written in scheme, and the code resides in the scm subfolder of the libskiwi folder. The compiler expects that the environment variable `SKIWI_MODULE_PATH` exists and points to this folder. The scm folder can be placed anywhere on your harddrive as long as `SKIWI_MODULE_PATH` points to it. Make sure that you use only slashes (/) and not backslashes (\\) when entering the path in the `SKIWI_MODULE_PATH` variable. Also make sure that you end the path with a slash, e.g. "C:/skiwi/scm/".
+When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program that you've just built) the compiler will still need to build some basic functionality. This functionality is written in scheme, and the code resides in the scm subfolder of the libskiwi folder. The compiler expects that the environment variable `SKIWI_MODULE_PATH` exists and points to this folder. The scm folder can be placed anywhere on your harddrive as long as `SKIWI_MODULE_PATH` points to it. Make sure that you use only slashes (/) and not backslashes (\\) when entering the path in the `SKIWI_MODULE_PATH` variable. Also make sure that you end the path with a slash, e.g. "C:/skiwi/scm/". On MacOS you can use "launchctl" in a terminal to set the environment variable, e.g. `launchctl setenv SKIWI_MODULE_PATH /Users/janm31415/skiwi/libskiwi/scm/`.
 
 As soon as SKIWI_MODULE_PATH is correctly initialised you are ready to go.
+
+The sample application `life` makes use of `X11` on Linux and MacOS. Since `X11` is not included in MacOS anymore, you'll have to install it. It is available via the [XQuartz project](https://www.xquartz.org). If the C++ compiler cannot find the `XLib.h` file or cannot link correctly, you might need to change the X11 paths in the CMakeLists.txt file in folder life.
 
 Using the compiler as a stand-alone repl
 ----------------------------------------
