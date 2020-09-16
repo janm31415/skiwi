@@ -3789,8 +3789,10 @@ namespace
 
 #ifdef _WIN32
       TEST_EQ("-nan(ind)", run("(/ 0.0 0.0)"));
-#else
+#elif defined(unix)
       TEST_EQ("-nan", run("(/ 0.0 0.0)"));
+#else
+      TEST_EQ("nan", run("(/ 0.0 0.0)"));
 #endif
 
       TEST_EQ("#t", run("(integer? 3)"));
@@ -4685,9 +4687,12 @@ to /* and */ in c/c++
 #ifdef _WIN32
       TEST_EQ("-nan(ind)", run("(string->number \"+nan.0\")"));
       TEST_EQ("-nan(ind)", run("(string->number \"-nan.0\")"));
-#else
+#elif defined(unix)
       TEST_EQ("-nan", run("(string->number \"+nan.0\")"));
       TEST_EQ("-nan", run("(string->number \"-nan.0\")"));
+#else
+      TEST_EQ("nan", run("(string->number \"+nan.0\")"));
+      TEST_EQ("nan", run("(string->number \"-nan.0\")"));
 #endif
       TEST_EQ("inf", run("(string->number \"+inf.0\")"));
       TEST_EQ("-inf", run("(string->number \"-inf.0\")"));

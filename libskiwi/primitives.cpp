@@ -6608,13 +6608,20 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R8, asmcode::NUMBER, _S_IREAD | _S_IWRITE);
   code.add(asmcode::MOV, asmcode::RDX, asmcode::R11);
 
-#else
+#elif defined(unix)
   code.add(asmcode::PUSH, asmcode::RDI);
   code.add(asmcode::PUSH, asmcode::RSI);
 
   code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, __S_IREAD | __S_IWRITE);
   code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
   code.add(asmcode::MOV, asmcode::RSI, asmcode::R11);
+#elif defined(__APPLE__)
+      code.add(asmcode::PUSH, asmcode::RDI);
+      code.add(asmcode::PUSH, asmcode::RSI);
+
+      code.add(asmcode::MOV, asmcode::RDX, asmcode::NUMBER, S_IREAD | S_IWRITE);
+      code.add(asmcode::MOV, asmcode::RDI, asmcode::RCX);
+      code.add(asmcode::MOV, asmcode::RSI, asmcode::R11);
 #endif
 
   save_before_foreign_call(code);

@@ -29,13 +29,13 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_executable(life ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
-
- target_include_directories(life
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
-    )	
     
-if (WIN32)	
+if (WIN32)
+target_include_directories(life
+   PRIVATE
+   ${CMAKE_CURRENT_SOURCE_DIR}/../
+   )
+
 target_link_libraries(life
     PRIVATE
     asm
@@ -43,11 +43,26 @@ target_link_libraries(life
     )
 endif (WIN32)    
 
-if (UNIX)	
+if (UNIX)
+
+set(XLIBINCLUDE "")
+set(XLIBLIBRARY "X11.so")
+
+if (APPLE)
+set(XLIBINCLUDE "/usr/X11/include/")
+set(XLIBLIBRARY "/usr/X11/lib/libX11.dylib")
+endif (APPLE)
+
+target_include_directories(life
+   PRIVATE
+   ${CMAKE_CURRENT_SOURCE_DIR}/../
+   ${XLIBINCLUDE}
+   )
+   
 target_link_libraries(life
     PRIVATE
     asm
     libskiwi
-    X11.so
+    ${XLIBLIBRARY}
     )
 endif (UNIX)
