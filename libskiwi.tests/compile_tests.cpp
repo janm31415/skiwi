@@ -5874,7 +5874,7 @@ struct c_input_test_5ints : public compile_fixture
       pars.heap_size = 1024 * 1024;
       skiwi::scheme_with_skiwi(&test_libskiwi_externals_register_fie, nullptr, pars);
       uint64_t value = skiwi_run_raw("(check-pair (cons 1 2))");
-      TEST_EQ(1, value);
+      TEST_EQ(1 << fixnum_shift, value);
       skiwi::skiwi_quit();
       }
     };
