@@ -46,7 +46,7 @@ namespace skiwi
   template <typename... Args>
   uint64_t skiwi_run_raw(skiwi_compiled_function_ptr fun, void* ctxt, Args... args)
     {
-    uint64_t result = undefined;
+    uint64_t result = 39; // hardcoded skiwi_undefined
     if (fun)
       {
       result = fun(ctxt, args...);
