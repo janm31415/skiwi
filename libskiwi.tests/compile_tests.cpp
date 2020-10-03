@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -5611,14 +5611,14 @@ to /* and */ in c/c++
           uint64_t res = f(&ctxt, (int64_t)3, (int64_t)6);
           scheme_runtime(res, str, env, rd, nullptr);
 
-          uint64_t res2 = f(&ctxt, (int64_t)101, (int64_t)4);
+          uint64_t res2 = f(&ctxt, (int64_t)40000000000, (int64_t)50000000000);
           scheme_runtime(res2, str2, env, rd, nullptr);
 
           compiled_functions.emplace_back(f, size);
           }
         }
       TEST_EQ("9", str.str());
-      TEST_EQ("105", str2.str());
+      TEST_EQ("90000000000", str2.str());
       }
     };
     
@@ -5849,6 +5849,35 @@ struct c_input_test_5ints : public compile_fixture
       TEST_ASSERT(res <= millisecondsUTC);
       }
     };
+    
+  namespace
+    {
+    int64_t check_pair(scm_type pr)
+      {
+      if (pr.is_pair())
+        return 1;
+      return 0;
+      }
+      
+    void* test_libskiwi_externals_register_fie(void*)
+      {
+      register_external_primitive("check-pair", (void*)&check_pair, skiwi_int64, skiwi_scm);
+      return nullptr;
+      }
+    }
+    
+  struct test_libskiwi_externals : public compile_fixture
+    {    
+    void test()
+      {
+      skiwi::skiwi_parameters pars;
+      pars.heap_size = 1024 * 1024;
+      skiwi::scheme_with_skiwi(&test_libskiwi_externals_register_fie, nullptr, pars);
+      uint64_t value = skiwi_run_raw("(check-pair (cons 1 2))");
+      TEST_EQ(1, value);
+      skiwi::skiwi_quit();
+      }
+    };
   }
 
 SKIWI_END
@@ -6050,7 +6079,8 @@ void run_all_compile_tests()
   c_input_test_8ints().test();
   c_input_test_mix_ints_doubles().test();
   c_input_test_mix_ints_doubles_2().test();
-#endif
   current_seconds_test().test();
   current_milliseconds_test().test();
+#endif
+  test_libskiwi_externals().test();
   }
