@@ -5852,8 +5852,9 @@ struct c_input_test_5ints : public compile_fixture
     
   namespace
     {
-    int64_t check_pair(scm_type pr)
+    int64_t check_pair(uint64_t in)
       {
+      scm_type pr(in);
       if (pr.is_pair())
         return 1;
       return 0;
