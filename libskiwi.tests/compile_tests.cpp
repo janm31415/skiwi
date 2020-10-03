@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#define ONLY_LAST
+//#define ONLY_LAST
 
 #include "compile_tests.h"
 #include "test_assert.h"
