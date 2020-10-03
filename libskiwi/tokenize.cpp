@@ -125,7 +125,7 @@ namespace
 
   bool ignore_character(const char& ch)
     {
-    return (ch == ' ' || ch == '\n' || ch == '\t');
+    return (ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r');
     }
   }
 
