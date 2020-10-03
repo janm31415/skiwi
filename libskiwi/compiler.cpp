@@ -36,7 +36,7 @@ function_map generate_function_map()
   fm.insert(std::pair<std::string, fun_ptr>("%slot-ref", &compile_slot_ref));
   fm.insert(std::pair<std::string, fun_ptr>("%slot-set!", &compile_slot_set));
   fm.insert(std::pair<std::string, fun_ptr>("%undefined", &compile_undefined));
-  fm.insert(std::pair<std::string, fun_ptr>("%quiet-undefined", &compile_quiet_undefined));
+  fm.insert(std::pair<std::string, fun_ptr>("%quiet-undefined", &compile_skiwi_quiet_undefined));
   fm.insert(std::pair<std::string, fun_ptr>("add1", &compile_add1));
   fm.insert(std::pair<std::string, fun_ptr>("%apply", &compile_apply));
   fm.insert(std::pair<std::string, fun_ptr>("arithmetic-shift", &compile_arithmetic_shift));
@@ -197,7 +197,7 @@ namespace
     fm.insert(std::pair<std::string, fun_ptr>("##quotient", &inline_quotient));
     fm.insert(std::pair<std::string, fun_ptr>("##arithmetic-shift", &inline_arithmetic_shift));
     fm.insert(std::pair<std::string, fun_ptr>("##%undefined", &inline_undefined));
-    fm.insert(std::pair<std::string, fun_ptr>("##%quiet-undefined", &inline_quiet_undefined));
+    fm.insert(std::pair<std::string, fun_ptr>("##%quiet-undefined", &inline_skiwi_quiet_undefined));
     fm.insert(std::pair<std::string, fun_ptr>("##vector-length", &inline_vector_length));
     fm.insert(std::pair<std::string, fun_ptr>("##fixnum->flonum", &inline_fixnum_to_flonum));
     fm.insert(std::pair<std::string, fun_ptr>("##flonum->fixnum", &inline_flonum_to_fixnum));
@@ -366,7 +366,7 @@ namespace
   void compile_nop(asmcode& code, asmcode::operand target)
     {
     assert(target_is_valid(target));
-    code.add(asmcode::MOV, target, asmcode::NUMBER, undefined);
+    code.add(asmcode::MOV, target, asmcode::NUMBER, skiwi_undefined);
     }
 
   void compile_fixnum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Fixnum& f, const compiler_options&, asmcode::operand target)

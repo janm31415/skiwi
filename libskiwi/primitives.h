@@ -156,7 +156,7 @@ void compile_flonum_to_fixnum(ASM::asmcode& code, const compiler_options& option
 void compile_string_copy(ASM::asmcode& code, const compiler_options& options);
 void compile_symbol_to_string(ASM::asmcode& code, const compiler_options& options);
 void compile_undefined(ASM::asmcode& code, const compiler_options& options);
-void compile_quiet_undefined(ASM::asmcode& code, const compiler_options& options);
+void compile_skiwi_quiet_undefined(ASM::asmcode& code, const compiler_options& options);
 
 void compile_member_cmp_eq(ASM::asmcode& code, const compiler_options&);
 void compile_member_cmp_eqv(ASM::asmcode& code, const compiler_options&);

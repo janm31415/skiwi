@@ -202,12 +202,12 @@ namespace
           str << "#\\" << std::fixed << std::setfill('0') << std::setw(3) << int(ch) << std::defaultfloat;
         texts.push_back(str.str());
         }
-      else if (rax == undefined)
+      else if (rax == skiwi_undefined)
         {
         str << "#undefined";
         texts.push_back(str.str());
         }
-      else if (rax == quiet_undefined)
+      else if (rax == skiwi_quiet_undefined)
         {
         }
       else if (rax == eof_tag)

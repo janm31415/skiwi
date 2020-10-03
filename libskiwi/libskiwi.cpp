@@ -365,7 +365,7 @@ namespace
   uint64_t compile_and_run(const std::string& input, environment_map& env, repl_data& rd)
     {
     using namespace SKIWI;
-    uint64_t result = undefined;
+    uint64_t result = skiwi_undefined;
     uint64_t size;
     compiler_data::fptr f = compile(size, input, env, rd);
     if (f)
@@ -992,7 +992,7 @@ void register_external_primitive(const std::string& name, void* func_ptr, extern
   register_external_primitive(name, func_ptr, return_type, args, help_text);
   }
 
-scm_type::scm_type() : scm_value(undefined)
+scm_type::scm_type() : scm_value(skiwi_undefined)
   {
   }
 
@@ -1029,11 +1029,11 @@ bool scm_type::is_char() const
   }
 bool scm_type::is_undefined() const
   {
-  return (scm_value == undefined);
+  return (scm_value == skiwi_undefined);
   }
-bool scm_type::is_quiet_undefined() const
+bool scm_type::is_skiwi_quiet_undefined() const
   {
-  return (scm_value == quiet_undefined);
+  return (scm_value == skiwi_quiet_undefined);
   }
 bool scm_type::is_eof() const
   {
@@ -1260,12 +1260,12 @@ scm_type make_false()
 
 scm_type make_undefined()
   {
-  return undefined;
+  return skiwi_undefined;
   }
 
-scm_type make_quiet_undefined()
+scm_type make_skiwi_quiet_undefined()
   {
-  return quiet_undefined;
+  return skiwi_quiet_undefined;
   }
 
 scm_type make_pair(scm_type first, scm_type second)
@@ -1503,7 +1503,7 @@ uint64_t c_prim_load(const char* filename)
 
 uint64_t c_prim_eval(const char* script)
   {
-  uint64_t return_value = undefined;
+  uint64_t return_value = skiwi_undefined;
   using namespace skiwi;
   /*
   void* rbx = cd.ctxt.rbx;

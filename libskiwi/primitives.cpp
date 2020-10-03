@@ -1806,7 +1806,7 @@ void compile_string_fill(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::BYTE_MEM_RCX, 7, asmcode::DL);
   code.add(asmcode::LABEL, done);
 
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
   code.add(asmcode::JMP, CONTINUE);
 
   if (ops.safe_primitives)
@@ -1846,7 +1846,7 @@ void compile_vector_fill(asmcode& code, const compiler_options& ops)
   code.add(asmcode::DEC, asmcode::RAX);
   code.add(asmcode::JMPS, repeat);
   code.add(asmcode::LABEL, done);
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
   code.add(asmcode::JMP, CONTINUE);
 
   if (ops.safe_primitives)
@@ -1886,7 +1886,7 @@ void compile_make_vector(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::RCX, asmcode::NUMBER, 0);
   code.add(asmcode::JES, done);
   code.add(asmcode::ADD, ALLOC, asmcode::NUMBER, CELLS(1));
-  code.add(asmcode::MOV, MEM_ALLOC, asmcode::NUMBER, undefined);
+  code.add(asmcode::MOV, MEM_ALLOC, asmcode::NUMBER, skiwi_undefined);
   code.add(asmcode::DEC, asmcode::RCX);
   code.add(asmcode::JMPS, fill_undefined);
   code.add(asmcode::LABEL, fill);
@@ -6258,7 +6258,7 @@ void compile_write_string(asmcode& code, const compiler_options& ops)
   code.add(asmcode::POP, asmcode::RDI);
 #endif
 
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
   code.add(asmcode::JMP, CONTINUE); // done
 
   code.add(asmcode::LABEL, noflush);
@@ -6291,7 +6291,7 @@ void compile_write_string(asmcode& code, const compiler_options& ops)
   code.add(asmcode::JMPS, repeat);
   code.add(asmcode::LABEL, done);
 
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
 
   code.add(asmcode::JMP, CONTINUE);
 
@@ -6397,7 +6397,7 @@ void compile_write_char(asmcode& code, const compiler_options& ops)
   code.add(asmcode::SHL, asmcode::R11, asmcode::NUMBER, 1);
   code.add(asmcode::MOV, asmcode::MEM_RDX, CELLS(5), asmcode::R11); //update index
 
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
 
   code.add(asmcode::JMP, CONTINUE);
 
@@ -6490,7 +6490,7 @@ void compile_flush_output_port(asmcode& code, const compiler_options& ops)
 #endif
 
   code.add(asmcode::LABEL, skip);
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
   code.add(asmcode::JMP, CONTINUE);
 
   if (ops.safe_primitives)
@@ -7882,13 +7882,13 @@ void compile_make_promise(asmcode& code, const compiler_options& ops)
 
 void compile_undefined(asmcode& code, const compiler_options&)
   {
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_undefined);
   code.add(asmcode::JMP, CONTINUE);
   }
 
-void compile_quiet_undefined(asmcode& code, const compiler_options&)
+void compile_skiwi_quiet_undefined(asmcode& code, const compiler_options&)
   {
-  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, quiet_undefined);
+  code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, skiwi_quiet_undefined);
   code.add(asmcode::JMP, CONTINUE);
   }
 

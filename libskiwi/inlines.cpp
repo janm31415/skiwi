@@ -1232,12 +1232,12 @@ void inline_fixnum_to_flonum(ASM::asmcode& code, const compiler_options&)
 
 void inline_undefined(ASM::asmcode& code, const compiler_options&)
   {
-  code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::NUMBER, undefined);
+  code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::NUMBER, skiwi_undefined);
   }
 
-void inline_quiet_undefined(ASM::asmcode& code, const compiler_options&)
+void inline_skiwi_quiet_undefined(ASM::asmcode& code, const compiler_options&)
   {
-  code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::NUMBER, quiet_undefined);
+  code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::NUMBER, skiwi_quiet_undefined);
   }
 
 void inline_arithmetic_shift(ASM::asmcode& code, const compiler_options&)

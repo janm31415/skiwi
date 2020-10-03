@@ -30,8 +30,8 @@ The machine registers are used in the following manner:
 #define char_mask   255
 #define char_tag    23      // 0 0 0 1 0 1 1 1
 #define nil         31      // 0 0 0 1 1 1 1 1
-#define undefined_mask 255
-#define undefined   39      // 0 0 1 0 0 1 1 1
+#define skiwi_undefined_mask 255
+#define skiwi_undefined   39      // 0 0 1 0 0 1 1 1
 #define error_mask 255
 #define error_tag    47     // 0 0 1 0 1 1 1 1
 #define unalloc_mask 255
@@ -39,8 +39,8 @@ The machine registers are used in the following manner:
 //free 55                      0 0 1 1 0 1 1 1
 #define eof_mask 255
 #define eof_tag 71          // 0 1 0 0 0 1 1 1
-#define quiet_undefined_mask 255
-#define quiet_undefined 79  // 0 1 0 0 1 1 1 1
+#define skiwi_quiet_undefined_mask 255
+#define skiwi_quiet_undefined 79  // 0 1 0 0 1 1 1 1
 #define unresolved_mask 255
 #define unresolved_tag 87   // 0 1 0 1 0 1 1 1
 #define reserved_mask 255

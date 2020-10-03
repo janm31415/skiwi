@@ -117,7 +117,7 @@ void inline_flonum_to_fixnum(ASM::asmcode& code, const compiler_options& options
 void inline_fixnum_to_flonum(ASM::asmcode& code, const compiler_options& options);
 
 void inline_undefined(ASM::asmcode& code, const compiler_options& options);
-void inline_quiet_undefined(ASM::asmcode& code, const compiler_options& options);
+void inline_skiwi_quiet_undefined(ASM::asmcode& code, const compiler_options& options);
 
 void inline_arithmetic_shift(ASM::asmcode& code, const compiler_options& options);
 void inline_quotient(ASM::asmcode& code, const compiler_options& options);

@@ -6,8 +6,6 @@
 #include <ostream>
 #include <vector>
 
-#include "types.h"
-
 namespace skiwi
   {
 
@@ -107,7 +105,7 @@ namespace skiwi
       SKIWI_SCHEME_API bool is_nil() const;
       SKIWI_SCHEME_API bool is_char() const;
       SKIWI_SCHEME_API bool is_undefined() const;
-      SKIWI_SCHEME_API bool is_quiet_undefined() const;
+      SKIWI_SCHEME_API bool is_skiwi_quiet_undefined() const;
       SKIWI_SCHEME_API bool is_eof() const;
       SKIWI_SCHEME_API bool is_procedure() const;
       SKIWI_SCHEME_API bool is_error() const;
@@ -140,7 +138,7 @@ namespace skiwi
   SKIWI_SCHEME_API scm_type make_true();
   SKIWI_SCHEME_API scm_type make_false();
   SKIWI_SCHEME_API scm_type make_undefined();
-  SKIWI_SCHEME_API scm_type make_quiet_undefined();
+  SKIWI_SCHEME_API scm_type make_skiwi_quiet_undefined();
   SKIWI_SCHEME_API scm_type make_flonum(double value);
   SKIWI_SCHEME_API scm_type make_pair(scm_type first, scm_type second);
   SKIWI_SCHEME_API scm_type make_list(const std::vector<scm_type>& lst);

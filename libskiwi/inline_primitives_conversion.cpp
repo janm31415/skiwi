@@ -965,7 +965,7 @@ namespace
     make_inline_procedure(p, e, 1, !g_standard_bindings, g_safe_primitives, "flonum->fixnum", "##flonum->fixnum", "##flonum?");
     }
 
-  void inline_quiet_undefined(PrimitiveCall& p, Expression&)
+  void inline_skiwi_quiet_undefined(PrimitiveCall& p, Expression&)
     {
     p.primitive_name = "##%quiet-undefined";
     }
@@ -999,7 +999,7 @@ namespace
       ptcbi.insert(std::pair<std::string, fun_ptr>("remainder", &inline_remainder));
       ptcbi.insert(std::pair<std::string, fun_ptr>("quotient", &inline_quotient));
       ptcbi.insert(std::pair<std::string, fun_ptr>("arithmetic-shift", &inline_arithmetic_shift));
-      ptcbi.insert(std::pair<std::string, fun_ptr>("%quiet-undefined", &inline_quiet_undefined));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("%quiet-undefined", &inline_skiwi_quiet_undefined));
       ptcbi.insert(std::pair<std::string, fun_ptr>("%undefined", &inline_undefined));
       ptcbi.insert(std::pair<std::string, fun_ptr>("vector-length", &inline_vector_length));
       ptcbi.insert(std::pair<std::string, fun_ptr>("fixnum->flonum", &inline_fixnum_to_flonum));
