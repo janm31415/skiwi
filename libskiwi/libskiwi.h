@@ -146,6 +146,8 @@ namespace skiwi
   
 
   SKIWI_SCHEME_API void set_prompt(const std::string& prompt_text);
+  SKIWI_SCHEME_API void set_welcome_message(const std::string& welcome_message_text);
+  SKIWI_SCHEME_API void set_help_text(const std::string& help_text);
 
   SKIWI_SCHEME_API void save_compiler_data();
   SKIWI_SCHEME_API void restore_compiler_data();  

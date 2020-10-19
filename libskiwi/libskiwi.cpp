@@ -88,6 +88,19 @@ namespace
     std::string help_text;
     };
 
+  static std::string help = R"(This is Skiwi. You are interacting with the REPL.
+Enter scheme commands or one of the following:
+
+,asm
+,env
+,exit
+,expand
+,external
+,mem
+,unresolved
+
+)";  
+  static std::string welcome_message = "\nWelcome to Skiwi\nType ,? for help.\n";
   static std::string prompt = "skiwi> ";
   static compiler_data cd;
   static std::vector<external_primitive> external_primitives;
@@ -390,6 +403,21 @@ namespace
     assert(is_cmd_command(txt));
     auto it = txt.find_first_not_of(' ');
     std::string cleaned = txt.substr(it);
+    it = cleaned.find_first_of(' ');
+    if (it == std::string::npos)
+      return cleaned;
+    return cleaned.substr(0, it);
+    }
+
+  std::string get_cleaned_first_argument(std::string txt)
+    {
+    assert(is_cmd_command(txt));
+    auto it = txt.find_first_not_of(' ');
+    std::string cleaned = txt.substr(it);
+    it = cleaned.find_first_of(' ');
+    if (it == std::string::npos)
+      return std::string();
+    cleaned = cleaned.substr(it);
     it = cleaned.find_first_of(' ');
     if (it == std::string::npos)
       return cleaned;
@@ -729,16 +757,7 @@ void skiwi_runf(const std::string& scheme_file)
 
 void skiwi_show_help()
   {
-  out("This is Skiwi. You are interacting with the REPL.\n");
-  out("Enter scheme commands or one of the following:\n\n");
-  out(",asm\n");
-  out(",env\n");
-  out(",exit\n");
-  out(",expand\n");
-  out(",external\n");
-  out(",mem\n");
-  out(",unresolved\n");
-  out("\n");
+  out(help);
   }
 
 void skiwi_show_expand(const std::string& input)
@@ -753,10 +772,15 @@ void skiwi_show_assembly(const std::string& input)
   out(assembly, "\n");
   }
 
-void skiwi_show_external_primitives()
+void skiwi_show_external_primitives(const std::string& arg)
   {
   for (const auto& p : external_primitives)
     {
+    if (!arg.empty())
+      {
+      if (p.name.substr(0, arg.length()) != arg)
+        continue;
+      }
     out("NAME\n");
     out("\t", p.name, "\n");
     if (!p.help_text.empty())
@@ -826,7 +850,7 @@ void skiwi_repl(int argc, char** argv)
     skiwi_runf(filename);
     }
 
-  out("\nWelcome to Skiwi\nType ,? for help.\n");
+  out(welcome_message);
   std::string input;
   bool quit = false;
   while (!quit)
@@ -875,7 +899,8 @@ void skiwi_repl(int argc, char** argv)
           }
         else if (command == ",external")
           {
-          skiwi_show_external_primitives();
+          std::string arg = get_cleaned_first_argument(input);
+          skiwi_show_external_primitives(arg);
           }
         break;
         }
@@ -1320,6 +1345,16 @@ scm_type make_vector(const std::vector<scm_type>& vec)
 void set_prompt(const std::string& prompt_text)
   {
   prompt = prompt_text;
+  }
+
+void set_welcome_message(const std::string& welcome_message_text)
+  {
+  welcome_message = welcome_message_text;
+  }
+
+void set_help_text(const std::string& help_text)
+  {
+  help = help_text;
   }
 
 void save_compiler_data()
