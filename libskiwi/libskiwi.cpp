@@ -418,6 +418,10 @@ Enter scheme commands or one of the following:
     if (it == std::string::npos)
       return std::string();
     cleaned = cleaned.substr(it);
+    it = cleaned.find_first_not_of(' ');
+    if (it == std::string::npos)
+      return std::string();
+    cleaned = cleaned.substr(it);
     it = cleaned.find_first_of(' ');
     if (it == std::string::npos)
       return cleaned;
