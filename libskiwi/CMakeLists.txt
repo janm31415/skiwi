@@ -180,9 +180,14 @@ if (${JTK_THREADING} STREQUAL "tbb")
       ${TBB_LIBRARIES}
       )	
 endif (${JTK_THREADING} STREQUAL "tbb")
-
+   
+if (WIN32)
 add_custom_command(TARGET libskiwi POST_BUILD 
    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scm" "${CMAKE_CURRENT_BINARY_DIR}/scm")
+endif (WIN32)
 
+if (UNIX)
 add_custom_command(TARGET libskiwi POST_BUILD 
-   COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scm" "$<TARGET_FILE_DIR:libskiwi>/scm")
+   COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scm" "$<TARGET_FILE_DIR:asm.tests>/scm")
+endif (UNIX)
+   
