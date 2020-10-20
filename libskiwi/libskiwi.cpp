@@ -583,6 +583,14 @@ void* scheme_with_skiwi(void *(*func)(void *), void *data, skiwi_parameters para
   if (cd.initialized)
     throw std::runtime_error("Skiwi is already initialized");
 
+  std::string modulepath = jtk::get_folder(jtk::get_executable_path()) + std::string("scm/");
+#ifdef _WIN32
+  std::wstring wmodulepath = jtk::convert_string_to_wstring(modulepath);
+  _wputenv_s(L"SKIWI_MODULE_PATH", wmodulepath.c_str());
+#else
+  ::setenv("SKIWI_MODULE_PATH", modulepath.c_str(), 0);
+#endif
+
   cd = compiler_data(); // this step is necessary to clear any potential content in cd if this is the second instantiation of skiwi
 
   cd.initialized = true;
