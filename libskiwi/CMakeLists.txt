@@ -33,7 +33,6 @@ debug_find.h
 define_conversion.h
 dump.h
 environment.h
-exepath.h
 filename_setter.h
 format.h
 free_var_analysis.h

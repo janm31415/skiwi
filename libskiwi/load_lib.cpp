@@ -1,7 +1,7 @@
 #include "load_lib.h"
 #include "macro_data.h"
-#include "exepath.h"
 #include <iostream>
+#include <sstream>
 
 #include <jtk/file_utils.h>
 
@@ -23,22 +23,12 @@ namespace
 
   std::string read_file_in_module_path(const std::string& relative_path)
     {
+    std::string modulepath = jtk::get_folder(jtk::get_executable_path()) + std::string("scm/");
+    std::string filepath = modulepath + relative_path;
 #ifdef _WIN32
-    wchar_t* path = _wgetenv(L"SKIWI_MODULE_PATH");
+    std::wstring wfilepath = jtk::convert_string_to_wstring(filepath);
+    std::ifstream f{ wfilepath };
 #else
-    char* path = getenv("SKIWI_MODULE_PATH");
-#endif
-    if (path == nullptr)
-      throw std::runtime_error("SKIWI_MODULE_PATH is not in the environment!");
-#ifdef _WIN32
-    std::wstring wfolder(path);
-    std::wstring wrelative(relative_path.begin(), relative_path.end());
-    std::wstring filepath = wfolder + wrelative;
-    std::ifstream f{ filepath };
-#else
-    std::string folder(path);
-    std::string relative(relative_path.begin(), relative_path.end());
-    std::string filepath = folder + relative;
     std::ifstream f{ filepath };
 #endif
     if (f.is_open())
@@ -64,20 +54,9 @@ bool load_lib(const std::string& libname, environment_map& env, repl_data& rd, m
     }
   catch (std::runtime_error e)
     {
-    std::cout << e.what() << "\n";
-#ifdef _WIN32
-    std::wstring w_environment_location = get_folder(get_exe_path());
-    std::replace(w_environment_location.begin(), w_environment_location.end(), '\\', '/');
-    w_environment_location.append(L"scm/");
-    std::string environment = jtk::convert_wstring_to_string(w_environment_location);
-#else
-    std::string environment_location = get_folder(get_exe_path());
-    std::string environment = environment_location.append("scm/");
-#endif
-    std::cout << "You have to set the environment variable SKIWI_MODULE_PATH\n";
-    std::cout << "to the correct location. This should be the folder where the\n";
-    std::cout << "Skiwi scm files are located. Probably this is folder\n";
-    std::cout << environment << "\n";
+    std::cout << e.what() << "\n";  
+    std::cout << "Trying to read scheme libraries in subfolder scm of your binaries folder\n";
+    std::cout << "It appears that this folder or the corresponding library files do not exist\n";
     return false;
     }
   if (script.empty())
