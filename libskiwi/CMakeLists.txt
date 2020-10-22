@@ -5,12 +5,16 @@ if (WIN32)
   set(TBB_LIBRARIES "C:/Program Files/TBB/lib/intel64/vc14/tbb.lib" "C:/Program Files/TBB/lib/intel64/vc14/tbb_debug.lib")
 endif (WIN32)
 
-
 if (UNIX)
   set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
   set(TBB_LIBRARIES "/usr/lib/x86_64-linux-gnu/libtbb.so" "/usr/lib/x86_64-linux-gnu/libtbb.so.2")
 endif (UNIX)
 
+if (APPLE)
+  set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
+  set(TBB_LIBRARIES "/usr/local/lib/libtbb.dylib")
+endif (APPLE)
+  
 set(HDRS
 alpha_conversion.h
 asm_aux.h
@@ -142,17 +146,7 @@ endif (UNIX)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-if (${JTK_THREADING} STREQUAL "tbb")
-add_definitions(-D_ENABLE_TBB)
-endif (${JTK_THREADING} STREQUAL "tbb")
-
-if (${JTK_THREADING} STREQUAL "ppl")
-add_definitions(-D_ENABLE_PPL)
-endif (${JTK_THREADING} STREQUAL "ppl")
-
-if (${JTK_THREADING} STREQUAL "std")
-add_definitions(-D_ENABLE_THREADS)
-endif (${JTK_THREADING} STREQUAL "std")
+include ("../jtk/jtk/jtk.cmake")
 
 
 add_library(libskiwi SHARED ${HDRS} ${SRCS})
