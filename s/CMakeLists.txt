@@ -30,3 +30,6 @@ target_link_libraries(s
     asm
     libskiwi	
     )	
+
+add_custom_command(TARGET s POST_BUILD 
+   COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/../libskiwi/scm" "$<TARGET_FILE_DIR:s>/scm") 
