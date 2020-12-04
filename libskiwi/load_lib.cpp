@@ -2,6 +2,7 @@
 #include "macro_data.h"
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include "file_utils.h"
 
@@ -23,10 +24,10 @@ namespace
 
   std::string read_file_in_module_path(const std::string& relative_path)
     {
-    std::string modulepath = jtk::get_folder(jtk::get_executable_path()) + std::string("scm/");
+    std::string modulepath = get_folder(get_executable_path()) + std::string("scm/");
     std::string filepath = modulepath + relative_path;
 #ifdef _WIN32
-    std::wstring wfilepath = jtk::convert_string_to_wstring(filepath);
+    std::wstring wfilepath = convert_string_to_wstring(filepath);
     std::ifstream f{ wfilepath };
 #else
     std::ifstream f{ filepath };

@@ -80,6 +80,7 @@ context.cpp
 define_conversion.cpp
 dump.cpp
 filename_setter.cpp
+file_utils.cpp
 format.cpp
 free_var_analysis.cpp
 global_define_env.cpp

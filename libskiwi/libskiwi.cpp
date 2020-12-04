@@ -524,13 +524,13 @@ Enter scheme commands or one of the following:
     if (!cd.initialized)
       throw std::runtime_error("Skiwi is not initialized");
     asmcode code;
-    std::string filename = jtk::get_filename(scheme_file);
-    std::string folder = jtk::get_folder(scheme_file);
+    std::string filename = get_filename(scheme_file);
+    std::string folder = get_folder(scheme_file);
 #ifdef _WIN32
     wchar_t buf[4096];
     GetCurrentDirectoryW(4096, buf);
-    std::wstring wfolder = jtk::convert_string_to_wstring(folder);
-    std::wstring wfilename = jtk::convert_string_to_wstring(filename);
+    std::wstring wfolder = convert_string_to_wstring(folder);
+    std::wstring wfilename = convert_string_to_wstring(filename);
     SetCurrentDirectoryW(wfolder.c_str());
 
     auto input_file = std::ifstream{ wfilename };
@@ -583,9 +583,9 @@ void* scheme_with_skiwi(void *(*func)(void *), void *data, skiwi_parameters para
   if (cd.initialized)
     throw std::runtime_error("Skiwi is already initialized");
 
-  std::string modulepath = jtk::get_folder(jtk::get_executable_path()) + std::string("scm/");
+  std::string modulepath = get_folder(get_executable_path()) + std::string("scm/");
 
-  jtk::putenv(std::string("SKIWI_MODULE_PATH"), modulepath);
+  putenv(std::string("SKIWI_MODULE_PATH"), modulepath);
 
   cd = compiler_data(); // this step is necessary to clear any potential content in cd if this is the second instantiation of skiwi
 
