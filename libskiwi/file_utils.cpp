@@ -5,10 +5,16 @@
 #include <string>
 #include <vector>
 #include <sys/stat.h>
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <algorithm>
 #include <sys/types.h>
 #include <windows.h>
+#elif defined(unix)
+#include <unistd.h>
+#include <linux/limits.h>
+#elif defined(__APPLE__)
+#include <unistd.h>
+#include <mach-o/dyld.h>
 #endif
 
 SKIWI_BEGIN

@@ -8022,7 +8022,7 @@ namespace
     env_value = convert_wstring_to_string(wresult);
     return env_value.c_str();
 #else
-    return getenv(name);
+    return ::getenv(name);
 #endif
     }
 
