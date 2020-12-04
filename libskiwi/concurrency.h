@@ -7,6 +7,7 @@
 #include <cassert>
 #include <exception>
 #include <cstring>
+#include <atomic>
 #ifdef _WIN32
 #include <windows.h>
 #undef min
