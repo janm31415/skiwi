@@ -1,20 +1,4 @@
 
-
-if (WIN32)
-  set(TBB_INCLUDE_DIR "C:/Program Files/TBB/include")
-  set(TBB_LIBRARIES "C:/Program Files/TBB/lib/intel64/vc14/tbb.lib" "C:/Program Files/TBB/lib/intel64/vc14/tbb_debug.lib")
-endif (WIN32)
-
-if (UNIX)
-  set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
-  set(TBB_LIBRARIES "/usr/lib/x86_64-linux-gnu/libtbb.so" "/usr/lib/x86_64-linux-gnu/libtbb.so.2")
-endif (UNIX)
-
-if (APPLE)
-  set(TBB_INCLUDE_DIR "/usr/local/include" "/usr/include")
-  set(TBB_LIBRARIES "/usr/local/lib/libtbb.dylib")
-endif (APPLE)
-  
 set(HDRS
 alpha_conversion.h
 asm_aux.h
@@ -38,6 +22,7 @@ define_conversion.h
 dump.h
 environment.h
 filename_setter.h
+file_utils.h
 format.h
 free_var_analysis.h
 global_define_env.h
@@ -74,6 +59,7 @@ tail_call_analysis.h
 tail_calls_check.h
 tokenize.h
 types.h
+utf8.h
 visitor.h
 )
 	
@@ -139,34 +125,19 @@ endif (UNIX)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-include ("../jtk/jtk/jtk.cmake")
-
-
 add_library(libskiwi SHARED ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})
 
 target_include_directories(libskiwi
     PRIVATE
-	  ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jtk   
+	  ${CMAKE_CURRENT_SOURCE_DIR}/..  
     )	    
 
 target_link_libraries(libskiwi
     PRIVATE	
     asm
     )	
-
-if (${JTK_THREADING} STREQUAL "tbb")
-  target_include_directories(libskiwi
-      PRIVATE
-      ${TBB_INCLUDE_DIR}
-      )
-  target_link_libraries(libskiwi
-      PRIVATE	
-      ${TBB_LIBRARIES}
-      )	
-endif (${JTK_THREADING} STREQUAL "tbb")
    
 if (WIN32)
 add_custom_command(TARGET libskiwi POST_BUILD 

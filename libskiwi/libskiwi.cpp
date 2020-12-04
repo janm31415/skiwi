@@ -27,8 +27,8 @@
 #include "dump.h"
 #include "format.h"
 
-#include <jtk/concurrency.h>
-#include <jtk/file_utils.h>
+#include "concurrency.h"
+#include "file_utils.h"
 
 SKIWI_BEGIN
 
@@ -80,7 +80,7 @@ namespace
     uint64_t* error_label; // Each scheme call has its error label to which to jump in case of error. It should thus be preserved.
     };
 
-  static jtk::combinable<std::vector< compiler_data_memento>> compiler_data_memento_vector;
+  static combinable<std::vector< compiler_data_memento>> compiler_data_memento_vector;
 
   struct external_primitive
     {

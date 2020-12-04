@@ -1,6 +1,6 @@
 #include "primitives.h"
 
-#include <jtk/file_utils.h>
+#include "file_utils.h"
 
 #include "asm_aux.h"
 #include "c_prim_decl.h"
@@ -8077,7 +8077,7 @@ namespace
     }
   }
 
-void compile_current_seconds(ASM::asmcode& code, const compiler_options& options)
+void compile_current_seconds(ASM::asmcode& code, const compiler_options& /*options*/)
   {
   save_before_foreign_call(code);
   align_stack(code);
@@ -8096,7 +8096,7 @@ void compile_current_seconds(ASM::asmcode& code, const compiler_options& options
   code.add(asmcode::JMP, CONTINUE);
   }
 
-void compile_current_milliseconds(ASM::asmcode& code, const compiler_options& options)
+void compile_current_milliseconds(ASM::asmcode& code, const compiler_options& /*options*/)
   {
   save_before_foreign_call(code);
   align_stack(code);

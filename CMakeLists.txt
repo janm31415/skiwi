@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.10)
 project (skiwi)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
@@ -18,11 +18,6 @@ endif (WIN32)
 
 add_subdirectory(asm)
 add_subdirectory(asm.tests)
-
-if (NOT TARGET jtk)
-add_subdirectory(jtk)
-endif()
-
 add_subdirectory(libskiwi)
 add_subdirectory(life)
 add_subdirectory(s)
