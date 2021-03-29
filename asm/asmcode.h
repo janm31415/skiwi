@@ -400,6 +400,9 @@ class asmcode
 
     ASSEMBLER_API void clear();
 
+    ASSEMBLER_API static std::string operation_to_string(operation op);
+    ASSEMBLER_API static std::string operand_to_string(operand op);
+
   private:
     std::list<std::vector<instruction>> instructions_list;
     std::vector<std::list<std::vector<instruction>>::iterator> instructions_list_stack;

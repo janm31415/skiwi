@@ -2292,7 +2292,7 @@ namespace
 
   uint64_t hamming_distance(uint64_t left, uint64_t right)
     {
-    return std::bitset<64>(left^right).count();
+    return std::bitset<64>(left ^ right).count();
     }
 
   struct opcode_table
@@ -4357,7 +4357,7 @@ namespace
     }
 
   uint64_t get_compressed_displacement(opcode::opcode_operand_type op)
-    {    
+    {
     /*
     Table 2-34 and 2-35 in Intel guide. Todo
     */
@@ -4372,7 +4372,7 @@ namespace
     //
     // not complete
 
-    /*disp8 compression mode for evex instructions*/    
+    /*disp8 compression mode for evex instructions*/
 
     if (code.operand1 != asmcode::NUMBER && is_8_bit((int64_t)code.operand1_mem / (int64_t)get_compressed_displacement(op1d)))
       code.operand1_mem = (int64_t)code.operand1_mem / (int64_t)get_compressed_displacement(op1d);
@@ -4766,6 +4766,333 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     default: throw std::logic_error("fill_opcode: this operation is not implemented");
     }
   //return 0;
+  }
+
+std::string asmcode::operation_to_string(operation oper)
+  {
+  switch (oper)
+    {
+    case asmcode::ADD: return std::string("ADD");
+    case asmcode::ADDSD: return std::string("ADDSD");
+    case asmcode::ADDSS: return std::string("ADDSS");
+    case asmcode::ADDPS: return std::string("ADDPS");
+    case asmcode::AND: return std::string("AND");
+    case asmcode::CALL:return std::string("CALL");
+    case asmcode::COMMENT: return std::string("COMMENT");
+    case asmcode::CMP: return std::string("CMP");
+    case asmcode::CMPEQPD: return std::string("CMPEQPD");
+    case asmcode::CMPLTPD: return std::string("CMPLTPD");
+    case asmcode::CMPLEPD: return std::string("CMPLEPD");
+    case asmcode::CQO: return std::string("CQO");
+    case asmcode::CDQ: return std::string("CDQ");
+    case asmcode::CVTSI2SD: return std::string("CVTSI2SD");
+    case asmcode::CVTSI2SS: return std::string("CVTSI2SS");
+    case asmcode::CVTSD2SS: return std::string("CVTSD2SS");
+    case asmcode::CVTTSD2SI:return std::string("CVTTSD2SI");
+    case asmcode::CVTTSS2SI:return std::string("CVTTSS2SI");
+    case asmcode::DEC: return std::string("DEC");
+    case asmcode::DIV: return std::string("DIV");
+    case asmcode::DIVSD: return std::string("DIVSD");
+    case asmcode::DIVPS: return std::string("DIVPS");
+    case asmcode::EXTERN:return std::string("EXTERN");
+    case asmcode::F2XM1:return std::string("F2XM1");
+    case asmcode::FABS: return std::string("FABS");
+    case asmcode::FADD: return std::string("FADD");
+    case asmcode::FADDP:return std::string("FADDP");
+    case asmcode::FDIV: return std::string("FDIV");
+    case asmcode::FDIVP:return std::string("FDIVP");
+    case asmcode::FIST: return std::string("FIST");
+    case asmcode::FISTPQ:return std::string("FISTPQ");
+    case asmcode::FCHS:return std::string("FCHS");
+    case asmcode::FLDQ:return std::string("FLDQ");
+    case asmcode::FILD:return std::string("FILD");
+    case asmcode::FLD: return std::string("FLD");
+    case asmcode::FLD1:return std::string("FLD1");
+    case asmcode::FLDL2E:return std::string("FLDL2E");
+    case asmcode::FLDPI: return std::string("FLDPI");
+    case asmcode::FLDLN2:return std::string("FLDLN2");
+    case asmcode::FMULP: return std::string("FMULP");
+    case asmcode::FMUL:return std::string("FMUL");
+    case asmcode::FSIN:return std::string("FSIN");
+    case asmcode::FCOS:return std::string("FCOS");
+    case asmcode::FPATAN:return std::string("FPATAN");
+    case asmcode::FPREM: return std::string("FPREM");
+    case asmcode::FPTAN: return std::string("FPTAN");
+    case asmcode::FRNDINT:return std::string("FRNDINT");
+    case asmcode::FSCALE: return std::string("FSCALE");
+    case asmcode::FSQRT:return std::string("FSQRT");
+    case asmcode::FSTP: return std::string("FSTP");
+    case asmcode::FSTPQ:return std::string("FSTPQ");
+    case asmcode::FSUB: return std::string("FSUB");
+    case asmcode::FSUBR:return std::string("FSUBR");
+    case asmcode::FSUBRP:return std::string("FSUBRP");
+    case asmcode::FXCH: return std::string("FXCH");
+    case asmcode::FYL2X: return std::string("FYL2X");
+    case asmcode::GLOBAL:return std::string("GLOBAL");
+    case asmcode::DATA: return std::string("DATA");
+    case asmcode::LABEL:return std::string("LABEL");
+    case asmcode::DQ: return std::string("DQ");
+    case asmcode::LABEL_ALIGNED:return std::string("LABEL_ALIGNED");
+    case asmcode::IDIV:return std::string("IDIV");
+    case asmcode::IMUL:return std::string("IMUL");
+    case asmcode::INC: return std::string("INC");
+    case asmcode::JE: return std::string("JE");
+    case asmcode::JL: return std::string("JL");
+    case asmcode::JLE:return std::string("JLE");
+    case asmcode::JA: return std::string("JA");
+    case asmcode::JB: return std::string("JB");
+    case asmcode::JG: return std::string("JG");
+    case asmcode::JGE:return std::string("JGE");
+    case asmcode::JNE:return std::string("JNE");
+    case asmcode::JMP:return std::string("JMP");
+    case asmcode::JES:return std::string("JES");
+    case asmcode::JLS:return std::string("JLS");
+    case asmcode::JLES:return std::string("JLES");
+    case asmcode::JAS: return std::string("JAS");
+    case asmcode::JBS: return std::string("JBS");
+    case asmcode::JGS: return std::string("JGS");
+    case asmcode::JGES:return std::string("JGES");
+    case asmcode::JNES:return std::string("JNES");
+    case asmcode::JMPS:return std::string("JMPS");
+    case asmcode::KMOVW: return std::string("KMOVW");
+    case asmcode::MOV: return std::string("MOV");
+    case asmcode::MOVAPS: return std::string("MOVAPS");
+    case asmcode::MOVD: return std::string("MOVD");
+    case asmcode::MOVQ: return std::string("MOVQ");
+    case asmcode::MOVDQA: return std::string("MOVDQA");
+    case asmcode::MOVMSKPD: return std::string("MOVMSKPD");
+    case asmcode::MOVSS:return std::string("MOVSS");
+    case asmcode::MOVSD:return std::string("MOVSD");
+    case asmcode::MOVZX:return std::string("MOVZX");
+    case asmcode::MUL: return std::string("MUL");
+    case asmcode::MULSD:return std::string("MULSD");
+    case asmcode::MULPS:return std::string("MULPS");
+    case asmcode::NEG:return std::string("NEG");
+    case asmcode::NOP:return std::string("NOP");
+    case asmcode::OR:return std::string("OR");
+    case asmcode::POP: return std::string("POP");
+    case asmcode::PUSH: return std::string("PUSH");
+    case asmcode::RET: return std::string("RET");
+    case asmcode::SECTION: return std::string("SECTION");
+    case asmcode::SAL: return std::string("SAL");
+    case asmcode::SAR: return std::string("SAR");
+    case asmcode::SETE: return std::string("SETE");
+    case asmcode::SETNE:return std::string("SETNE");
+    case asmcode::SETL: return std::string("SETL");
+    case asmcode::SETG: return std::string("SETG");
+    case asmcode::SETLE:return std::string("SETLE");
+    case asmcode::SETGE:return std::string("SETGE");
+    case asmcode::SHL: return std::string("SHL");
+    case asmcode::SHUFPS:return std::string("SHUFPS");
+    case asmcode::SHR:return std::string("SHR");
+    case asmcode::SQRTPD:return std::string("SQRTPD");
+    case asmcode::SQRTPS:return std::string("SQRTPS");
+    case asmcode::SUB: return std::string("SUB");
+    case asmcode::SUBSD: return std::string("SUBSD");
+    case asmcode::SUBPS: return std::string("SUBPS");
+    case asmcode::TEST: return std::string("TEST");
+    case asmcode::UCOMISD:return std::string("UCOMISD");
+    case asmcode::VADDPS: return std::string("VADDPS");
+    case asmcode::VANDPS: return std::string("VANDPS");
+    case asmcode::VANDNPS:return std::string("VANDNPS");
+    case asmcode::VCMPPS: return std::string("VCMPPS");
+    case asmcode::VDIVPS: return std::string("VDIVPS");
+    case asmcode::VMAXPS: return std::string("VMAXPS");
+    case asmcode::VMINPS: return std::string("VMINPS");
+    case asmcode::VMULPS: return std::string("VMULPS");
+    case asmcode::VMOVD: return std::string("VMOVD");
+    case asmcode::VMOVSS: return std::string("VMOVSS");
+    case asmcode::VMOVMSKPS: return std::string("VMOVMSKPS");
+    case asmcode::VMOVQ: return std::string("VMOVQ");
+    case asmcode::VORPS: return std::string("VORPS");
+    case asmcode::VSQRTPS: return std::string("VSQRTPS");
+    case asmcode::VCVTSI2SS:return std::string("VCVTSI2SS");
+    case asmcode::VCVTDQ2PS:return std::string("VCVTDQ2PS");
+    case asmcode::VCVTSD2SS:return std::string("VCVTSD2SS");
+    case asmcode::VCVTSS2SI:return std::string("VCVTSS2SI");
+    case asmcode::VCVTPS2DQ:return std::string("VCVTPS2DQ");
+    case asmcode::VSHUFPS:return std::string("VSHUFPS");
+    case asmcode::VSUBPS: return std::string("VSUBPS");
+    case asmcode::VBROADCASTSS: return std::string("VBROADCASTSS");
+    case asmcode::VMOVAPS: return std::string("VMOVAPS");
+    case asmcode::VPERM2F128: return std::string("VPERM2F128");
+    case asmcode::VROUNDPS: return std::string("VROUNDPS");
+    case asmcode::VRNDSCALEPS: return std::string("VRNDSCALEPS");
+    case asmcode::VXORPS: return std::string("VXORPS");
+    case asmcode::XOR: return std::string("XOR");
+    case asmcode::XORPD: return std::string("XORPD");
+    case asmcode::XORPS:return std::string("XORPS");
+    }
+  return std::string();
+  }
+
+std::string asmcode::operand_to_string(operand op)
+  {
+  switch (op)
+    {
+    case asmcode::EMPTY: return std::string("EMPTY");
+    case asmcode::AL: return std::string("AL");
+    case asmcode::AH: return std::string("AH");
+    case asmcode::BL: return std::string("BL");
+    case asmcode::BH: return std::string("BH");
+    case asmcode::CL: return std::string("CL");
+    case asmcode::CH: return std::string("CH");
+    case asmcode::DL: return std::string("DL");
+    case asmcode::DH: return std::string("DH");
+    case asmcode::EAX: return std::string("EAX");
+    case asmcode::EBX: return std::string("EBX");
+    case asmcode::ECX: return std::string("ECX");
+    case asmcode::EDX: return std::string("EDX");
+    case asmcode::EDI: return std::string("EDI");
+    case asmcode::ESI: return std::string("ESI");
+    case asmcode::ESP: return std::string("ESP");
+    case asmcode::EBP: return std::string("EBP");
+    case asmcode::R8D: return std::string("R8D");
+    case asmcode::R9D: return std::string("R9D");
+    case asmcode::R10D:return std::string("R10D");
+    case asmcode::R11D:return std::string("R11D");
+    case asmcode::RAX: return std::string("RAX");
+    case asmcode::RBX: return std::string("RBX");
+    case asmcode::RCX: return std::string("RCX");
+    case asmcode::RDX: return std::string("RDX");
+    case asmcode::RDI: return std::string("RDI");
+    case asmcode::RSI: return std::string("RSI");
+    case asmcode::RSP: return std::string("RSP");
+    case asmcode::RBP: return std::string("RBP");
+    case asmcode::R8:  return std::string("R8");
+    case asmcode::R9:  return std::string("R9");
+    case asmcode::R10: return std::string("R10");
+    case asmcode::R11: return std::string("R11");
+    case asmcode::R12: return std::string("R12");
+    case asmcode::R13: return std::string("R13");
+    case asmcode::R14: return std::string("R14");
+    case asmcode::R15: return std::string("R15");
+    case asmcode::MEM_EAX: return std::string("MEM_EAX");
+    case asmcode::MEM_EBX: return std::string("MEM_EBX");
+    case asmcode::MEM_ECX: return std::string("MEM_ECX");
+    case asmcode::MEM_EDX: return std::string("MEM_EDX");
+    case asmcode::MEM_EDI: return std::string("MEM_EDI");
+    case asmcode::MEM_ESI: return std::string("MEM_ESI");
+    case asmcode::MEM_ESP: return std::string("MEM_ESP");
+    case asmcode::MEM_EBP: return std::string("MEM_EBP");
+    case asmcode::MEM_RAX: return std::string("MEM_RAX");
+    case asmcode::MEM_RBX: return std::string("MEM_RBX");
+    case asmcode::MEM_RCX: return std::string("MEM_RCX");
+    case asmcode::MEM_RDX: return std::string("MEM_RDX");
+    case asmcode::MEM_RDI: return std::string("MEM_RDI");
+    case asmcode::MEM_RSI: return std::string("MEM_RSI");
+    case asmcode::MEM_RSP: return std::string("MEM_RSP");
+    case asmcode::MEM_RBP: return std::string("MEM_RBP");
+    case asmcode::MEM_R8:  return std::string("MEM_R8");
+    case asmcode::MEM_R9:  return std::string("MEM_R9");
+    case asmcode::MEM_R10: return std::string("MEM_R10");
+    case asmcode::MEM_R11: return std::string("MEM_R11");
+    case asmcode::MEM_R12: return std::string("MEM_R12");
+    case asmcode::MEM_R13: return std::string("MEM_R13");
+    case asmcode::MEM_R14: return std::string("MEM_R14");
+    case asmcode::MEM_R15: return std::string("MEM_R15");
+    case asmcode::BYTE_MEM_RAX: return std::string("BYTE_MEM_RAX");
+    case asmcode::BYTE_MEM_RBX: return std::string("BYTE_MEM_RBX");
+    case asmcode::BYTE_MEM_RCX: return std::string("BYTE_MEM_RCX");
+    case asmcode::BYTE_MEM_RDX: return std::string("BYTE_MEM_RDX");
+    case asmcode::BYTE_MEM_RDI: return std::string("BYTE_MEM_RDI");
+    case asmcode::BYTE_MEM_RSI: return std::string("BYTE_MEM_RSI");
+    case asmcode::BYTE_MEM_RSP: return std::string("BYTE_MEM_RSP");
+    case asmcode::BYTE_MEM_RBP: return std::string("BYTE_MEM_RBP");
+    case asmcode::BYTE_MEM_R8:  return std::string("BYTE_MEM_R8");
+    case asmcode::BYTE_MEM_R9:  return std::string("BYTE_MEM_R9");
+    case asmcode::BYTE_MEM_R10: return std::string("BYTE_MEM_R10");
+    case asmcode::BYTE_MEM_R11: return std::string("BYTE_MEM_R11");
+    case asmcode::BYTE_MEM_R12: return std::string("BYTE_MEM_R12");
+    case asmcode::BYTE_MEM_R13: return std::string("BYTE_MEM_R13");
+    case asmcode::BYTE_MEM_R14: return std::string("BYTE_MEM_R14");
+    case asmcode::BYTE_MEM_R15: return std::string("BYTE_MEM_R15");
+    case asmcode::DWORD_MEM_RAX: return std::string("DWORD_MEM_RAX");
+    case asmcode::DWORD_MEM_RBX: return std::string("DWORD_MEM_RBX");
+    case asmcode::DWORD_MEM_RCX: return std::string("DWORD_MEM_RCX");
+    case asmcode::DWORD_MEM_RDX: return std::string("DWORD_MEM_RDX");
+    case asmcode::DWORD_MEM_RDI: return std::string("DWORD_MEM_RDI");
+    case asmcode::DWORD_MEM_RSI: return std::string("DWORD_MEM_RSI");
+    case asmcode::DWORD_MEM_RSP: return std::string("DWORD_MEM_RSP");
+    case asmcode::DWORD_MEM_RBP: return std::string("DWORD_MEM_RBP");
+    case asmcode::DWORD_MEM_R8:  return std::string("DWORD_MEM_R8");
+    case asmcode::DWORD_MEM_R9:  return std::string("DWORD_MEM_R9");
+    case asmcode::DWORD_MEM_R10: return std::string("DWORD_MEM_R10");
+    case asmcode::DWORD_MEM_R11: return std::string("DWORD_MEM_R11");
+    case asmcode::DWORD_MEM_R12: return std::string("DWORD_MEM_R12");
+    case asmcode::DWORD_MEM_R13: return std::string("DWORD_MEM_R13");
+    case asmcode::DWORD_MEM_R14: return std::string("DWORD_MEM_R14");
+    case asmcode::DWORD_MEM_R15: return std::string("DWORD_MEM_R15");
+    case asmcode::MOFFS64: return std::string("MOFFS64");
+    case asmcode::NUMBER: return std::string("NUMBER");   
+    case asmcode::ST0:  return std::string("ST0");
+    case asmcode::ST1:  return std::string("ST1");
+    case asmcode::ST2:  return std::string("ST2");
+    case asmcode::ST3:  return std::string("ST3");
+    case asmcode::ST4:  return std::string("ST4");
+    case asmcode::ST5:  return std::string("ST5");
+    case asmcode::ST6:  return std::string("ST6");
+    case asmcode::ST7:  return std::string("ST7");
+    case asmcode::XMM0: return std::string("XMM0");
+    case asmcode::XMM1: return std::string("XMM1");
+    case asmcode::XMM2: return std::string("XMM2");
+    case asmcode::XMM3: return std::string("XMM3");
+    case asmcode::XMM4: return std::string("XMM4");
+    case asmcode::XMM5: return std::string("XMM5");
+    case asmcode::XMM6: return std::string("XMM6");
+    case asmcode::XMM7: return std::string("XMM7");
+    case asmcode::XMM8: return std::string("XMM8");
+    case asmcode::XMM9: return std::string("XMM9");
+    case asmcode::XMM10:return std::string("XMM10");
+    case asmcode::XMM11:return std::string("XMM11");
+    case asmcode::XMM12:return std::string("XMM12");
+    case asmcode::XMM13:return std::string("XMM13");
+    case asmcode::XMM14:return std::string("XMM14");
+    case asmcode::XMM15:return std::string("XMM15");
+    case asmcode::YMM0: return std::string("YMM0");
+    case asmcode::YMM1: return std::string("YMM1");
+    case asmcode::YMM2: return std::string("YMM2");
+    case asmcode::YMM3: return std::string("YMM3");
+    case asmcode::YMM4: return std::string("YMM4");
+    case asmcode::YMM5: return std::string("YMM5");
+    case asmcode::YMM6: return std::string("YMM6");
+    case asmcode::YMM7: return std::string("YMM7");
+    case asmcode::YMM8: return std::string("YMM8");
+    case asmcode::YMM9: return std::string("YMM9");
+    case asmcode::YMM10:return std::string("YMM10");
+    case asmcode::YMM11:return std::string("YMM11");
+    case asmcode::YMM12:return std::string("YMM12");
+    case asmcode::YMM13:return std::string("YMM13");
+    case asmcode::YMM14:return std::string("YMM14");
+    case asmcode::YMM15:return std::string("YMM15");
+    case asmcode::ZMM0: return std::string("ZMM0");
+    case asmcode::ZMM1: return std::string("ZMM1");
+    case asmcode::ZMM2: return std::string("ZMM2");
+    case asmcode::ZMM3: return std::string("ZMM3");
+    case asmcode::ZMM4: return std::string("ZMM4");
+    case asmcode::ZMM5: return std::string("ZMM5");
+    case asmcode::ZMM6: return std::string("ZMM6");
+    case asmcode::ZMM7: return std::string("ZMM7");
+    case asmcode::ZMM8: return std::string("ZMM8");
+    case asmcode::ZMM9: return std::string("ZMM9");
+    case asmcode::ZMM10:return std::string("ZMM10");
+    case asmcode::ZMM11:return std::string("ZMM11");
+    case asmcode::ZMM12: return std::string("ZMM12");
+    case asmcode::ZMM13: return std::string("ZMM13");
+    case asmcode::ZMM14: return std::string("ZMM14");
+    case asmcode::ZMM15: return std::string("ZMM15");
+    case asmcode::K0: return std::string("K0");
+    case asmcode::K1: return std::string("K1");
+    case asmcode::K2: return std::string("K2");
+    case asmcode::K3: return std::string("K3");
+    case asmcode::K4: return std::string("K4");
+    case asmcode::K5: return std::string("K5");
+    case asmcode::K6: return std::string("K6");
+    case asmcode::K7: return std::string("K7");
+    case asmcode::VARIABLE: return std::string("VARIABLE");
+    case asmcode::LABELADDRESS: return std::string("LABELADDRESS");
+    }
+  return std::string();
   }
 
 ASM_END

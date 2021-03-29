@@ -3,6 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 //#define ONLY_LAST
+#define PRINT_OUT_REGISTERS_AND_OPERANDS
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -54,6 +55,32 @@ using namespace ASM;
 
 namespace
   {
+#ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
+  std::vector<asmcode::operand> operands;
+  std::vector<asmcode::operation> operations;
+#endif
+
+  void digest_asmcode(const asmcode& code)
+    {
+    (void)code;
+#ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
+    for (const auto& instruction_vector : code.get_instructions_list())
+      {
+      for (const auto& instr : instruction_vector)
+        {
+        operations.push_back(instr.oper);
+        if (instr.operand1 != asmcode::EMPTY)
+          operands.push_back(instr.operand1);
+        if (instr.operand2 != asmcode::EMPTY)
+          operands.push_back(instr.operand2);
+        if (instr.operand3 != asmcode::EMPTY)
+          operands.push_back(instr.operand3);
+        if (instr.operand4 != asmcode::EMPTY)
+          operands.push_back(instr.operand4);
+        }
+      }
+#endif
+    }
 
   struct compile_fixture
     {
@@ -80,6 +107,7 @@ namespace
       try
         {
         compile_primitives_library(pm, rd, env, ctxt, code, ops);
+        digest_asmcode(code);
         first_pass_data d;
         uint64_t size;
         fun_ptr f = (fun_ptr)assemble(size, d, code);
@@ -122,6 +150,7 @@ namespace
         {
         if (load_apply(env, rd, md, ctxt, code, pm, ops))
           {
+          digest_asmcode(code);
           first_pass_data d;
           uint64_t size;
           fun_ptr f = (fun_ptr)assemble(size, d, code);
@@ -144,6 +173,7 @@ namespace
         {
         if (load_r5rs(env, rd, md, ctxt, code, pm, ops))
           {
+          digest_asmcode(code);
           first_pass_data d;
           uint64_t size;
           fun_ptr f = (fun_ptr)assemble(size, d, code);
@@ -166,6 +196,7 @@ namespace
         {
         if (load_string_to_symbol(env, rd, md, ctxt, code, pm, ops))
           {
+          digest_asmcode(code);
           first_pass_data d;
           uint64_t size;
           fun_ptr f = (fun_ptr)assemble(size, d, code);
@@ -208,6 +239,7 @@ namespace
       try
         {
         compile_primitives_library(pm, rd, env, ctxt, code, ops);
+        digest_asmcode(code);
         first_pass_data d;
         uint64_t size;
         fun_ptr f = (fun_ptr)assemble(size, d, code);
@@ -258,6 +290,7 @@ namespace
       try
         {
         compile(env, rd, md, ctxt, code, prog, pm, externals, ops);
+        digest_asmcode(code);
         }
       catch (std::logic_error e)
         {
@@ -287,6 +320,7 @@ namespace
       try
         {
         code = get_asmcode(script);
+        digest_asmcode(code);
         }
       catch (std::logic_error e)
         {
@@ -335,6 +369,7 @@ namespace
       try
         {
         code = get_asmcode(script);
+        digest_asmcode(code);
         }
       catch (std::logic_error e)
         {
@@ -5886,6 +5921,12 @@ SKIWI_END
 void run_all_compile_tests()
   {
   using namespace SKIWI;
+
+#ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
+  operands.clear();
+  operations.clear();
+#endif
+
 #ifndef ONLY_LAST  
   fixnums().test();
   bools().test();
@@ -6084,4 +6125,24 @@ void run_all_compile_tests()
   current_milliseconds_test().test();
 #endif
   test_libskiwi_externals().test();
+
+#ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
+  std::sort(operands.begin(), operands.end());
+  std::sort(operations.begin(), operations.end());
+  operands.erase(std::unique(operands.begin(), operands.end()), operands.end());
+  operations.erase(std::unique(operations.begin(), operations.end()), operations.end());
+
+  std::cout << "OPERANDS\n";
+  std::cout << "========\n";
+  for (auto operand : operands)
+    {
+    std::cout << asmcode::operand_to_string(operand) << std::endl;
+    }
+  std::cout << "OPERATIONS\n";
+  std::cout << "==========\n";
+  for (auto op : operations)
+    {
+    std::cout << asmcode::operation_to_string(op) << std::endl;
+    }
+#endif
   }
