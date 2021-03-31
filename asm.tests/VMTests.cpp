@@ -567,6 +567,58 @@ namespace
     free_bytecode(f, size);
     }
 
+  void test_vm_movq()
+    {
+    asmcode code;
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 10);
+    code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::RAX);
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 15);
+    code.add(asmcode::MOVQ, asmcode::RAX, asmcode::XMM0);    
+    code.add(asmcode::RET);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(10, reg.rax);
+    TEST_EQ(10, *reinterpret_cast<uint64_t*>(&reg.xmm0));
+    free_bytecode(f, size);
+    }
+
+  void test_vm_addsd()
+    {
+    asmcode code;
+    double v1 = 1.5;
+    double v2 = 0.2;
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, *reinterpret_cast<uint64_t*>(&v1));
+    code.add(asmcode::MOVQ, asmcode::XMM0, asmcode::RAX);
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, *reinterpret_cast<uint64_t*>(&v2));
+    code.add(asmcode::MOVQ, asmcode::XMM1, asmcode::RAX);
+    code.add(asmcode::ADDSD, asmcode::XMM0, asmcode::XMM1);
+    code.add(asmcode::RET);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(1.7, reg.xmm0);
+    free_bytecode(f, size);
+    }
+
   } // namespace
 
 ASM_END
@@ -594,4 +646,6 @@ void run_all_vm_tests()
   test_vm_jles();  
   test_vm_jges();
   test_vm_push_pop();
+  test_vm_movq();
+  test_vm_addsd();
   }

@@ -462,6 +462,28 @@ namespace
       TEST_EQ("3.1415926535900001", run("(3.14159265359)", true, 17));
       }
     };
+
+  struct add1 : public compile_fixture {
+    void test()
+      {
+      ops.garbage_collection = false;
+      TEST_EQ("0", run("(add1)"));      
+      TEST_EQ("1", run("(add1 0)"));
+      
+      TEST_EQ("0", run("(add1 -1)"));
+      TEST_EQ("6", run("(add1 5)"));
+      TEST_EQ("-999", run("(add1 -1000)"));
+      
+      TEST_EQ("536870911", run("(add1 536870910)"));
+      TEST_EQ("-536870911", run("(add1 -536870912)"));
+      TEST_EQ("2", run("(add1 (add1 0))"));
+      TEST_EQ("18", run("(add1 (add1 (add1 (add1 (add1 (add1 12))))))"));
+      TEST_EQ("53687091001", run("(add1 53687091000)"));
+      TEST_EQ("-53687091000", run("(add1 -53687091001)"));      
+      TEST_EQ("1.5", run("(add1 0.5)"));
+      TEST_EQ("0.4", run("(add1 -0.6)"));      
+      }
+    };
   }
 
 SKIWI_END
@@ -474,4 +496,5 @@ void run_all_compile_vm_tests()
   test_for_nil().test();
   chars().test();
   doubles().test();
+  add1().test();
   }

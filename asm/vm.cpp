@@ -1,5 +1,7 @@
 #include "vm.h"
 
+#include <iostream>
+#include <sstream>
 
 ASM_BEGIN
 
@@ -84,6 +86,22 @@ namespace
       if (instr.oper == asmcode::CALL)
         op1mem = 3;
       if (instr.oper == asmcode::JMP)
+        op1mem = 3;
+      if (instr.oper == asmcode::JA)
+        op1mem = 3;
+      if (instr.oper == asmcode::JB)
+        op1mem = 3;
+      if (instr.oper == asmcode::JE)
+        op1mem = 3;
+      if (instr.oper == asmcode::JL)
+        op1mem = 3;
+      if (instr.oper == asmcode::JLE)
+        op1mem = 3;
+      if (instr.oper == asmcode::JG)
+        op1mem = 3;
+      if (instr.oper == asmcode::JGE)
+        op1mem = 3;
+      if (instr.oper == asmcode::JNE)
         op1mem = 3;
       }
     if (instr.operand2_mem != 0)
@@ -835,6 +853,14 @@ namespace
       }
     };
 
+  struct AddsdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left += right;
+      }
+    };
+
   template <class TOper>
   inline void execute_operation(asmcode::operand operand1,
                                 asmcode::operand operand2,
@@ -869,6 +895,22 @@ namespace
           TOper::apply(*oprnd1_8, operand2_mem);
         }
       }
+    }
+
+  template <class TOper>
+  inline void execute_double_operation(asmcode::operand operand1,
+    asmcode::operand operand2,
+    uint64_t operand1_mem,
+    uint64_t operand2_mem,
+    registers& regs)
+    {
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    if (oprnd1)
+      {
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      if (oprnd2)
+        TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));    
+      }   
     }
 
   template <class TOper>
@@ -985,6 +1027,20 @@ namespace
       regs.eflags |= sign_flag;      
     }
 
+  void print(asmcode::operation op, asmcode::operand operand1,
+    asmcode::operand operand2,
+    uint64_t operand1_mem,
+    uint64_t operand2_mem)
+    {
+    asmcode::instruction i;
+    i.oper = op;
+    i.operand1 = operand1;
+    i.operand2 = operand2;
+    i.operand1_mem = operand1_mem;
+    i.operand2_mem = operand2_mem;
+    i.stream(std::cout);
+    }
+
   } // namespace
 void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
   {
@@ -1003,11 +1059,19 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
     uint64_t operand1_mem;
     uint64_t operand2_mem;
     uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, bytecode_ptr);
+
+    //print(op, operand1, operand2, operand1_mem, operand2_mem);
+
     switch (op)
       {
       case asmcode::ADD:
       {
       execute_operation<AddOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::ADDSD:
+      {
+      execute_double_operation<AddsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case asmcode::AND:
@@ -1211,9 +1275,17 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
         }
       break;
       }
+      case asmcode::MOVQ:
       case asmcode::MOV:
       {
       execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);      
+      break;
+      }
+      case asmcode::MOVZX:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint8_t* oprnd2 = get_address_8bit(operand2, operand2_mem, regs);
+      *oprnd1 = *oprnd2;
       break;
       }
       case asmcode::NOP: break;
@@ -1265,6 +1337,60 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_operation<SarOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::SETE:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if (regs.eflags & zero_flag)
+        *oprnd1 = 1;
+      else
+        *oprnd1 = 0;
+      break;
+      }
+      case asmcode::SETNE:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if (regs.eflags & zero_flag)
+        *oprnd1 = 0;
+      else
+        *oprnd1 = 1;
+      break;
+      }
+      case asmcode::SETL:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
+        *oprnd1 = 1;
+      else
+        *oprnd1 = 0;
+      break;
+      }
+      case asmcode::SETLE:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
+        *oprnd1 = 0;
+      else
+        *oprnd1 = 1;
+      break;
+      }
+      case asmcode::SETG:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
+        *oprnd1 = 1;
+      else
+        *oprnd1 = 0;
+      break;
+      }
+      case asmcode::SETGE:
+      {
+      uint8_t* oprnd1 = get_address_8bit(operand1, operand1_mem, regs);
+      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
+        *oprnd1 = 0;
+      else
+        *oprnd1 = 1;
+      break;
+      }
       case asmcode::SHL:
       {
       execute_operation<ShlOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -1303,7 +1429,12 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_operation<XorOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
-      default: throw std::logic_error("not implemented yet!");
+      default: 
+      {
+      std::stringstream str;
+      str << asmcode::operation_to_string(op) << " is not implemented yet!";
+      throw std::logic_error(str.str());
+      }
       }
     bytecode_ptr += sz;
     }
