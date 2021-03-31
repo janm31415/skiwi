@@ -1280,6 +1280,24 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_operation<SubOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::TEST:
+      {
+      uint64_t tmp = execute_operation_const<AndOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      if (tmp)
+        {
+        regs.eflags &= ~zero_flag;
+        if ((int64_t)tmp < 0)
+          regs.eflags |= sign_flag;
+        else
+          regs.eflags &= ~sign_flag;
+        }
+      else
+        {
+        regs.eflags |= zero_flag;
+        regs.eflags &= ~sign_flag;
+        }
+      break;
+      }
       case asmcode::XOR:
       {
       execute_operation<XorOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
