@@ -925,24 +925,66 @@ namespace
     throw std::logic_error("Invalid bytecode");
     }
 
-  void set_eflags(int64_t cmp_value, registers& regs)
+  inline void get_values(int64_t& left_signed, int64_t& right_signed, uint64_t& left_unsigned, uint64_t right_unsigned, asmcode::operand operand1,
+    asmcode::operand operand2,
+    uint64_t operand1_mem,
+    uint64_t operand2_mem,
+    registers& regs)
     {
-    if (cmp_value == 0)
+    uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+    if (oprnd1)
       {
-      regs.eflags |= zero_flag;
-      regs.eflags &= ~sign_flag;
-      }
-    else if (cmp_value < 0)
-      {      
-      regs.eflags |= sign_flag;
-      regs.eflags &= ~zero_flag;
+      left_unsigned = *oprnd1;
+      left_signed = (int64_t)left_unsigned;
       }
     else
       {
-      regs.eflags &= ~sign_flag;
-      regs.eflags &= ~zero_flag;
+      uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+      left_unsigned = *oprnd1_8;
+      left_signed = (int8_t)(*oprnd1_8);
+      }
+    uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+    if (oprnd2)
+      {
+      right_unsigned = *oprnd2;
+      right_signed = (int64_t)right_unsigned;
+      }
+    else if (operand2 == asmcode::NUMBER || operand2 == asmcode::LABELADDRESS)
+      {
+      right_unsigned = operand2_mem;
+      right_signed = (int64_t)right_unsigned;
+      }
+    else
+      {
+      uint8_t* oprnd2_8 = get_address_8bit(operand2, operand2_mem, regs);
+      right_unsigned = *oprnd2_8;
+      right_signed = (int8_t)(*oprnd2_8);
       }
     }
+
+  inline void compare_operation(asmcode::operand operand1,
+    asmcode::operand operand2,
+    uint64_t operand1_mem,
+    uint64_t operand2_mem,
+    registers& regs)
+    {    
+    regs.eflags = 0;
+    int64_t left_signed = 0;
+    int64_t right_signed = 0;
+    uint64_t left_unsigned = 0;
+    uint64_t right_unsigned = 0;
+    get_values(left_signed, right_signed, left_unsigned, right_unsigned, operand1, operand2, operand1_mem, operand2_mem, regs);    
+    if (left_signed == right_signed)
+      regs.eflags |= zero_flag;
+    if (left_unsigned < right_unsigned)
+      regs.eflags |= carry_flag;
+    int64_t temp = left_signed - right_signed;
+    if ((temp < left_signed) != (right_signed > 0))
+      regs.eflags |= overflow_flag;
+    if (temp < 0)      
+      regs.eflags |= sign_flag;      
+    }
+
   } // namespace
 void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
   {
@@ -992,13 +1034,67 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       }
       case asmcode::CMP:
       {
-      int64_t temp = (int64_t)execute_operation_const<SubOper>(operand1, operand2, operand1_mem, operand2_mem, regs);      
-      set_eflags(temp, regs);
+      compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);            
       break;
       }
+      case asmcode::JA:
+      case asmcode::JAS:
+      {
+      if (((regs.eflags & zero_flag) | (regs.eflags & carry_flag)) == 0)
+        {
+        if (operand1 == asmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("ja(s) not implemented");
+          }
+        }
+      break;
+      }
+      case asmcode::JB:
+      case asmcode::JBS:
+      {
+      if (regs.eflags & carry_flag)
+        {
+        if (operand1 == asmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("jb(s) not implemented");
+          }
+        }
+      break;
+      }
+      case asmcode::JE:
+      case asmcode::JES:
+      {
+      if (regs.eflags & zero_flag)
+        {
+        if (operand1 == asmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("je(s) not implemented");
+          }
+        }
+      break;
+      }
+      case asmcode::JG:
       case asmcode::JGS:
       {
-      if ((regs.eflags & sign_flag) == 0)
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)) == 0)
         {
         if (operand1 == asmcode::NUMBER)
           {
@@ -1008,14 +1104,15 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
           }
         else
           {
-          throw std::logic_error("jgs not implemented");
+          throw std::logic_error("jg(s) not implemented");
           }
         }
       break;
       }
+      case asmcode::JGE:
       case asmcode::JGES:
       {
-      if (((regs.eflags & sign_flag)==0) || (regs.eflags & zero_flag))
+      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) == 0)
         {
         if (operand1 == asmcode::NUMBER)
           {
@@ -1025,14 +1122,15 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
           }
         else
           {
-          throw std::logic_error("jges not implemented");
+          throw std::logic_error("jge(s) not implemented");
           }
         }
       break;
       }
+      case asmcode::JL:
       case asmcode::JLS:
       {
-      if (regs.eflags & sign_flag)
+      if (((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)))
         {
         if (operand1 == asmcode::NUMBER)
           {
@@ -1042,14 +1140,15 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
           }
         else
           {
-          throw std::logic_error("jls not implemented");
+          throw std::logic_error("jl(s) not implemented");
           }
         }
       break;
       }
+      case asmcode::JLE:
       case asmcode::JLES:
       {
-      if ((regs.eflags & sign_flag) || (regs.eflags & zero_flag))
+      if ((((regs.eflags & sign_flag) ^ (regs.eflags & overflow_flag)) | (regs.eflags & zero_flag)))
         {
         if (operand1 == asmcode::NUMBER)
           {
@@ -1059,8 +1158,40 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
           }
         else
           {
-          throw std::logic_error("jles not implemented");
+          throw std::logic_error("jle(s) not implemented");
           }
+        }
+      break;
+      }
+      case asmcode::JNE:
+      case asmcode::JNES:
+      {
+      if ((regs.eflags & zero_flag)==0)
+        {
+        if (operand1 == asmcode::NUMBER)
+          {
+          int32_t local_offset = (int32_t)operand1_mem;
+          bytecode_ptr += local_offset;
+          sz = 0;
+          }
+        else
+          {
+          throw std::logic_error("jne(s) not implemented");
+          }
+        }
+      break;
+      }
+      case asmcode::JMPS:
+      {
+      if (operand1 == asmcode::NUMBER)
+        {
+        int32_t local_offset = (int32_t)operand1_mem;
+        bytecode_ptr += local_offset;
+        sz = 0;
+        }
+      else
+        {
+        throw std::logic_error("jmps not implemented");
         }
       break;
       }

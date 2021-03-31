@@ -21,6 +21,8 @@ ASSEMBLER_API uint64_t disassemble_bytecode(asmcode::operation& op,
                                         uint64_t& operand2_mem,
                                         const uint8_t* bytecode);
   
+#define carry_flag 1
+#define overflow_flag 2048
 #define sign_flag 64
 #define zero_flag 128
 
