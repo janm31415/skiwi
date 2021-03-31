@@ -541,6 +541,32 @@ namespace
     free_bytecode(f, size);
     }
 
+  void test_vm_push_pop()
+    {
+    asmcode code;
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 10);
+    code.add(asmcode::PUSH, asmcode::RAX);
+    code.add(asmcode::POP, asmcode::RCX);
+    code.add(asmcode::RET);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    reg.rax = 0;
+    reg.rcx = 0;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(10, reg.rax);
+    TEST_EQ(10, reg.rcx);
+    free_bytecode(f, size);
+    }
+
   } // namespace
 
 ASM_END
@@ -567,4 +593,5 @@ void run_all_vm_tests()
   test_vm_jls_2();
   test_vm_jles();  
   test_vm_jges();
+  test_vm_push_pop();
   }

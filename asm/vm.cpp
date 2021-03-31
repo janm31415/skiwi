@@ -1222,6 +1222,29 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_operation<OrOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::POP:
+      {
+      uint64_t address = *((uint64_t*)regs.rsp);
+      regs.rsp += 8;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      *oprnd1 = address;
+      break;
+      }
+      case asmcode::PUSH:
+      {      
+      regs.rsp -= 8;
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        *((uint64_t*)regs.rsp) = *oprnd1;
+      else if (operand1 == asmcode::NUMBER || operand1 == asmcode::LABELADDRESS)
+        *((uint64_t*)regs.rsp) = operand1_mem;
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        *((uint64_t*)regs.rsp) = (int8_t)(*oprnd1_8);
+        }
+      break;
+      }
       case asmcode::RET:
       {
       uint64_t address = *((uint64_t*)regs.rsp);
