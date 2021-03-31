@@ -19,6 +19,13 @@ SKIWI_BEGIN
 
 using namespace ASM;
 
+function_map generate_simplified_function_map()
+  {
+  function_map fm;
+  fm.insert(std::pair<std::string, fun_ptr>("halt", &compile_halt));
+  return fm;
+  }
+
 function_map generate_function_map()
   {
   function_map fm;
@@ -621,7 +628,7 @@ namespace
 
       auto pm_it = pm.find("reclaim-garbage");
       if (pm_it == pm.end())
-        throw_error(primitive_unknown);
+        throw_error(primitive_unknown, "reclaim-garbage");
 
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, pm_it->second.address);
       code.add(asmcode::MOV, CONTINUE, asmcode::LABELADDRESS, continue_label);
@@ -1185,7 +1192,7 @@ namespace
         code.add(asmcode::COMMENT, "jump to reclaim-garbage");
         auto pm_it = pm.find("reclaim-garbage");
         if (pm_it == pm.end())
-          throw_error(primitive_unknown);
+          throw_error(primitive_unknown, "reclaim-garbage");
         code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, pm_it->second.address);
         code.add(asmcode::MOV, CONTINUE, asmcode::LABELADDRESS, continue_label2);
         code.add(asmcode::JMP, asmcode::RAX);

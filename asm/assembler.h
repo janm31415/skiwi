@@ -16,7 +16,6 @@ struct first_pass_data
   uint64_t size, data_size;
   std::map<std::string, uint64_t> label_to_address;
   std::map<std::string, uint64_t> external_to_address;
-  std::map<std::string, std::pair<uint64_t, uint64_t>> dq_to_pair_offset_value;
   };
 
 ASSEMBLER_API void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map<std::string, uint64_t>& externals);

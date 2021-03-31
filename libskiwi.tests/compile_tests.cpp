@@ -2,8 +2,8 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-//#define ONLY_LAST
-#define PRINT_OUT_REGISTERS_AND_OPERANDS
+#define ONLY_LAST
+//#define PRINT_OUT_REGISTERS_AND_OPERANDS
 
 #include "compile_tests.h"
 #include "test_assert.h"
@@ -6123,8 +6123,8 @@ void run_all_compile_tests()
   c_input_test_mix_ints_doubles_2().test();
   current_seconds_test().test();
   current_milliseconds_test().test();
-#endif
   test_libskiwi_externals().test();
+#endif
 
 #ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
   std::sort(operands.begin(), operands.end());

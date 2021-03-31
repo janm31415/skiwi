@@ -2,6 +2,7 @@
 
 #include "AssemblerTests.h"
 #include "AsmCodeTests.h"
+#include "VMTests.h"
 
 #include <ctime>
 
@@ -12,6 +13,7 @@ int main(int /*argc*/, const char* /*argv*/[])
   auto tic = std::clock();
   run_all_asm_code_tests();
   run_all_assembler_tests();
+  run_all_vm_tests();
   auto toc = std::clock();
 
   if (!testing_fails) 

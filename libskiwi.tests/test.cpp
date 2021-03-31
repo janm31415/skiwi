@@ -1,6 +1,7 @@
 #include "test_assert.h"
 
 #include "compile_tests.h"
+#include "compile_vm_tests.h"
 #include "conversion_tests.h"
 #include "format_tests.h"
 #include "parse_tests.h"
@@ -18,6 +19,7 @@ int main(int /*argc*/, const char* /*argv*/[])
   run_all_tokenize_tests();
   run_all_conversion_tests();
   run_all_compile_tests();
+  run_all_compile_vm_tests();
   auto toc = std::clock();
 
   if (!testing_fails) 

@@ -2,6 +2,7 @@
 set(HDRS
 test_assert.h
 compile_tests.h
+compile_vm_tests.h
 conversion_tests.h
 format_tests.h
 parse_tests.h
@@ -12,6 +13,7 @@ set(SRCS
 test_assert.cpp
 test.cpp
 compile_tests.cpp
+compile_vm_tests.cpp
 conversion_tests.cpp
 format_tests.cpp
 parse_tests.cpp

@@ -3,11 +3,13 @@ asm_api.h
 assembler.h
 asmcode.h
 namespace.h
+vm.h
 )
 	
 set(SRCS
 assembler.cpp
 asmcode.cpp
+vm.cpp
 )
 
 # general build definitions

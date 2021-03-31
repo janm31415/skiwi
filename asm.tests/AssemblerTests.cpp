@@ -4,7 +4,7 @@
 
 #include "AssemblerTests.h"
 #include <stdint.h>
-#include <asm/assembler.h>
+#include "asm/assembler.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -381,116 +381,6 @@ namespace
 
     }
 
-  void dq_memory()
-    {
-    asmcode code;
-    code.add(asmcode::GLOBAL, "entry");
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
-    code.add(asmcode::MOV, asmcode::MOFFS64, asmcode::RAX, "my_var");
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 4);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MOFFS64, "my_var");
-    code.add(asmcode::RET);
-    code.add(asmcode::DATA);
-    code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
-
-    typedef uint64_t(*fun_ptr)();
-    uint64_t size;
-    fun_ptr f = (fun_ptr)assemble(size, code);
-
-    TEST_ASSERT(f != NULL);
-
-    if (f)
-      {
-      uint64_t res = f();
-      TEST_EQ(res, uint64_t(2));
-      free_assembled_function((void*)f, size);
-      }
-
-    }
-
-  void dq_memory_2()
-    {
-    asmcode code;
-    code.add(asmcode::GLOBAL, "entry");
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MOFFS64, "my_var");
-    code.add(asmcode::RET);
-    code.add(asmcode::DATA);
-    code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
-
-    typedef uint64_t(*fun_ptr)();
-    uint64_t size;
-    fun_ptr f = (fun_ptr)assemble(size, code);
-
-    TEST_ASSERT(f != NULL);
-
-    if (f)
-      {
-      uint64_t res = f();
-      TEST_EQ(res, uint64_t(100));
-      free_assembled_function((void*)f, size);
-      }
-
-    }
-
-  void dq_memory_3()
-    {
-    asmcode code;
-    code.add(asmcode::GLOBAL, "entry");
-    code.add(asmcode::XOR, asmcode::RCX, asmcode::RCX);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MOFFS64, "var1");
-    code.add(asmcode::ADD, asmcode::RCX, asmcode::RAX);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MOFFS64, "var2");
-    code.add(asmcode::ADD, asmcode::RCX, asmcode::RAX);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MOFFS64, "var3");
-    code.add(asmcode::ADD, asmcode::RCX, asmcode::RAX);
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
-    code.add(asmcode::RET);
-    code.add(asmcode::DATA);
-    code.add(asmcode::DQ, asmcode::NUMBER, 11, "var1");
-    code.add(asmcode::DQ, asmcode::NUMBER, 12, "var2");
-    code.add(asmcode::DQ, asmcode::NUMBER, 13, "var3");
-    typedef uint64_t(*fun_ptr)();
-    uint64_t size;
-    fun_ptr f = (fun_ptr)assemble(size, code);
-
-    TEST_ASSERT(f != NULL);
-
-    if (f)
-      {
-      uint64_t res = f();
-      TEST_EQ(res, uint64_t(36));
-      free_assembled_function((void*)f, size);
-      }
-
-    }
-
-  void dq_memory_4()
-    {
-    asmcode code;
-    code.add(asmcode::GLOBAL, "entry");
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
-    code.add(asmcode::MOV, asmcode::RCX, asmcode::VARIABLE, "my_var");
-    code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RCX);
-    code.add(asmcode::RET);
-    code.add(asmcode::DATA);
-    code.add(asmcode::DQ, asmcode::NUMBER, 100, "my_var");
-
-    typedef uint64_t(*fun_ptr)();
-    uint64_t size;
-    fun_ptr f = (fun_ptr)assemble(size, code);
-
-    TEST_ASSERT(f != NULL);
-
-    if (f)
-      {
-      uint64_t res = f();
-      TEST_EQ(res, uint64_t(100));
-      free_assembled_function((void*)f, size);
-      }
-
-    }
-
   }
 
 ASM_END
@@ -512,8 +402,4 @@ void run_all_assembler_tests()
   assembler_call_external();
   assembler_move_label_to_rax_and_call_rax();
   assembler_move_label_to_rax_and_call_rax_aligned();
-  dq_memory();
-  dq_memory_2();
-  dq_memory_3();
-  dq_memory_4();
   }

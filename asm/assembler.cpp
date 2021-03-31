@@ -105,12 +105,6 @@ namespace
               nops_to_add.emplace_back(i, nr_of_nops);
               }
             data.label_to_address[instr.text] = data.size; break;
-          case asmcode::DQ:
-          {
-          data.dq_to_pair_offset_value[instr.text] = std::pair<uint64_t, uint64_t>(data.data_size, instr.operand1_mem);
-          data.data_size += 8; // reserve memory for 64 bit data
-          break;
-          }
           case asmcode::EXTERN:
           {
           auto it2 = externals.find(instr.text);
@@ -141,21 +135,7 @@ namespace
     for (auto it = code.get_instructions_list().begin(); it != code.get_instructions_list().end(); ++it)
       {
       for (asmcode::instruction instr : *it)
-        {
-        if (instr.operand1 == asmcode::VARIABLE)
-          {
-          auto it2 = data.dq_to_pair_offset_value.find(instr.text);
-          if (it2 == data.dq_to_pair_offset_value.end())
-            throw std::logic_error("error: variable is not defined");
-          instr.operand1_mem = address_start + data.size + it2->second.first;
-          }
-        if (instr.operand2 == asmcode::VARIABLE)
-          {
-          auto it2 = data.dq_to_pair_offset_value.find(instr.text);
-          if (it2 == data.dq_to_pair_offset_value.end())
-            throw std::logic_error("error: variable is not defined");
-          instr.operand2_mem = address_start + data.size + it2->second.first;
-          }
+        {       
         if (instr.operand1 == asmcode::LABELADDRESS)
           {
           auto it2 = data.label_to_address.find(instr.text);
@@ -169,21 +149,7 @@ namespace
           if (it2 == data.label_to_address.end())
             throw std::logic_error("error: label is not defined");
           instr.operand2_mem = address_start + it2->second;
-          }
-        if (instr.operand1 == asmcode::MOFFS64)
-          {
-          auto it2 = data.dq_to_pair_offset_value.find(instr.text);
-          if (it2 == data.dq_to_pair_offset_value.end())
-            throw std::logic_error("error: dq variable is not defined");
-          instr.operand1_mem = address_start + data.size + it2->second.first;
-          }
-        if (instr.operand2 == asmcode::MOFFS64)
-          {
-          auto it2 = data.dq_to_pair_offset_value.find(instr.text);
-          if (it2 == data.dq_to_pair_offset_value.end())
-            throw std::logic_error("error: dq variable is not defined");
-          instr.operand2_mem = address_start + data.size + it2->second.first;
-          }
+          }      
         switch (instr.oper)
           {
           case asmcode::CALL:
@@ -282,7 +248,6 @@ void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map
   {
   d.external_to_address.clear();
   d.label_to_address.clear();
-  d.dq_to_pair_offset_value.clear();
   first_pass(d, code, externals);
 
   void *compiled_func;
@@ -302,13 +267,6 @@ void* assemble(uint64_t& size, first_pass_data& d, asmcode& code, const std::map
   if (size_used != d.size)
     {
     throw std::logic_error("error: error in size computation.");
-    }
-
-  for (auto it = d.dq_to_pair_offset_value.begin(); it != d.dq_to_pair_offset_value.end(); ++it)
-    {
-    uint64_t offset = it->second.first;
-    uint64_t value = it->second.second;
-    *(uint64_t*)(func_end + offset) = value;
     }
 
   size = d.size + d.data_size;

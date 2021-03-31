@@ -74,9 +74,9 @@ void throw_error(int line_nr, int column_nr, const std::string& filename, error_
   throw std::logic_error(str.str());
   }
 
-void throw_error(error_type t)
+void throw_error(error_type t, std::string extra)
   {
-  throw_error(-1, -1, "", t);
+  throw_error(-1, -1, "", t, extra);
   }
 
 SKIWI_END

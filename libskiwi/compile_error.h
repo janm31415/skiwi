@@ -28,6 +28,6 @@ enum error_type
   };
 
 void throw_error(int line_nr, int column_nr, const std::string& filename, error_type t, std::string extra = std::string(""));
-void throw_error(error_type t);
+void throw_error(error_type t, std::string extra = std::string(""));
 
 SKIWI_END

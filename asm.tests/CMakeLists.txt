@@ -3,6 +3,7 @@ set(HDRS
 AssemblerTests.h
 AsmCodeTests.h
 test_assert.h
+VMTests.h
     )
 	
 set(SRCS
@@ -10,6 +11,7 @@ AssemblerTests.cpp
 AsmCodeTests.cpp
 test_assert.cpp
 test.cpp
+VMTests.cpp
 )
 
 # general build definitions
