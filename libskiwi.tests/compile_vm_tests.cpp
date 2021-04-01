@@ -73,7 +73,7 @@ namespace
       asmcode code;
       try
         {
-        compile_simplified_primitives_library(pm, rd, env, ctxt, code, ops);
+        compile_primitives_library(pm, rd, env, ctxt, code, ops);
         uint64_t size;
         first_pass_data d;
         uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);

@@ -72,7 +72,6 @@ typedef std::shared_ptr<environment<environment_entry>> environment_map;
 struct macro_data;
 
 function_map generate_function_map();
-function_map generate_simplified_function_map();
 
 SKIWI_SCHEME_API void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt, ASM::asmcode& code, Program& prog, const primitive_map& pm, const std::map<std::string, external_function>& external_functions, const compiler_options& options);
 

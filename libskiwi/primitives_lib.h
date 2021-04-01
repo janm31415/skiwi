@@ -14,7 +14,6 @@
 
 SKIWI_BEGIN
 
-SKIWI_SCHEME_API void compile_simplified_primitives_library(primitive_map& pm, repl_data& rd, environment_map& env, context& ctxt, ASM::asmcode& code, const compiler_options& options);
 SKIWI_SCHEME_API void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_map& env, context& ctxt, ASM::asmcode& code, const compiler_options& options);
 SKIWI_SCHEME_API void assign_primitive_addresses(primitive_map& pm, const ASM::first_pass_data& d, uint64_t address_start);
 
