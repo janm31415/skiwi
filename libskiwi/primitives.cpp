@@ -787,7 +787,7 @@ void compile_make_string(asmcode& code, const compiler_options& ops)
   code.add(asmcode::LABEL, fill_remainder);
   code.add(asmcode::MOV, MEM_ALLOC, asmcode::NUMBER, 0);
   code.add(asmcode::CMP, asmcode::RCX, asmcode::NUMBER, 0);
-  code.add(asmcode::JES, done1);
+  code.add(asmcode::JE, done1); // assembly can jump short, but vm cannot
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 0x00000000000000ff);
   code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
   code.add(asmcode::CMP, asmcode::RCX, asmcode::NUMBER, 1);
@@ -1612,7 +1612,7 @@ void compile_string_ref(asmcode& code, const compiler_options& ops)
     {
     error = label_to_string(label++);
     code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 2);
-    code.add(asmcode::JNES, error);
+    code.add(asmcode::JNE, error); // assembly can jump short, but vm cannot
     jump_short_if_arg_is_not_block(code, asmcode::RCX, asmcode::R11, error);
     }
   code.add(asmcode::AND, asmcode::RCX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
@@ -1662,7 +1662,7 @@ void compile_string_set(asmcode& code, const compiler_options& ops)
     error = label_to_string(label++);
     code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 3);
     code.add(asmcode::JNE, error);
-    jump_short_if_arg_is_not_block(code, asmcode::RCX, asmcode::R11, error);
+    jump_if_arg_is_not_block(code, asmcode::RCX, asmcode::R11, error); // assembly can jump short, but vm cannot
     }
   code.add(asmcode::AND, asmcode::RCX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   // here check whether it is a string and a char
@@ -1924,7 +1924,7 @@ void compile_vector(asmcode& code, const compiler_options& ops)
   code.add(asmcode::OR, asmcode::R15, asmcode::NUMBER, block_tag);
   code.add(asmcode::MOV, MEM_ALLOC, asmcode::RAX);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 0);
-  code.add(asmcode::JES, done);
+  code.add(asmcode::JE, done); // assembly can jump short, but vm cannot
   code.add(asmcode::MOV, MEM_ALLOC, CELLS(1), asmcode::RCX);
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
   code.add(asmcode::JES, done);
@@ -7777,8 +7777,8 @@ void compile_compare_strings_ci(asmcode& code, const compiler_options& ops)
   code.add(asmcode::AND, asmcode::RDX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   if (ops.safe_primitives)
     {
-    jump_short_if_arg_does_not_point_to_string(code, asmcode::RCX, asmcode::R11, error);
-    jump_short_if_arg_does_not_point_to_string(code, asmcode::RDX, asmcode::R11, error);
+    jump_if_arg_does_not_point_to_string(code, asmcode::RCX, asmcode::R11, error); // assembly can jump_short, but vm cannot.
+    jump_if_arg_does_not_point_to_string(code, asmcode::RDX, asmcode::R11, error); // assembly can jump_short, but vm cannot.
     }
   code.add(asmcode::ADD, asmcode::RCX, asmcode::NUMBER, CELLS(1));
   code.add(asmcode::ADD, asmcode::RDX, asmcode::NUMBER, CELLS(1));

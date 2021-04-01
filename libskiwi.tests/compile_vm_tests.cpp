@@ -683,7 +683,7 @@ namespace
 
 SKIWI_END
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 void run_all_compile_vm_tests()
   {
