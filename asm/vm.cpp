@@ -1138,6 +1138,30 @@ namespace
       }
     };
 
+  struct DivsdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left /= right;
+      }
+    };
+
+  struct MulsdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left *= right;
+      }
+    };
+
+  struct SubsdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left -= right;
+      }
+    };
+
   template <class TOper>
   inline void execute_operation(asmcode::operand operand1,
                                 asmcode::operand operand2,
@@ -1368,13 +1392,73 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
         }
       else // external call
         {
-        throw std::logic_error("external call not implemented");
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        regs.rsp -= 8;
+        *((uint64_t*)regs.rsp) = (uint64_t)(bytecode_ptr + sz); // save address right after call on stack
+        bytecode_ptr = (const uint8_t*)(*oprnd1);
+        sz = 0;
+        //throw std::logic_error("external call not implemented");
         }
       break;
       }
       case asmcode::CMP:
       {
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);            
+      break;
+      }
+      case asmcode::DEC:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {
+        *oprnd1 -= 1;
+        if (*oprnd1)
+          regs.eflags &= ~zero_flag;
+        else
+          regs.eflags |= zero_flag;
+        }
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        if (oprnd1_8)
+          {
+          *oprnd1_8 -= 1;
+          if (*oprnd1_8)
+            regs.eflags &= ~zero_flag;
+          else
+            regs.eflags |= zero_flag;
+          }
+        }
+      break;
+      }
+      case asmcode::DIVSD:
+      {
+      execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::INC:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {
+        *oprnd1 += 1;
+        if (*oprnd1)
+          regs.eflags &= ~zero_flag;
+        else
+          regs.eflags |= zero_flag;
+        }
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        if (oprnd1_8)
+          {
+          *oprnd1_8 += 1;
+          if (*oprnd1_8)
+            regs.eflags &= ~zero_flag;
+          else
+            regs.eflags |= zero_flag;
+          }
+        }
       break;
       }
       case asmcode::JA:
@@ -1551,6 +1635,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
         }
       break;
       }
+      case asmcode::MOVSD:
       case asmcode::MOVQ:
       case asmcode::MOV:
       {
@@ -1562,6 +1647,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
       uint8_t* oprnd2 = get_address_8bit(operand2, operand2_mem, regs);
       *oprnd1 = *oprnd2;
+      break;
+      }
+      case asmcode::MULSD:
+      {
+      execute_double_operation<MulsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case asmcode::NOP: break;
@@ -1680,6 +1770,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       case asmcode::SUB:
       {
       execute_operation<SubOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::SUBSD:
+      {
+      execute_double_operation<SubsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case asmcode::TEST:

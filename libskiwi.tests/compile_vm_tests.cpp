@@ -493,13 +493,48 @@ namespace
       TEST_EQ("-1.6", run("(sub1 -0.6)"));
       }
     };
+
+  struct add_fixnums : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("3", run("(+ 1 2)"));
+      TEST_EQ("6", run("(+ 1 2 3)"));
+      TEST_EQ("10", run("(+ 1 2 3 4)"));
+      TEST_EQ("15", run("(+ 1 2 3 4 5)"));
+      TEST_EQ("21", run("(+ 1 2 3 4 5 6)"));
+      TEST_EQ("28", run("(+ 1 2 3 4 5 6 7)"));
+      TEST_EQ("36", run("(+ 1 2 3 4 5 6 7 8)"));
+      TEST_EQ("45", run("(+ 1 2 3 4 5 6 7 8 9)"));
+      TEST_EQ("55", run("(+ 1 2 3 4 5 6 7 8 9 10)"));
+      TEST_EQ("66", run("(+ 1 2 3 4 5 6 7 8 9 10 11)"));
+      }
+    };
+
+  struct add_flonums : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("3", run("(+ 1.0 2.0)"));
+      TEST_EQ("6", run("(+ 1.0 2.0 3.0)"));
+      TEST_EQ("10", run("(+ 1.0 2.0 3.0 4.0)"));
+      TEST_EQ("15", run("(+ 1.0 2.0 3.0 4.0 5.0)"));
+      TEST_EQ("21", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0)"));
+      TEST_EQ("28", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0)"));
+      TEST_EQ("36", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0)"));
+      TEST_EQ("45", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)"));
+      TEST_EQ("55", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0)"));
+      TEST_EQ("66", run("(+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0)"));
+      }
+    };
   }
 
 SKIWI_END
 
+#define ONLY_LAST
+
 void run_all_compile_vm_tests()
   {
   using namespace SKIWI;
+#ifndef ONLY_LAST  
   fixnums().test();
   bools().test();
   test_for_nil().test();
@@ -507,4 +542,7 @@ void run_all_compile_vm_tests()
   doubles().test();
   add1().test();
   sub1().test();
+  add_fixnums().test();
+#endif  
+  add_flonums().test();
   }
