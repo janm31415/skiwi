@@ -1508,6 +1508,33 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::CMPEQPD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      double v1 = *reinterpret_cast<double*>(oprnd1);
+      double v2 = *reinterpret_cast<double*>(oprnd2);
+      *oprnd1 = (v1 == v2) ? 0xffffffffffffffff : 0;
+      break;
+      }
+      case asmcode::CMPLTPD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      double v1 = *reinterpret_cast<double*>(oprnd1);
+      double v2 = *reinterpret_cast<double*>(oprnd2);
+      *oprnd1 = (v1 < v2) ? 0xffffffffffffffff : 0;
+      break;
+      }
+      case asmcode::CMPLEPD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      double v1 = *reinterpret_cast<double*>(oprnd1);
+      double v2 = *reinterpret_cast<double*>(oprnd2);
+      *oprnd1 = (v1 <= v2) ? 0xffffffffffffffff : 0;
+      break;
+      }
       case asmcode::CVTSI2SD:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
@@ -1770,6 +1797,13 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
         bytecode_ptr = (const uint8_t*)(*oprnd1);
         sz = 0;
         }
+      break;
+      }
+      case asmcode::MOVMSKPD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      *oprnd1 = (*oprnd2) ? 1 : 0;
       break;
       }
       case asmcode::MOVSD:

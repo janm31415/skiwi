@@ -679,6 +679,154 @@ namespace
       TEST_EQ("#f", run("(= 12 12 12 12 12 12 12 12 12 13)"));
       }
     };
+
+  struct not_equal : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#t", run("(!= 12 13)"));
+      TEST_EQ("#f", run("(!= 12 12)"));
+      TEST_EQ("#t", run("(!= 12.1 13.1)"));
+      TEST_EQ("#f", run("(!= 12.1 12.1)"));
+      TEST_EQ("#t", run("(!= 12 13.1)"));
+      TEST_EQ("#f", run("(!= 12 12.0)"));
+      TEST_EQ("#t", run("(!= 12.0 13)"));
+      TEST_EQ("#f", run("(!= 12.0 12)"));
+
+      TEST_EQ("#f", run("(!= 12 12)"));
+      TEST_EQ("#t", run("(!= 13 12)"));
+      TEST_EQ("#t", run("(!= 16 (+ 13 1)) "));
+      TEST_EQ("#f", run("(!= 16 (+ 13 3))"));
+      TEST_EQ("#t", run("(!= 16 (+ 13 13))"));
+      TEST_EQ("#t", run("(!= (+ 13 1) 16) "));
+      TEST_EQ("#f", run("(!= (+ 13 3) 16) "));
+      TEST_EQ("#t", run("(!= (+ 13 13) 16)"));
+
+      TEST_EQ("#t", run("(!= 12.0 13)"));
+      TEST_EQ("#f", run("(!= 12.0 12)"));
+      TEST_EQ("#t", run("(!= 13.0 12)"));
+      TEST_EQ("#t", run("(!= 16.0 (+ 13 1)) "));
+      TEST_EQ("#f", run("(!= 16.0 (+ 13 3))"));
+      TEST_EQ("#t", run("(!= 16.0 (+ 13 13))"));
+      TEST_EQ("#t", run("(!= (+ 13.0 1) 16) "));
+      TEST_EQ("#f", run("(!= (+ 13.0 3) 16.0) "));
+      TEST_EQ("#t", run("(!= (+ 13.0 13.0) 16.0)"));
+
+      TEST_EQ("#t", run("(!= 12 13 14 15 16 17 18 19 20 21 22 23)"));
+      TEST_EQ("#t", run("(!= 12 13 14 15 16 17 18 19 20 21 22 12)"));
+      }
+    };
+
+  struct less : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#f", run("(< 4 2)"));
+      TEST_EQ("#t", run("(< 2 4)"));
+      TEST_EQ("#f", run("(< 4 2 3)"));
+      TEST_EQ("#t", run("(< 2 4 5)"));
+      TEST_EQ("#f", run("(< 2 4 3)"));
+
+      TEST_EQ("#f", run("(< 4.1 2)"));
+      TEST_EQ("#t", run("(< 2.1 4)"));
+      TEST_EQ("#f", run("(< 4.1 2 3)"));
+      TEST_EQ("#t", run("(< 2.1 4 5)"));
+      TEST_EQ("#f", run("(< 2.1 4 3)"));
+
+      TEST_EQ("#t", run("(< 12 13)"));
+      TEST_EQ("#f", run("(< 12 12)"));
+      TEST_EQ("#f", run("(< 13 12)"));
+      TEST_EQ("#f", run("(< 16 (+ 13 1)) "));
+      TEST_EQ("#f", run("(< 16 (+ 13 3))"));
+      TEST_EQ("#t", run("(< 16 (+ 13 13))"));
+      TEST_EQ("#t", run("(< (+ 13 1) 16) "));
+      TEST_EQ("#f", run("(< (+ 13 3) 16) "));
+      TEST_EQ("#f", run("(< (+ 13 13) 16)"));
+
+      TEST_EQ("#t", run("(< 12.0 13)"));
+      TEST_EQ("#f", run("(< 12.0 12)"));
+      TEST_EQ("#f", run("(< 13.0 12)"));
+      TEST_EQ("#f", run("(< 16.0 (+ 13 1.0)) "));
+      TEST_EQ("#f", run("(< 16.0 (+ 13.0 3.0))"));
+      TEST_EQ("#t", run("(< 16.0 (+ 13.0 13.0))"));
+      TEST_EQ("#t", run("(< (+ 13.0 1) 16.0) "));
+      TEST_EQ("#f", run("(< (+ 13.0 3.000000001) 16.0)"));
+      TEST_EQ("#f", run("(< (+ 13 13.0) 16)"));
+      }
+    };
+
+  struct leq : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#t", run("(<= 12 13)"));
+      TEST_EQ("#t", run("(<= 12 12)"));
+      TEST_EQ("#f", run("(<= 13 12)"));
+      TEST_EQ("#f", run("(<= 16 (+ 13 1)) "));
+      TEST_EQ("#t", run("(<= 16 (+ 13 3))"));
+      TEST_EQ("#t", run("(<= 16 (+ 13 13))"));
+      TEST_EQ("#t", run("(<= (+ 13 1) 16) "));
+      TEST_EQ("#t", run("(<= (+ 13 3) 16) "));
+      TEST_EQ("#f", run("(<= (+ 13 13) 16)"));
+
+      TEST_EQ("#t", run("(<= 12.0 13.0)"));
+      TEST_EQ("#t", run("(<= 12.0 12.0)"));
+      TEST_EQ("#f", run("(<= 13.0 12)"));
+      TEST_EQ("#f", run("(<= 16 (+ 13.0 1)) "));
+      TEST_EQ("#t", run("(<= 16 (+ 13 3.0))"));
+      TEST_EQ("#t", run("(<= 16.0 (+ 13.0 13.0))"));
+      TEST_EQ("#t", run("(<= (+ 13.0 1) 16) "));
+      TEST_EQ("#t", run("(<= (+ 13 3.0) 16.0) "));
+      TEST_EQ("#f", run("(<= (+ 13.0 13) 16.0)"));
+      }
+    };
+
+  struct greater : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#f", run("(> 12 13)"));
+      TEST_EQ("#f", run("(> 12 12)"));
+      TEST_EQ("#t", run("(> 13 12)"));
+      TEST_EQ("#t", run("(> 16 (+ 13 1)) "));
+      TEST_EQ("#f", run("(> 16 (+ 13 3))"));
+      TEST_EQ("#f", run("(> 16 (+ 13 13))"));
+      TEST_EQ("#f", run("(> (+ 13 1) 16) "));
+      TEST_EQ("#f", run("(> (+ 13 3) 16) "));
+      TEST_EQ("#t", run("(> (+ 13 13) 16)"));
+
+      TEST_EQ("#f", run("(> 12.0 13)"));
+      TEST_EQ("#f", run("(> 12.0 12)"));
+      TEST_EQ("#t", run("(> 13.0 12)"));
+      TEST_EQ("#t", run("(> 16.0 (+ 13 1)) "));
+      TEST_EQ("#f", run("(> 16.0 (+ 13 3))"));
+      TEST_EQ("#f", run("(> 16.0 (+ 13 13))"));
+      TEST_EQ("#f", run("(> (+ 13.0 1) 16) "));
+      TEST_EQ("#f", run("(> (+ 13.0 3) 16) "));
+      TEST_EQ("#t", run("(> (+ 13.0 13) 16)"));
+      }
+    };
+
+  struct geq : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#f", run("(>= 12 13)"));
+      TEST_EQ("#t", run("(>= 12 12)"));
+      TEST_EQ("#t", run("(>= 13 12)"));
+      TEST_EQ("#t", run("(>= 16 (+ 13 1)) "));
+      TEST_EQ("#t", run("(>= 16 (+ 13 3))"));
+      TEST_EQ("#f", run("(>= 16 (+ 13 13))"));
+      TEST_EQ("#f", run("(>= (+ 13 1) 16) "));
+      TEST_EQ("#t", run("(>= (+ 13 3) 16) "));
+      TEST_EQ("#t", run("(>= (+ 13 13) 16)"));
+
+      TEST_EQ("#f", run("(>= 12.0 13)"));
+      TEST_EQ("#t", run("(>= 12.0 12)"));
+      TEST_EQ("#t", run("(>= 13.0 12)"));
+      TEST_EQ("#t", run("(>= 16.0 (+ 13 1)) "));
+      TEST_EQ("#t", run("(>= 16.0 (+ 13 3))"));
+      TEST_EQ("#f", run("(>= 16.0 (+ 13 13))"));
+      TEST_EQ("#f", run("(>= (+ 13.0 1) 16) "));
+      TEST_EQ("#t", run("(>= (+ 13.0 3) 16) "));
+      TEST_EQ("#t", run("(>= (+ 13.0 13) 16)"));
+      }
+    };
   }
 
 SKIWI_END
@@ -704,7 +852,11 @@ void run_all_compile_vm_tests()
   divtest().test(); 
   add_incorrect_argument().test();
   combination_of_math_ops().test();
-#endif   
-  combination_of_math_ops().test();
-  //equal().test();
+  equal().test();
+  not_equal().test();
+  less().test();
+#endif     
+  leq().test();
+  greater().test();
+  geq().test();
   }
