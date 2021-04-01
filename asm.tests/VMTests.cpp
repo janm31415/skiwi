@@ -626,7 +626,7 @@ ASM_END
 void run_all_vm_tests()
   {
   using namespace ASM;
-  test_vm_mov_bytecode();
+  test_vm_mov_bytecode();  
   test_vm_mov_bytecode_2();
   test_vm_nop_bytecode();
   test_vm_ret();

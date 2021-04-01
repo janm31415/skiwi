@@ -484,6 +484,22 @@ namespace
       TEST_EQ("0.4", run("(add1 -0.6)"));      
       }
     };
+
+  struct sub1 : public compile_fixture {
+    void test()
+      {
+      ops.garbage_collection = false;
+      TEST_EQ("0", run("(sub1 1)"));
+      TEST_EQ("-1", run("(sub1 0)"));
+      TEST_EQ("-2", run("(sub1 -1)"));
+      TEST_EQ("4", run("(sub1 5)"));
+      TEST_EQ("-1001", run(R"((sub1 -1000))"));
+
+      TEST_EQ("0.5", run("(sub1 1.5)"));
+      TEST_EQ("-0.5", run("(sub1 0.5)"));
+      TEST_EQ("-1.6", run("(sub1 -0.6)"));
+      }
+    };
   }
 
 SKIWI_END
@@ -491,10 +507,11 @@ SKIWI_END
 void run_all_compile_vm_tests()
   {
   using namespace SKIWI;
-  fixnums().test();
-  bools().test();
-  test_for_nil().test();
-  chars().test();
-  doubles().test();
-  add1().test();
+  //fixnums().test();
+  //bools().test();
+  //test_for_nil().test();
+  //chars().test();
+  //doubles().test();
+  //add1().test();
+  sub1().test();
   }
