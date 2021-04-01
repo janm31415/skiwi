@@ -20,11 +20,10 @@ namespace
 
     uint64_t size;
     uint8_t* f = (uint8_t*)vm_bytecode(size, code);
-    TEST_EQ(4, size);
+    TEST_EQ(3, size);
     TEST_EQ((int)asmcode::MOV, (int)f[0]);
     TEST_EQ((int)asmcode::RAX, (int)f[1]);
-    TEST_EQ((int)asmcode::RCX, (int)f[2]);
-    TEST_EQ(0, (int)f[3]);
+    TEST_EQ((int)asmcode::RCX, (int)f[2]);    
 
     asmcode::operation op;
     asmcode::operand operand1;
@@ -32,7 +31,7 @@ namespace
     uint64_t operand1_mem;
     uint64_t operand2_mem;
     uint64_t sz = disassemble_bytecode(op, operand1, operand2, operand1_mem, operand2_mem, f);
-    TEST_EQ(4, sz);
+    TEST_EQ(3, sz);
     TEST_EQ(asmcode::MOV, op);
     TEST_EQ(asmcode::RAX, operand1);
     TEST_EQ(asmcode::RCX, operand2);

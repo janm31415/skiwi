@@ -6,7 +6,7 @@
 
 ASM_BEGIN
 
-namespace 
+namespace
   {
 
   bool is_8_bit(uint64_t number)
@@ -131,82 +131,138 @@ namespace
       }
     }
 
-    enum operand_immediate_type
-      {
-      _VARIABLE,
-      _8BIT,
-      _32BIT,
-      _64BIT
-      };
+  enum operand_immediate_type
+    {
+    _VARIABLE,
+    _8BIT,
+    _32BIT,
+    _64BIT
+    };
 
-    operand_immediate_type get_operand_immediate_type(const asmcode::operation& op)
+  operand_immediate_type get_operand_immediate_type(const asmcode::operation& op)
+    {
+    switch (op)
       {
-      switch (op)
-        { 
-        case asmcode::CALL: return _32BIT;
-        case asmcode::JE: return _32BIT;
-        case asmcode::JL: return _32BIT;
-        case asmcode::JLE:return _32BIT;
-        case asmcode::JA: return _32BIT;
-        case asmcode::JB: return _32BIT;
-        case asmcode::JG: return _32BIT;
-        case asmcode::JGE:return _32BIT;
-        case asmcode::JNE:return _32BIT;
-        case asmcode::JMP:return _32BIT;
-        case asmcode::JES: return _8BIT;
-        case asmcode::JLS: return _8BIT;
-        case asmcode::JLES: return _8BIT;
-        case asmcode::JAS: return _8BIT;
-        case asmcode::JBS: return _8BIT;
-        case asmcode::JGS: return _8BIT;
-        case asmcode::JGES: return _8BIT;
-        case asmcode::JNES: return _8BIT;
-        case asmcode::JMPS: return _8BIT; 
-        default: return _VARIABLE;
+      case asmcode::CALL: return _32BIT;
+      case asmcode::JE: return _32BIT;
+      case asmcode::JL: return _32BIT;
+      case asmcode::JLE:return _32BIT;
+      case asmcode::JA: return _32BIT;
+      case asmcode::JB: return _32BIT;
+      case asmcode::JG: return _32BIT;
+      case asmcode::JGE:return _32BIT;
+      case asmcode::JNE:return _32BIT;
+      case asmcode::JMP:return _32BIT;
+      case asmcode::JES: return _8BIT;
+      case asmcode::JLS: return _8BIT;
+      case asmcode::JLES: return _8BIT;
+      case asmcode::JAS: return _8BIT;
+      case asmcode::JBS: return _8BIT;
+      case asmcode::JGS: return _8BIT;
+      case asmcode::JGES: return _8BIT;
+      case asmcode::JNES: return _8BIT;
+      case asmcode::JMPS: return _8BIT;
+      default: return _VARIABLE;
+      }
+    }
+
+  bool ignore_operation_as_bytecode(const asmcode::operation& op)
+    {
+    switch (op)
+      {
+      case asmcode::LABEL: return true;
+      case asmcode::LABEL_ALIGNED: return true;
+      case asmcode::GLOBAL: return true;
+      case asmcode::COMMENT: return true;
+      default: return false;
+      }
+    }
+
+  void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const asmcode::operation& op, const asmcode::operand& oprnd, uint64_t oprnd_mem)
+    {
+    switch (oprnd)
+      {
+      case  asmcode::EMPTY:
+      case  asmcode::AL:
+      case  asmcode::AH:
+      case  asmcode::BL:
+      case  asmcode::BH:
+      case  asmcode::CL:
+      case  asmcode::CH:
+      case  asmcode::DL:
+      case  asmcode::DH:
+      case  asmcode::RAX:
+      case  asmcode::RBX:
+      case  asmcode::RCX:
+      case  asmcode::RDX:
+      case  asmcode::RSI:
+      case  asmcode::RDI:
+      case  asmcode::RSP:
+      case  asmcode::RBP:
+      case  asmcode::R8:
+      case  asmcode::R9:
+      case  asmcode::R10:
+      case  asmcode::R11:
+      case  asmcode::R12:
+      case  asmcode::R13:
+      case  asmcode::R14:
+      case  asmcode::R15:
+      case  asmcode::ST0:
+      case  asmcode::ST1:
+      case  asmcode::ST2:
+      case  asmcode::ST3:
+      case  asmcode::ST4:
+      case  asmcode::ST5:
+      case  asmcode::ST6:
+      case  asmcode::ST7:
+      case  asmcode::XMM0:
+      case  asmcode::XMM1:
+      case  asmcode::XMM2:
+      case  asmcode::XMM3:
+      case  asmcode::XMM4:
+      case  asmcode::XMM5:
+      case  asmcode::XMM6:
+      case  asmcode::XMM7:
+      case  asmcode::XMM8:
+      case  asmcode::XMM9:
+      case  asmcode::XMM10:
+      case  asmcode::XMM11:
+      case  asmcode::XMM12:
+      case  asmcode::XMM13:
+      case  asmcode::XMM14:
+      case  asmcode::XMM15:
+        save_mem_size = false;
+        opmem = 0;
+        return;
+      case asmcode::NUMBER:
+      {
+      auto memtype = get_operand_immediate_type(op);
+      switch (memtype)
+        {
+        case _VARIABLE: break;
+        case _8BIT: opmem = 1; save_mem_size = false; return;
+        case _32BIT: opmem = 3; save_mem_size = false; return;
+        case _64BIT: opmem = 4; save_mem_size = false; return;
         }
       }
-
-    bool ignore_operation_as_bytecode(const asmcode::operation& op)
-      {
-      switch (op)
-        {
-        case asmcode::LABEL: return true;
-        case asmcode::LABEL_ALIGNED: return true;
-        case asmcode::GLOBAL: return true;
-        case asmcode::COMMENT: return true;
-        default: return false;
-        }
+      default: break;
       }
-
-    void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const asmcode::operation& op, const asmcode::operand& oprnd, uint64_t oprnd_mem)
+    save_mem_size = true;
+    opmem = 0;
+    if (oprnd_mem != 0)
       {
-      if (oprnd == asmcode::NUMBER)
-        {
-        auto memtype = get_operand_immediate_type(op);
-        switch (memtype)
-          {
-          case _VARIABLE: break;
-          case _8BIT: opmem = 1; save_mem_size = false; return;
-          case _32BIT: opmem = 3; save_mem_size = false; return;
-          case _64BIT: opmem = 4; save_mem_size = false; return;
-          }
-        }      
-      save_mem_size = true;
-      opmem = 0;
-      if (oprnd_mem != 0)
-        {
-        if (is_8_bit(oprnd_mem))
-          opmem = 1;
-        else if (is_16_bit(oprnd_mem))
-          opmem = 2;
-        else if (is_32_bit(oprnd_mem))
-          opmem = 3;
-        else
-          opmem = 4;
-        }
-      if (oprnd == asmcode::LABELADDRESS)
+      if (is_8_bit(oprnd_mem))
+        opmem = 1;
+      else if (is_16_bit(oprnd_mem))
+        opmem = 2;
+      else if (is_32_bit(oprnd_mem))
+        opmem = 3;
+      else
         opmem = 4;
       }
+    if (oprnd == asmcode::LABELADDRESS)
+      opmem = 4;
+    }
 
   /*
   byte 1: operation opcode: equal to (int)asmcode::operation value of instr.oper
@@ -228,7 +284,7 @@ namespace
   exception: NOP is only 1 byte
   */
   uint64_t fill_vm_bytecode(const asmcode::instruction& instr, uint8_t* opcode_stream)
-    {  
+    {
     uint64_t sz = 0;
     if (ignore_operation_as_bytecode(instr.oper))
       return sz;
@@ -250,12 +306,12 @@ namespace
       {
       opcode_stream[sz++] = (uint8_t)instr.operand1;
       opcode_stream[sz++] = (uint8_t)instr.operand2;
-      bool savemem = true;
-      get_memory_size_type(op1mem, savemem, instr.oper, instr.operand1, instr.operand1_mem);
-      assert(savemem);
-      get_memory_size_type(op2mem, savemem, instr.oper, instr.operand2, instr.operand2_mem);
-      assert(savemem);
-      opcode_stream[sz++] = (uint8_t)(op2mem << 4) | op1mem;
+      bool savemem1 = true;
+      bool savemem2 = true;
+      get_memory_size_type(op1mem, savemem1, instr.oper, instr.operand1, instr.operand1_mem);
+      get_memory_size_type(op2mem, savemem2, instr.oper, instr.operand2, instr.operand2_mem);
+      if (savemem1 || savemem2)
+        opcode_stream[sz++] = (uint8_t)(op2mem << 4) | op1mem;
       }
     switch (op1mem)
       {
@@ -366,7 +422,7 @@ namespace
       case 4: *(reinterpret_cast<uint64_t*>(opcode_stream + sz)) = (uint64_t)instr.operand2_mem; sz += 8; break;
       default: break;
       }
-      
+
     return sz;
     */
     }
@@ -599,7 +655,7 @@ namespace
       }
     return func;
     }
-  }  
+  }
 
 void* vm_bytecode(uint64_t& size, first_pass_data& d, asmcode& code, const std::map<std::string, uint64_t>& externals)
   {
@@ -651,25 +707,25 @@ void free_bytecode(void* f, uint64_t size)
   }
 
 
-  /*
-  byte 1: operation opcode: equal to (int)asmcode::operation value of instr.oper
-  byte 2: first operand: equal to (int)asmcode::operand of instr.operand1
-  byte 3: second operand: equal to (int)asmcode::operand of instr.operand2
-  byte 4: information on operand1_mem and operand2_mem
-          First four bits equal to: 0 => instr.operand1_mem equals zero
-                                  : 1 => instr.operand1_mem needs 8 bits
-                                  : 2 => instr.operand1_mem needs 16 bits
-                                  : 3 => instr.operand1_mem needs 32 bits
-                                  : 4 => instr.operand1_mem needs 64 bits
-          Last four bits equal to : 0 => instr.operand2_mem equals zero
-                                  : 1 => instr.operand2_mem needs 8 bits
-                                  : 2 => instr.operand2_mem needs 16 bits
-                                  : 3 => instr.operand2_mem needs 32 bits
-                                  : 4 => instr.operand2_mem needs 64 bits
-  byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
+/*
+byte 1: operation opcode: equal to (int)asmcode::operation value of instr.oper
+byte 2: first operand: equal to (int)asmcode::operand of instr.operand1
+byte 3: second operand: equal to (int)asmcode::operand of instr.operand2
+byte 4: information on operand1_mem and operand2_mem
+        First four bits equal to: 0 => instr.operand1_mem equals zero
+                                : 1 => instr.operand1_mem needs 8 bits
+                                : 2 => instr.operand1_mem needs 16 bits
+                                : 3 => instr.operand1_mem needs 32 bits
+                                : 4 => instr.operand1_mem needs 64 bits
+        Last four bits equal to : 0 => instr.operand2_mem equals zero
+                                : 1 => instr.operand2_mem needs 8 bits
+                                : 2 => instr.operand2_mem needs 16 bits
+                                : 3 => instr.operand2_mem needs 32 bits
+                                : 4 => instr.operand2_mem needs 64 bits
+byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
 
-  exception: NOP is only 1 byte
-  */
+exception: NOP is only 1 byte
+*/
 uint64_t disassemble_bytecode(asmcode::operation& op,
   asmcode::operand& operand1,
   asmcode::operand& operand2,
@@ -691,7 +747,7 @@ uint64_t disassemble_bytecode(asmcode::operation& op,
   if (nr_ops == 1)
     {
     operand1 = (asmcode::operand)bytecode[sz++];
-    bool savemem = true;    
+    bool savemem = true;
     get_memory_size_type(op1mem, savemem, op, operand1, 0);
     if (savemem)
       op1mem = bytecode[sz++];
@@ -701,9 +757,16 @@ uint64_t disassemble_bytecode(asmcode::operation& op,
     assert(nr_ops == 2);
     operand1 = (asmcode::operand)bytecode[sz++];
     operand2 = (asmcode::operand)bytecode[sz++];
-    op1mem = bytecode[sz] & 15;
-    op2mem = bytecode[sz] >> 4;
-    ++sz;
+    bool savemem1 = true;
+    get_memory_size_type(op1mem, savemem1, op, operand1, 0);
+    bool savemem2 = true;
+    get_memory_size_type(op2mem, savemem2, op, operand2, 0);
+    if (savemem1 || savemem2)
+      {
+      op1mem = bytecode[sz] & 15;
+      op2mem = bytecode[sz] >> 4;
+      ++sz;
+      }
     }
   switch (op1mem)
     {
@@ -880,22 +943,22 @@ namespace
       case asmcode::R13: return &regs.r13;
       case asmcode::R14: return &regs.r14;
       case asmcode::R15: return &regs.r15;
-      case asmcode::MEM_RAX: return (uint64_t*)(regs.rax+operand_mem);
-      case asmcode::MEM_RBX: return (uint64_t*)(regs.rbx+operand_mem);
-      case asmcode::MEM_RCX: return (uint64_t*)(regs.rcx+operand_mem);
-      case asmcode::MEM_RDX: return (uint64_t*)(regs.rdx+operand_mem);
-      case asmcode::MEM_RDI: return (uint64_t*)(regs.rdi+operand_mem);
-      case asmcode::MEM_RSI: return (uint64_t*)(regs.rsi+operand_mem);
-      case asmcode::MEM_RSP: return (uint64_t*)(regs.rsp+operand_mem);
-      case asmcode::MEM_RBP: return (uint64_t*)(regs.rbp+operand_mem);
-      case asmcode::MEM_R8:  return (uint64_t*)(regs.r8+operand_mem);
-      case asmcode::MEM_R9:  return (uint64_t*)(regs.r9+operand_mem);
-      case asmcode::MEM_R10: return (uint64_t*)(regs.r10+operand_mem);
-      case asmcode::MEM_R11: return (uint64_t*)(regs.r11+operand_mem);
-      case asmcode::MEM_R12: return (uint64_t*)(regs.r12+operand_mem);
-      case asmcode::MEM_R13: return (uint64_t*)(regs.r13+operand_mem);
-      case asmcode::MEM_R14: return (uint64_t*)(regs.r14+operand_mem);
-      case asmcode::MEM_R15: return (uint64_t*)(regs.r15+operand_mem);
+      case asmcode::MEM_RAX: return (uint64_t*)(regs.rax + operand_mem);
+      case asmcode::MEM_RBX: return (uint64_t*)(regs.rbx + operand_mem);
+      case asmcode::MEM_RCX: return (uint64_t*)(regs.rcx + operand_mem);
+      case asmcode::MEM_RDX: return (uint64_t*)(regs.rdx + operand_mem);
+      case asmcode::MEM_RDI: return (uint64_t*)(regs.rdi + operand_mem);
+      case asmcode::MEM_RSI: return (uint64_t*)(regs.rsi + operand_mem);
+      case asmcode::MEM_RSP: return (uint64_t*)(regs.rsp + operand_mem);
+      case asmcode::MEM_RBP: return (uint64_t*)(regs.rbp + operand_mem);
+      case asmcode::MEM_R8:  return (uint64_t*)(regs.r8 + operand_mem);
+      case asmcode::MEM_R9:  return (uint64_t*)(regs.r9 + operand_mem);
+      case asmcode::MEM_R10: return (uint64_t*)(regs.r10 + operand_mem);
+      case asmcode::MEM_R11: return (uint64_t*)(regs.r11 + operand_mem);
+      case asmcode::MEM_R12: return (uint64_t*)(regs.r12 + operand_mem);
+      case asmcode::MEM_R13: return (uint64_t*)(regs.r13 + operand_mem);
+      case asmcode::MEM_R14: return (uint64_t*)(regs.r14 + operand_mem);
+      case asmcode::MEM_R15: return (uint64_t*)(regs.r15 + operand_mem);
       case asmcode::BYTE_MEM_RAX: return nullptr;
       case asmcode::BYTE_MEM_RBX: return nullptr;
       case asmcode::BYTE_MEM_RCX: return nullptr;
@@ -1164,17 +1227,17 @@ namespace
 
   template <class TOper>
   inline void execute_operation(asmcode::operand operand1,
-                                asmcode::operand operand2,
-                                uint64_t operand1_mem,
-                                uint64_t operand2_mem,
-                                registers& regs)
+    asmcode::operand operand2,
+    uint64_t operand1_mem,
+    uint64_t operand2_mem,
+    registers& regs)
     {
     uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
     if (oprnd1)
       {
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
       if (oprnd2)
-        TOper::apply(*oprnd1, *oprnd2);        
+        TOper::apply(*oprnd1, *oprnd2);
       else if (operand2 == asmcode::NUMBER || operand2 == asmcode::LABELADDRESS)
         TOper::apply(*oprnd1, operand2_mem);
       else
@@ -1210,8 +1273,8 @@ namespace
       {
       uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
       if (oprnd2)
-        TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));    
-      }   
+        TOper::apply(*reinterpret_cast<double*>(oprnd1), *reinterpret_cast<double*>(oprnd2));
+      }
     }
 
   template <class TOper>
@@ -1310,13 +1373,13 @@ namespace
     uint64_t operand1_mem,
     uint64_t operand2_mem,
     registers& regs)
-    {    
+    {
     regs.eflags = 0;
     int64_t left_signed = 0;
     int64_t right_signed = 0;
     uint64_t left_unsigned = 0;
     uint64_t right_unsigned = 0;
-    get_values(left_signed, right_signed, left_unsigned, right_unsigned, operand1, operand2, operand1_mem, operand2_mem, regs);    
+    get_values(left_signed, right_signed, left_unsigned, right_unsigned, operand1, operand2, operand1_mem, operand2_mem, regs);
     if (left_signed == right_signed)
       regs.eflags |= zero_flag;
     if (left_unsigned < right_unsigned)
@@ -1324,8 +1387,8 @@ namespace
     int64_t temp = left_signed - right_signed;
     if ((temp < left_signed) != (right_signed > 0))
       regs.eflags |= overflow_flag;
-    if (temp < 0)      
-      regs.eflags |= sign_flag;      
+    if (temp < 0)
+      regs.eflags |= sign_flag;
     }
 
   void print(asmcode::operation op, asmcode::operand operand1,
@@ -1381,11 +1444,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       break;
       }
       case asmcode::CALL:
-      {      
+      {
       if (operand1 == asmcode::NUMBER) // local call
         {
         regs.rsp -= 8;
-        *((uint64_t*)regs.rsp) = (uint64_t)(bytecode_ptr+sz); // save address right after call on stack
+        *((uint64_t*)regs.rsp) = (uint64_t)(bytecode_ptr + sz); // save address right after call on stack
         uint32_t local_offset = (uint32_t)operand1_mem;
         bytecode_ptr += (int32_t)local_offset;
         sz = 0;
@@ -1403,13 +1466,13 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       }
       case asmcode::CMP:
       {
-      compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);            
+      compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case asmcode::CVTSI2SD:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);      
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
       double v = (double)((int64_t)*oprnd2);
       *reinterpret_cast<double*>(oprnd1) = v;
       break;
@@ -1464,7 +1527,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       else
         {
         uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
-        int8_t rax = ((int64_t)regs.rax)&255;
+        int8_t rax = ((int64_t)regs.rax) & 255;
         rax *= (int8_t)(*oprnd1_8);
         regs.rax &= 0xffffffffffffff00;
         regs.rax |= rax;
@@ -1625,7 +1688,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       case asmcode::JNE:
       case asmcode::JNES:
       {
-      if ((regs.eflags & zero_flag)==0)
+      if ((regs.eflags & zero_flag) == 0)
         {
         if (operand1 == asmcode::NUMBER)
           {
@@ -1674,7 +1737,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       case asmcode::MOVQ:
       case asmcode::MOV:
       {
-      execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);      
+      execute_operation<MovOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       case asmcode::MOVZX:
@@ -1688,7 +1751,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
       if (oprnd1)
-        {        
+        {
         regs.rax *= (uint64_t)(*oprnd1);
         }
       else
@@ -1721,7 +1784,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       break;
       }
       case asmcode::PUSH:
-      {      
+      {
       regs.rsp -= 8;
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
       if (oprnd1)
@@ -1852,7 +1915,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_operation<XorOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
-      default: 
+      default:
       {
       std::stringstream str;
       str << asmcode::operation_to_string(op) << " is not implemented yet!";

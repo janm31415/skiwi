@@ -591,9 +591,9 @@ void run_all_compile_vm_tests()
   sub1().test();
   add_fixnums().test();
   add_flonums().test();
-#endif    
   add_flonums_and_fixnums().test();
   sub().test();
   mul().test();
   divtest().test();
+#endif    
   }
