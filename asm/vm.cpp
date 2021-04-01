@@ -1842,6 +1842,22 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       execute_double_operation<MulsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::NEG:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {
+        int64_t val = (int64_t)(*oprnd1);
+        *oprnd1 = -val;
+        }
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        int8_t val = (int8_t)(*oprnd1_8);
+        *oprnd1_8 = -val;
+        }
+      break;
+      }
       case asmcode::NOP: break;
       case asmcode::OR:
       {

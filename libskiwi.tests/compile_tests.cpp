@@ -231,6 +231,7 @@ namespace
       {
       for (auto& f : compiled_functions)
         free_assembled_function((void*)f.first, f.second);
+      compiled_functions.clear();
       destroy_context(ctxt);
       ctxt = create_context(heap_size, global_stack, local_stack, scheme_stack);
       env = std::make_shared<environment<environment_entry>>(nullptr);
