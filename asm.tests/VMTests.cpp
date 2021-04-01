@@ -22,8 +22,8 @@ namespace
     uint8_t* f = (uint8_t*)vm_bytecode(size, code);
     TEST_EQ(3, size);
     TEST_EQ((int)asmcode::MOV, (int)f[0]);
-    TEST_EQ((int)asmcode::RAX, (int)f[1]);
-    TEST_EQ((int)asmcode::RCX, (int)f[2]);    
+    TEST_EQ((int)asmcode::RAX | operand_has_8bit_mem, (int)f[1]);
+    TEST_EQ((int)asmcode::RCX | operand_has_8bit_mem, (int)f[2]);
 
     asmcode::operation op;
     asmcode::operand operand1;
@@ -625,6 +625,7 @@ ASM_END
 void run_all_vm_tests()
   {
   using namespace ASM;
+  
   test_vm_mov_bytecode();  
   test_vm_mov_bytecode_2();
   test_vm_nop_bytecode();
@@ -647,4 +648,5 @@ void run_all_vm_tests()
   test_vm_push_pop();
   test_vm_movq();
   test_vm_addsd();
+  
   }

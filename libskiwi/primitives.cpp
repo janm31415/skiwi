@@ -2634,7 +2634,7 @@ void compile_add_2(asmcode& code, const compiler_options& ops)
   if (ops.safe_primitives)
     {
     code.add(asmcode::PUSH, asmcode::R11);
-    jump_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error); // for assembly jump_short is possible, for vm not
+    jump_short_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error);
     }
   code.add(asmcode::AND, asmcode::RBX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   if (ops.safe_primitives)
@@ -2735,7 +2735,7 @@ void compile_subtract_2(asmcode& code, const compiler_options& ops)
   if (ops.safe_primitives)
     {
     code.add(asmcode::PUSH, asmcode::R11);
-    jump_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error); // for assembly jump short is possible, for vm not
+    jump_short_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error); 
     }
   code.add(asmcode::AND, asmcode::RBX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   if (ops.safe_primitives)
@@ -2836,7 +2836,7 @@ void compile_multiply_2(asmcode& code, const compiler_options& ops)
   if (ops.safe_primitives)
     {
     code.add(asmcode::PUSH, asmcode::R11);
-    jump_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error); // for assembly jump short is possible, for vm not
+    jump_short_if_arg_is_not_block(code, asmcode::RBX, asmcode::R11, error); 
     }
   code.add(asmcode::AND, asmcode::RBX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   if (ops.safe_primitives)
@@ -2944,7 +2944,7 @@ void compile_divide_2(asmcode& code, const compiler_options& ops)
   code.add(asmcode::AND, asmcode::RBX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
   if (ops.safe_primitives)
     {
-    jump_if_arg_does_not_point_to_flonum(code, asmcode::RBX, asmcode::R11, error); // for assembly jump short is possible, for vm not
+    jump_short_if_arg_does_not_point_to_flonum(code, asmcode::RBX, asmcode::R11, error); 
     code.add(asmcode::POP, asmcode::R11);
     }
   code.add(asmcode::MOVSD, asmcode::XMM1, asmcode::MEM_RBX, CELLS(1));
@@ -3039,7 +3039,7 @@ void compile_pairwise_compare(asmcode& code, const compiler_options&)
   code.add(asmcode::MOV, asmcode::RBX, asmcode::R9); // 6th arg
   code.add(asmcode::CALL, asmcode::R15);
   code.add(asmcode::CMP, asmcode::AL, asmcode::NUMBER, bool_f);
-  code.add(asmcode::JES, lab_arg_no); // JES works for assembly but not for vm
+  code.add(asmcode::JES, lab_arg_no); 
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 6);
   code.add(asmcode::JES, lab_arg_yes);
 
@@ -3133,7 +3133,7 @@ void compile_fold_binary(asmcode& code, const compiler_options&)
   code.add(asmcode::SUB, asmcode::R11, asmcode::NUMBER, 8);
   code.add(asmcode::MOV, asmcode::RDX, LOCAL);
   code.add(asmcode::TEST, asmcode::R11, asmcode::R11);
-  code.add(asmcode::JE, done); // for assembly JES is possible, for vm not
+  code.add(asmcode::JES, done); 
   code.add(asmcode::LABEL, lab3);
   code.add(asmcode::MOV, asmcode::RBX, asmcode::MEM_RDX);
   code.add(asmcode::CALL, asmcode::R15);
@@ -3322,7 +3322,7 @@ void compile_sub(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
   std::string lab_arg_ok = label_to_string(label++);
   std::string lab_one_arg = label_to_string(label++);
-  code.add(asmcode::JG, lab_arg_ok); // JGS works for assembly, but not for vm
+  code.add(asmcode::JGS, lab_arg_ok); 
   code.add(asmcode::JES, lab_one_arg);
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX); // no arguments, return error here
   code.add(asmcode::JMP, CONTINUE);
@@ -3393,7 +3393,7 @@ void compile_div(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
   std::string lab_arg_ok = label_to_string(label++);
   std::string lab_one_arg = label_to_string(label++);
-  code.add(asmcode::JG, lab_arg_ok); // jgs works for assembly, but not for vm
+  code.add(asmcode::JGS, lab_arg_ok); 
   code.add(asmcode::JES, lab_one_arg);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2); // no arguments, return error here
   code.add(asmcode::JMP, CONTINUE);

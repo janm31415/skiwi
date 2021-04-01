@@ -26,6 +26,7 @@ ASSEMBLER_API uint64_t disassemble_bytecode(asmcode::operation& op,
 #define sign_flag 64
 #define zero_flag 128
 
+#define operand_has_8bit_mem 128
 
 struct registers
   {

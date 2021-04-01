@@ -180,6 +180,8 @@ namespace
 
   void get_memory_size_type(uint8_t& opmem, bool& save_mem_size, const asmcode::operation& op, const asmcode::operand& oprnd, uint64_t oprnd_mem)
     {
+    save_mem_size = false;
+    opmem = 0;
     switch (oprnd)
       {
       case  asmcode::EMPTY:
@@ -231,8 +233,6 @@ namespace
       case  asmcode::XMM13:
       case  asmcode::XMM14:
       case  asmcode::XMM15:
-        save_mem_size = false;
-        opmem = 0;
         return;
       case asmcode::NUMBER:
       {
@@ -240,28 +240,35 @@ namespace
       switch (memtype)
         {
         case _VARIABLE: break;
-        case _8BIT: opmem = 1; save_mem_size = false; return;
-        case _32BIT: opmem = 3; save_mem_size = false; return;
-        case _64BIT: opmem = 4; save_mem_size = false; return;
+        case _8BIT: opmem = 1; return;
+        case _32BIT: opmem = 3; return;
+        case _64BIT: opmem = 4; return;
         }
       }
       default: break;
-      }
-    save_mem_size = true;
-    opmem = 0;
-    if (oprnd_mem != 0)
+      } 
+    if (is_8_bit(oprnd_mem))
+      opmem = 1;
+    else if (is_16_bit(oprnd_mem))
       {
-      if (is_8_bit(oprnd_mem))
-        opmem = 1;
-      else if (is_16_bit(oprnd_mem))
-        opmem = 2;
-      else if (is_32_bit(oprnd_mem))
-        opmem = 3;
-      else
-        opmem = 4;
+      save_mem_size = true;
+      opmem = 2;
       }
-    if (oprnd == asmcode::LABELADDRESS)
+    else if (is_32_bit(oprnd_mem))
+      {
+      save_mem_size = true;
+      opmem = 3;
+      }
+    else
+      {
+      save_mem_size = true;
       opmem = 4;
+      }      
+    if (oprnd == asmcode::LABELADDRESS)
+      {
+      save_mem_size = true;
+      opmem = 4;
+      }
     }
 
   /*
@@ -280,8 +287,6 @@ namespace
                                   : 3 => instr.operand2_mem needs 32 bits
                                   : 4 => instr.operand2_mem needs 64 bits
   byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
-
-  exception: NOP is only 1 byte
   */
   uint64_t fill_vm_bytecode(const asmcode::instruction& instr, uint8_t* opcode_stream)
     {
@@ -294,24 +299,35 @@ namespace
     int nr_ops = number_of_operands(instr.oper);
     if (nr_ops == 1)
       {
-      opcode_stream[sz++] = (uint8_t)instr.operand1;
       bool savemem = true;
       get_memory_size_type(op1mem, savemem, instr.oper, instr.operand1, instr.operand1_mem);
       if (savemem)
         {
+        opcode_stream[sz++] = (uint8_t)instr.operand1;
         opcode_stream[sz++] = op1mem;
+        }
+      else
+        {
+        opcode_stream[sz++] = (uint8_t)instr.operand1 | operand_has_8bit_mem;
         }
       }
     else if (nr_ops == 2)
       {
-      opcode_stream[sz++] = (uint8_t)instr.operand1;
-      opcode_stream[sz++] = (uint8_t)instr.operand2;
       bool savemem1 = true;
       bool savemem2 = true;
       get_memory_size_type(op1mem, savemem1, instr.oper, instr.operand1, instr.operand1_mem);
       get_memory_size_type(op2mem, savemem2, instr.oper, instr.operand2, instr.operand2_mem);
       if (savemem1 || savemem2)
+        {
+        opcode_stream[sz++] = (uint8_t)instr.operand1;
+        opcode_stream[sz++] = (uint8_t)instr.operand2;
         opcode_stream[sz++] = (uint8_t)(op2mem << 4) | op1mem;
+        }
+      else
+        {
+        opcode_stream[sz++] = (uint8_t)instr.operand1 | operand_has_8bit_mem;
+        opcode_stream[sz++] = (uint8_t)instr.operand2 | operand_has_8bit_mem;
+        }
       }
     switch (op1mem)
       {
@@ -745,26 +761,50 @@ uint64_t disassemble_bytecode(asmcode::operation& op,
     return sz;
   if (nr_ops == 1)
     {
-    operand1 = (asmcode::operand)bytecode[sz++];
-    bool savemem = true;
-    get_memory_size_type(op1mem, savemem, op, operand1, 0);
-    if (savemem)
+    uint8_t op1 = bytecode[sz++];
+    //bool savemem = true;
+    //get_memory_size_type(op1mem, savemem, op, operand1, 0);
+    //if (savemem)
+    if ((op1 & operand_has_8bit_mem) == 0)
+      {
       op1mem = bytecode[sz++];
+      operand1 = (asmcode::operand)op1;
+      }
+    else
+      {
+      op1 &= ~operand_has_8bit_mem;
+      operand1 = (asmcode::operand)op1;
+      bool savemem;
+      get_memory_size_type(op1mem, savemem, op, operand1, 0);
+      }    
     }
   else
     {
     assert(nr_ops == 2);
-    operand1 = (asmcode::operand)bytecode[sz++];
-    operand2 = (asmcode::operand)bytecode[sz++];
-    bool savemem1 = true;
-    get_memory_size_type(op1mem, savemem1, op, operand1, 0);
-    bool savemem2 = true;
-    get_memory_size_type(op2mem, savemem2, op, operand2, 0);
-    if (savemem1 || savemem2)
+    uint8_t op1 = bytecode[sz++];
+    uint8_t op2 = bytecode[sz++];
+    //bool savemem1 = true;
+    //get_memory_size_type(op1mem, savemem1, op, operand1, 0);
+    //bool savemem2 = true;
+    //get_memory_size_type(op2mem, savemem2, op, operand2, 0);
+    //if (savemem1 || savemem2)
+    if ((op1 & operand_has_8bit_mem) == 0)
       {
       op1mem = bytecode[sz] & 15;
       op2mem = bytecode[sz] >> 4;
+      operand1 = (asmcode::operand)op1;
+      operand2 = (asmcode::operand)op2;
       ++sz;
+      }
+    else
+      {
+      op1 &= ~operand_has_8bit_mem;
+      op2 &= ~operand_has_8bit_mem;
+      operand1 = (asmcode::operand)op1;
+      operand2 = (asmcode::operand)op2;
+      bool savemem;
+      get_memory_size_type(op1mem, savemem, op, operand1, 0);
+      get_memory_size_type(op2mem, savemem, op, operand2, 0);
       }
     }
   switch (op1mem)
