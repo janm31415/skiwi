@@ -1406,6 +1406,22 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);            
       break;
       }
+      case asmcode::CVTSI2SD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);      
+      double v = (double)((int64_t)*oprnd2);
+      *reinterpret_cast<double*>(oprnd1) = v;
+      break;
+      }
+      case asmcode::CVTTSD2SI:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t* oprnd2 = get_address_64bit(operand2, operand2_mem, regs);
+      double v = *reinterpret_cast<double*>(oprnd2);
+      *oprnd1 = (int64_t)v;
+      break;
+      }
       case asmcode::DEC:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
@@ -1434,6 +1450,25 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       case asmcode::DIVSD:
       {
       execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::IMUL:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {
+        int64_t rax = (int64_t)regs.rax;
+        rax *= (int64_t)(*oprnd1);
+        regs.rax = rax;
+        }
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        int8_t rax = ((int64_t)regs.rax)&255;
+        rax *= (int8_t)(*oprnd1_8);
+        regs.rax &= 0xffffffffffffff00;
+        regs.rax |= rax;
+        }
       break;
       }
       case asmcode::INC:
@@ -1647,6 +1682,23 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs)
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
       uint8_t* oprnd2 = get_address_8bit(operand2, operand2_mem, regs);
       *oprnd1 = *oprnd2;
+      break;
+      }
+      case asmcode::MUL:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {        
+        regs.rax *= (uint64_t)(*oprnd1);
+        }
+      else
+        {
+        uint8_t* oprnd1_8 = get_address_8bit(operand1, operand1_mem, regs);
+        uint8_t rax = regs.rax & 255;
+        rax *= (uint8_t)(*oprnd1_8);
+        regs.rax &= 0xffffffffffffff00;
+        regs.rax |= rax;
+        }
       break;
       }
       case asmcode::MULSD:

@@ -3322,7 +3322,7 @@ void compile_sub(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
   std::string lab_arg_ok = label_to_string(label++);
   std::string lab_one_arg = label_to_string(label++);
-  code.add(asmcode::JGS, lab_arg_ok);
+  code.add(asmcode::JG, lab_arg_ok); // JGS works for assembly, but not for vm
   code.add(asmcode::JES, lab_one_arg);
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX); // no arguments, return error here
   code.add(asmcode::JMP, CONTINUE);
@@ -3393,7 +3393,7 @@ void compile_div(asmcode& code, const compiler_options& ops)
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 1);
   std::string lab_arg_ok = label_to_string(label++);
   std::string lab_one_arg = label_to_string(label++);
-  code.add(asmcode::JGS, lab_arg_ok);
+  code.add(asmcode::JG, lab_arg_ok); // jgs works for assembly, but not for vm
   code.add(asmcode::JES, lab_one_arg);
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2); // no arguments, return error here
   code.add(asmcode::JMP, CONTINUE);

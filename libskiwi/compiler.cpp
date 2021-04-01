@@ -23,6 +23,9 @@ function_map generate_simplified_function_map()
   {
   function_map fm;
   fm.insert(std::pair<std::string, fun_ptr>("+", &compile_add));
+  fm.insert(std::pair<std::string, fun_ptr>("-", &compile_sub));
+  fm.insert(std::pair<std::string, fun_ptr>("*", &compile_mul));
+  fm.insert(std::pair<std::string, fun_ptr>("/", &compile_div));
   fm.insert(std::pair<std::string, fun_ptr>("halt", &compile_halt));
   fm.insert(std::pair<std::string, fun_ptr>("add1", &compile_add1));
   fm.insert(std::pair<std::string, fun_ptr>("sub1", &compile_sub1));
