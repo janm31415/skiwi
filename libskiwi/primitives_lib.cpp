@@ -83,7 +83,7 @@ void compile_simplified_primitives_library(primitive_map& pm, repl_data& rd, env
     code.add(ASM::asmcode::LABEL_ALIGNED, pe.label_name);
     it->second(code, options);
     }
-  /*
+  
   compile_bitwise_and_2(code, options);
   compile_bitwise_or_2(code, options);
   compile_bitwise_xor_2(code, options);
@@ -110,8 +110,8 @@ void compile_simplified_primitives_library(primitive_map& pm, repl_data& rd, env
   compile_assoc_cmp_eqv(code, options);
   compile_assoc_cmp_eq(code, options);
   compile_assoc_cmp_equal(code, options);
-  compile_apply_fake_cps_identity(code, options);
-  */
+  //compile_apply_fake_cps_identity(code, options);
+  
   code.pop();
   }
 

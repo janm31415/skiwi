@@ -194,7 +194,6 @@ namespace
     {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("45", run("(45)"));
       TEST_EQ("-1", run("(-1)"));
       TEST_EQ("100", run("100"));
@@ -212,7 +211,6 @@ namespace
   struct bools : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("#t", run("#t"));
       TEST_EQ("#f", run("#f"));
       TEST_EQ("#t", run("(#t)"));
@@ -223,7 +221,6 @@ namespace
   struct test_for_nil : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("()", run("()"));
       TEST_EQ("()", run("(())"));
       TEST_EQ("()", run("((()))"));
@@ -234,7 +231,6 @@ namespace
   struct chars : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ(R"(#\*)", run(R"(#\*)"));
       TEST_EQ(R"(#\a)", run(R"(#\97)"));
 
@@ -454,7 +450,6 @@ namespace
   struct doubles : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("3.14", run("3.14"));
       TEST_EQ("3.14", run("(3.14)"));
       TEST_EQ("3.14", run("((3.14))"));
@@ -466,7 +461,6 @@ namespace
   struct add1 : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("0", run("(add1)"));      
       TEST_EQ("1", run("(add1 0)"));
       
@@ -488,7 +482,6 @@ namespace
   struct sub1 : public compile_fixture {
     void test()
       {
-      ops.garbage_collection = false;
       TEST_EQ("0", run("(sub1 1)"));
       TEST_EQ("-1", run("(sub1 0)"));
       TEST_EQ("-2", run("(sub1 -1)"));
@@ -507,11 +500,11 @@ SKIWI_END
 void run_all_compile_vm_tests()
   {
   using namespace SKIWI;
-  //fixnums().test();
-  //bools().test();
-  //test_for_nil().test();
-  //chars().test();
-  //doubles().test();
-  //add1().test();
+  fixnums().test();
+  bools().test();
+  test_for_nil().test();
+  chars().test();
+  doubles().test();
+  add1().test();
   sub1().test();
   }

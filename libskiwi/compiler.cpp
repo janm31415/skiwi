@@ -25,6 +25,10 @@ function_map generate_simplified_function_map()
   fm.insert(std::pair<std::string, fun_ptr>("halt", &compile_halt));
   fm.insert(std::pair<std::string, fun_ptr>("add1", &compile_add1));
   fm.insert(std::pair<std::string, fun_ptr>("sub1", &compile_sub1));
+
+  fm.insert(std::pair<std::string, fun_ptr>("reclaim", &compile_reclaim));
+  fm.insert(std::pair<std::string, fun_ptr>("reclaim-garbage", &compile_reclaim_garbage));
+
   return fm;
   }
 
