@@ -3039,7 +3039,7 @@ void compile_pairwise_compare(asmcode& code, const compiler_options&)
   code.add(asmcode::MOV, asmcode::RBX, asmcode::R9); // 6th arg
   code.add(asmcode::CALL, asmcode::R15);
   code.add(asmcode::CMP, asmcode::AL, asmcode::NUMBER, bool_f);
-  code.add(asmcode::JES, lab_arg_no); 
+  code.add(asmcode::JES, lab_arg_no); // JES works for assembly but not for vm
   code.add(asmcode::CMP, asmcode::R11, asmcode::NUMBER, 6);
   code.add(asmcode::JES, lab_arg_yes);
 

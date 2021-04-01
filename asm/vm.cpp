@@ -724,7 +724,6 @@ byte 4: information on operand1_mem and operand2_mem
                                 : 4 => instr.operand2_mem needs 64 bits
 byte 5+: instr.operand1_mem using as many bytes as warranted by byte 4, followed by instr.operand2_mem using as many bytes as warranted by byte4.
 
-exception: NOP is only 1 byte
 */
 uint64_t disassemble_bytecode(asmcode::operation& op,
   asmcode::operand& operand1,

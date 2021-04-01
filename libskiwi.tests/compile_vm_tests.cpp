@@ -572,6 +572,113 @@ namespace
       TEST_EQ("-12.5", run("(/ 2.5 2 -0.1)"));
       }
     };
+
+  struct add_incorrect_argument : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("runtime error: add1: contract violation", run("(add1 #t)"));
+      TEST_EQ("runtime error: sub1: contract violation", run("(sub1 ())"));
+
+      TEST_EQ("runtime error: +: contract violation", run("(+ #t #t)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ 3 #t)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ #t 5)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ 3.1 #t)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ #t 5.1)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ 1 2 3 4 5 6 7 8 3.1 #t)"));
+      TEST_EQ("runtime error: +: contract violation", run("(+ 1 2 3 4 5 6 7 8 #t 5.1)"));
+
+      TEST_EQ("runtime error: -: contract violation", run("(- #t #t)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- 3 #t)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- #t 5)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- 3.1 #t)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- #t 5.1)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- 1 2 3 4 5 6 7 8 3.1 #t)"));
+      TEST_EQ("runtime error: -: contract violation", run("(- 1 2 3 4 5 6 7 8 #t 5.1)"));
+
+      TEST_EQ("runtime error: *: contract violation", run("(* #t #t)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* 3 #t)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* #t 5)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* 3.1 #t)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* #t 5.1)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* 1 2 3 4 5 6 7 8 3.1 #t)"));
+      TEST_EQ("runtime error: *: contract violation", run("(* 1 2 3 4 5 6 7 8 #t 5.1)"));
+
+      TEST_EQ("runtime error: /: contract violation", run("(/ #t #t)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ 3 #t)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ #t 5)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ 3.1 #t)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ #t 5.1)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ 1 2 3 4 5 6 7 8 3.1 #t)"));
+      TEST_EQ("runtime error: /: contract violation", run("(/ 1 2 3 4 5 6 7 8 #t 5.1)"));
+      }
+    };
+
+  struct combination_of_math_ops : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("27", run("(/ (* 3 (- (+ 23 9) 20.0) 1.5) 2)")); // 3*12*1.5 / 2 = 3*6*1.5 = 3*9 = 27
+      }
+    };
+
+  struct equal : public compile_fixture {
+    void test()
+      {
+      TEST_EQ("#f", run("(= 12 13)"));
+      TEST_EQ("#t", run("(= 12 12)"));
+      TEST_EQ("#f", run("(= 12.1 13.1)"));
+      TEST_EQ("#t", run("(= 12.1 12.1)"));
+      TEST_EQ("#f", run("(= 12 13.1)"));
+      TEST_EQ("#t", run("(= 12 12.0)"));
+      TEST_EQ("#f", run("(= 12.0 13)"));
+      TEST_EQ("#t", run("(= 12.0 12)"));
+
+      TEST_EQ("#t", run("(= 12 12)"));
+      TEST_EQ("#f", run("(= 13 12)"));
+      TEST_EQ("#f", run("(= 16 (+ 13 1)) "));
+      TEST_EQ("#t", run("(= 16 (+ 13 3))"));
+      TEST_EQ("#f", run("(= 16 (+ 13 13))"));
+      TEST_EQ("#f", run("(= (+ 13 1) 16) "));
+      TEST_EQ("#t", run("(= (+ 13 3) 16) "));
+      TEST_EQ("#f", run("(= (+ 13 13) 16)"));
+
+      TEST_EQ("#f", run("(= 12.0 13)"));
+      TEST_EQ("#t", run("(= 12.0 12)"));
+      TEST_EQ("#f", run("(= 13.0 12)"));
+      TEST_EQ("#f", run("(= 16.0 (+ 13 1)) "));
+      TEST_EQ("#t", run("(= 16.0 (+ 13 3))"));
+      TEST_EQ("#f", run("(= 16.0 (+ 13 13))"));
+      TEST_EQ("#f", run("(= (+ 13.0 1) 16) "));
+      TEST_EQ("#t", run("(= (+ 13.0 3) 16.0) "));
+      TEST_EQ("#f", run("(= (+ 13.0 13.0) 16.0)"));
+
+      TEST_EQ("#t", run("(= 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12 12 12 12 12)"));
+      TEST_EQ("#t", run("(= 12 12 12 12 12 12 12 12 12 12)"));
+
+      TEST_EQ("#f", run("(= 13 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12 12 12 12 12)"));
+      TEST_EQ("#f", run("(= 13 12 12 12 12 12 12 12 12 12)"));
+
+      TEST_EQ("#f", run("(= 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 12 12 12 12 13)"));
+      TEST_EQ("#f", run("(= 12 12 12 12 12 12 12 12 12 13)"));
+      }
+    };
   }
 
 SKIWI_END
@@ -594,6 +701,10 @@ void run_all_compile_vm_tests()
   add_flonums_and_fixnums().test();
   sub().test();
   mul().test();
-  divtest().test();
-#endif    
+  divtest().test(); 
+  add_incorrect_argument().test();
+  combination_of_math_ops().test();
+#endif   
+  combination_of_math_ops().test();
+  //equal().test();
   }
