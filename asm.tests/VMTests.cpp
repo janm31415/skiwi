@@ -618,6 +618,30 @@ namespace
     free_bytecode(f, size);
     }
 
+  void test_vm_fldpi()
+    {
+    asmcode code;
+    double v = 0.0;
+    code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, (uint64_t)&v);
+    code.add(asmcode::FLDPI);
+    code.add(asmcode::FSTP, asmcode::MEM_RAX);    
+    code.add(asmcode::RET);
+
+    uint64_t size;
+    uint8_t* f = (uint8_t*)vm_bytecode(size, code);
+    registers reg;
+    try
+      {
+      run_bytecode(f, size, reg);
+      }
+    catch (std::logic_error e)
+      {
+      std::cout << e.what() << "\n";
+      }
+    TEST_EQ(3.141592653589793238462643383, v);
+    free_bytecode(f, size);
+    }
+
   } // namespace
 
 ASM_END
@@ -648,5 +672,5 @@ void run_all_vm_tests()
   test_vm_push_pop();
   test_vm_movq();
   test_vm_addsd();
-  
+  test_vm_fldpi();
   }

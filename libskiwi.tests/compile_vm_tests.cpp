@@ -200,6 +200,7 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+          reg.rcx = (uint64_t)(&ctxt);
           try {
             run_bytecode(f, size, reg);
             }
@@ -228,6 +229,7 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+          reg.rcx = (uint64_t)(&ctxt);
           try {
             run_bytecode(f, size, reg);
             }
@@ -256,6 +258,7 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+          reg.rcx = (uint64_t)(&ctxt);
           try {
             run_bytecode(f, size, reg);
             }
@@ -284,6 +287,7 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+          reg.rcx = (uint64_t)(&ctxt);
           try {
             run_bytecode(f, size, reg);
             }
@@ -2232,7 +2236,7 @@ namespace
       run("(define fib (lambda (n) (cond [(fx<? n 2) 1]  [else (fx+ (fib (fx- n 2)) (fib(fx- n 1)))]))) ");
       //run("(define fib (lambda (n) (cond [(< n 2) 1]  [else (+ (fib (- n 2)) (fib(- n 1)))]))) ");
       auto tic = std::clock();
-      TEST_EQ("165580141", run("(fib 40)"));
+      TEST_EQ("121393", run("(fib 25)"));
       //TEST_EQ("165580141", run("(define fib (lambda (n) (cond [(< n 2) 1]  [else (+ (fib (- n 2)) (fib(- n 1)))]))) (fib 40)"));
       auto toc = std::clock();
       std::cout << "fibonacci: " << (toc - tic) << "ms\n";
@@ -2664,6 +2668,595 @@ namespace
       std::cout << std::endl;
       }
     };
+
+  struct case_examples : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      TEST_EQ("big", run("(case (+ 7 5) [(1 2 3) 'small] [(10 11 12) 'big])"));
+      TEST_EQ("75", run("(case (+ 7 3) [(10 11 12) 75])"));
+      TEST_EQ("small", run("(case (- 7 5) [(1 2 3) 'small] [(10 11 12) 'big])"));
+
+      TEST_EQ("composite", run("(case (* 2 3) [(2 3 5 7) 'prime][(1 4 6 8 9) 'composite])"));
+      TEST_EQ("#undefined", run("(case (car '(c d)) [(a) 'a] [(b) 'b])"));
+      TEST_EQ("consonant", run("(case (car '(c d)) [(a e i o u) 'vowel][(w y) 'semivowel][else 'consonant])"));
+      TEST_EQ("vowel", run("(case (car '(e d)) [(a e i o u) 'vowel][(w y) 'semivowel][else 'consonant])"));
+
+      //TEST_EQ("backwards", run("(case (list 'y 'x) [((a b) (x y)) 'forwards]  [((b a) (y x)) 'backwards])")); // this only works if case is rewritten with member instead of memv
+      TEST_EQ("5", run("(let ([x 3]) (case x [else 5]))"));
+
+      TEST_EQ("5", run("(let ([x #\\a]) (case x [(#\\newline) 7] [else 5]))"));
+      TEST_EQ("5", run("(let ([x #\\a]) (case x [(#\\newline) (char->fixnum x)] [else 5]))"));
+      TEST_EQ("10", run("(let ([x #\\newline]) (case x [(#\\newline) (char->fixnum x)] [else 5]))"));
+      TEST_EQ("#t", run("(let ([x #\\newline]) (eqv? x #\\newline))"));
+      TEST_EQ("(#\\010)", run("(let ([x #\\newline]) (memv x '(#\\newline)))"));
+      }
+    };
+
+  struct memv : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      TEST_EQ("(2 3 4)", run("(memv 2 (list 1 2 3 4))"));
+      TEST_EQ("#f", run("(memv 9 (list 1 2 3 4))"));
+      TEST_EQ("(101 102)", run("(memv 101 '(100 101 102))"));
+
+      TEST_EQ("#f", run("(memv 101 '((b a) (y x)))"));
+      TEST_EQ("(a c)", run("(memv 'a '(b a c))"));
+      TEST_EQ("#f", run("(memv '(y x) '((b a) (y x)))"));
+      }
+    };
+
+  struct memq : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      TEST_EQ("(2 3 4)", run("(memq 2 (list 1 2 3 4))"));
+      TEST_EQ("#f", run("(memq 9 (list 1 2 3 4))"));
+      TEST_EQ("(101 102)", run("(memq 101 '(100 101 102))"));
+
+      TEST_EQ("#f", run("(memq 101 '((b a) (y x)))"));
+      TEST_EQ("(a c)", run("(memq 'a '(b a c))"));
+      TEST_EQ("#f", run("(memq '(y x) '((b a) (y x)))"));
+      }
+    };
+
+  struct member : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      TEST_EQ("(2 3 4)", run("(member 2 (list 1 2 3 4))"));
+      TEST_EQ("#f", run("(member 9 (list 1 2 3 4))"));
+      TEST_EQ("(101 102)", run("(member 101 '(100 101 102))"));
+
+      TEST_EQ("#f", run("(member 101 '((b a) (y x)))"));
+      TEST_EQ("(a c)", run("(member 'a '(b a c))"));
+      TEST_EQ("((y x))", run("(member '(y x) '((b a) (y x)))"));
+      }
+    };
+
+  struct equality : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      TEST_EQ("#t", run("(equal? 'yes 'yes)"));
+      TEST_EQ("#f", run("(equal? 'yes 'no)"));
+      TEST_EQ("#t", run("(equal? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(equal? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (equal? v v))"));
+      TEST_EQ("#t", run("(equal? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#t", run("(equal? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(equal? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#t", run("(equal? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(equal? #t #t)"));
+
+      TEST_EQ("#t", run("(%eqv? 'yes 'yes)"));
+      TEST_EQ("#f", run("(%eqv? 'yes 'no)"));
+      TEST_EQ("#t", run("(%eqv? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(%eqv? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (%eqv? v v))"));
+      TEST_EQ("#t", run("(%eqv? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#f", run("(%eqv? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(%eqv? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#t", run("(%eqv? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(%eqv? #t #t)"));
+
+      TEST_EQ("#t", run("(eq? 'yes 'yes)"));
+      TEST_EQ("#f", run("(eq? 'yes 'no)"));
+      TEST_EQ("#t", run("(eq? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(eq? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (eq? v v))"));
+      TEST_EQ("#f", run("(eq? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#f", run("(eq? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(eq? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#f", run("(eq? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(eq? #t #t)"));
+      }
+    };
+
+  struct equality_inlined : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      ops.primitives_inlined = true;
+      TEST_EQ("#t", run("(equal? 'yes 'yes)"));
+      TEST_EQ("#f", run("(equal? 'yes 'no)"));
+      TEST_EQ("#t", run("(equal? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(equal? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (equal? v v))"));
+      TEST_EQ("#t", run("(equal? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#t", run("(equal? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(equal? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#t", run("(equal? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(equal? #t #t)"));
+
+      TEST_EQ("#t", run("(%eqv? 'yes 'yes)"));
+      TEST_EQ("#f", run("(%eqv? 'yes 'no)"));
+      TEST_EQ("#t", run("(%eqv? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(%eqv? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (eqv? v v))"));
+      TEST_EQ("#t", run("(%eqv? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#f", run("(%eqv? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(%eqv? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#t", run("(%eqv? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(%eqv? #t #t)"));
+
+      TEST_EQ("#t", run("(eq? 'yes 'yes)"));
+      TEST_EQ("#f", run("(eq? 'yes 'no)"));
+      TEST_EQ("#t", run("(eq? (* 6 7) 42)"));
+      TEST_EQ("#f", run("(eq? 2 2.0)"));
+      TEST_EQ("#t", run("(let ([v (cons 1 2)]) (eq? v v))"));
+      TEST_EQ("#f", run("(eq? (cons 1 2) (cons 1 2))"));
+      TEST_EQ("#f", run("(eq? (cons (cons 3 4) 2) (cons (cons 3 4) 2))"));
+      TEST_EQ("#t", run("(eq? (fixnum->char 955) (fixnum->char 955))"));
+      TEST_EQ("#f", run("(eq? (make-string 3 #\\z) (make-string 3 #\\z))"));
+      TEST_EQ("#t", run("(eq? #t #t)"));
+      }
+    };
+
+  struct apply : public compile_fixture {
+    void test()
+      {
+      build_string_to_symbol();
+      build_apply();
+      TEST_EQ("0", run("(apply + ())"));
+      TEST_EQ("7", run("(apply + (list 3 4))"));
+      TEST_EQ("10", run("(apply + (list 1 2 3 4))"));
+      TEST_EQ("10", run("(apply + 1 2 (list 3 4))"));
+      TEST_EQ("36", run("(apply + (list 1 2 3 4 5 6 7 8))"));
+      TEST_EQ("45", run("(apply + (list 1 2 3 4 5 6 7 8 9))"));
+      TEST_EQ("55", run("(apply + (list 1 2 3 4 5 6 7 8 9 10))"));
+      TEST_EQ("55", run("(apply + 1 2 3 4 5 6 7 8 9 (list 10))"));
+
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector '(1 2 3 4 5 6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 '(2 3 4 5 6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 '(3 4 5 6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 '(4 5 6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 4 '(5 6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 4 5 '(6 7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 4 5 6 '(7 8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 4 5 6 7 '(8)) '())"));
+      TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 2 3 4 5 6 7 8 ()) '())"));
+
+      TEST_EQ("13", run("(let([f(lambda() 12)])( + (apply f '()) 1))"));
+      TEST_EQ("26", run("(let([f(lambda(x) ( + x 12))]) ( + (apply f 13 '()) 1))"));
+      TEST_EQ("26", run("(let([f(lambda(x) ( + x 12))]) ( + (apply f(cons 13 '())) 1))"));
+      TEST_EQ("27", run("(let([f(lambda(x y z) ( + x(* y z)))])( + (apply f 12 '(7 2)) 1))"));
+
+      TEST_EQ("12", run("(let([f(lambda() 12)])(apply f '()))"));
+      TEST_EQ("25", run("(let([f(lambda(x) ( + x 12))])(apply f 13 '()))"));
+      TEST_EQ("25", run("(let([f(lambda(x) ( + x 12))])(apply f(cons 13 '())))"));
+      TEST_EQ("26", run("(let([f(lambda(x y z) ( + x(* y z)))])(apply f 12 '(7 2)))"));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector '(1 2 3 4 5 6 7 8))"));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 '(2 3 4 5 6 7 8))"));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 '(3 4 5 6 7 8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 '(4 5 6 7 8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 4 '(5 6 7 8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 4 5 '(6 7 8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 4 5 6 '(7 8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 4 5 6 7 '(8)) "));
+      TEST_EQ("#(1 2 3 4 5 6 7 8)", run("(apply vector 1 2 3 4 5 6 7 8 ())"));
+
+
+      TEST_EQ("<lambda>", run("(define compose (lambda(f g)(lambda args(f(apply g args)))))"));
+      TEST_EQ("<lambda>", run("(define twice (lambda (x) (* 2 x)))"));
+      TEST_EQ("1800", run("((compose twice *) 12 75)"));
+      }
+    };
+
+  struct fib_iterative_perf_test : public compile_fixture
+    {
+    void test()
+      {
+      TEST_EQ("<lambda>", run("(define fib (lambda (n) (define iter (lambda (a b c) (cond [(= c 0) b]  [else (iter (+ a b) a (- c 1))]) ) ) (iter 1 0 n) ))"));
+      TEST_EQ("21", run("(fib 8)"));
+      TEST_EQ("165580141", run("(fib 41)"));
+      TEST_EQ("-4249520595888827205", run("(fib 1000000)"));
+      }
+    };
+
+  struct make_port_test : public compile_fixture
+    {
+    void test()
+      {
+      build_string_to_symbol();
+      build_apply();
+      build_r5rs();
+      TEST_EQ("#t", run("(define default-port (make-port #f \"stdout\" 1 (make-string 1024) 0 1024)) (port? default-port)"));
+      TEST_EQ("#f", run("(port? (vector #f \"stdout\" 1 (make-string 1024) 0 1024))"));
+      TEST_EQ("", run("(write-char #\\j default-port)"));
+      TEST_EQ("", run("(write-char #\\a default-port)"));
+      TEST_EQ("", run("(write-char #\\n default-port)"));
+      TEST_EQ("36", run("(foreign-call _write 1 \"This is a test of '_write' function\n\" 36)"));
+      TEST_EQ("", run("(flush-output-port default-port)"));
+      TEST_EQ("", run("(write-char #\\J default-port)"));
+      TEST_EQ("", run("(write-char #\\A default-port)"));
+      TEST_EQ("", run("(write-char #\\N default-port)"));
+      TEST_EQ("", run("(write-char #\\010 default-port)"));
+      TEST_EQ("", run("(flush-output-port default-port)"));
+      }
+    };
+
+  struct make_port2_test : public compile_fixture
+    {
+    void test()
+      {
+      build_string_to_symbol();
+      build_apply();
+      build_r5rs();
+      TEST_EQ("#t", run("(define default-port (make-port #f \"stdout\" 1 (make-string 8) 0 8)) (port? default-port)"));
+      TEST_EQ("", run("(write-char #\\j default-port)"));
+      TEST_EQ("", run("(write-char #\\a default-port)"));
+      TEST_EQ("", run("(write-char #\\n default-port)"));
+      TEST_EQ("", run("(write-char #\\m default-port)"));
+      TEST_EQ("", run("(write-char #\\a default-port)"));
+      TEST_EQ("", run("(write-char #\\e default-port)"));
+      TEST_EQ("", run("(write-char #\\s default-port)"));
+      TEST_EQ("", run("(write-char #\\010 default-port)"));
+      TEST_EQ("", run("(write-char #\\! default-port)"));
+      }
+    };
+
+  struct r5rs_test : public compile_fixture
+    {
+    void test()
+      {
+      build_libs();
+
+      TEST_EQ("(1 2 3 4)", run("(append (list 1 2) (list 3 4))"));
+      TEST_EQ("(1 2 3 4)", run("(append '(1 2) '(3 4))"));
+      TEST_EQ("#t", run("(exact? 3)"));
+      TEST_EQ("#f", run("(exact? 3.14)"));
+      TEST_EQ("#f", run("(inexact? 3)"));
+      TEST_EQ("#t", run("(inexact? 3.14)"));
+      TEST_EQ("#t", run("(number? 3)"));
+      TEST_EQ("#t", run("(number? 3.14)"));
+      TEST_EQ("#f", run("(number? 'a)"));
+
+      TEST_EQ("#t", run("(rational? 5)"));
+      TEST_EQ("#t", run("(rational? 5.2)"));
+      TEST_EQ("#f", run("(rational? \"test\")"));
+
+      TEST_EQ("#t", run("(positive? 5)"));
+      TEST_EQ("#f", run("(negative? 5)"));
+      TEST_EQ("#t", run("(positive? 5.2)"));
+      TEST_EQ("#f", run("(negative? 5.2)"));
+
+      TEST_EQ("#f", run("(positive? -5)"));
+      TEST_EQ("#t", run("(negative? -5)"));
+      TEST_EQ("#f", run("(positive? -5.2)"));
+      TEST_EQ("#t", run("(negative? -5.2)"));
+
+      TEST_EQ("#f", run("(even? -5)"));
+      TEST_EQ("#t", run("(even? -6)"));
+
+      TEST_EQ("#t", run("(odd? -5)"));
+      TEST_EQ("#f", run("(odd? -6)"));
+      }
+    };
+
+  typedef union {
+    double d;
+    struct {
+      uint64_t mantissa : 52;
+      uint64_t exponent : 11;
+      uint64_t sign : 1;
+      } parts;
+    struct {
+      uint64_t notsign : 63;
+      uint64_t sign : 1;
+      } parts2;
+    } double_cast;
+
+  std::string to_string(int64_t val)
+    {
+    std::stringstream ss;
+    ss << val;
+    return ss.str();
+    }
+
+  struct ieee745_test : public compile_fixture {
+    void test()
+      {
+      build_libs();
+      double_cast d1;
+      d1.d = 3.14;
+
+      TEST_EQ(to_string(d1.parts.sign), run("(ieee754-sign 3.14)"));
+      TEST_EQ(to_string(d1.parts.exponent), run("(ieee754-exponent 3.14)"));
+      TEST_EQ(to_string(d1.parts.mantissa), run("(ieee754-mantissa 3.14)"));
+      
+      d1.d = -3.14;
+
+      TEST_EQ(to_string(d1.parts.sign), run("(ieee754-sign -3.14)"));
+      TEST_EQ(to_string(d1.parts.exponent), run("(ieee754-exponent -3.14)"));
+      TEST_EQ(to_string(d1.parts.mantissa), run("(ieee754-mantissa -3.14)"));
+
+      d1.d = 458972348798345098345.0;
+
+      TEST_EQ(to_string(d1.parts.sign), run("(ieee754-sign 458972348798345098345.0)"));
+      TEST_EQ(to_string(d1.parts.exponent), run("(ieee754-exponent 458972348798345098345.0)"));
+      TEST_EQ(to_string(d1.parts.mantissa), run("(ieee754-mantissa 458972348798345098345.0)"));
+
+      d1.d = 0.15625;
+
+      TEST_EQ(to_string(d1.parts.sign), run("(ieee754-sign 0.15625)"));
+      TEST_EQ(to_string(d1.parts.exponent), run("(ieee754-exponent 0.15625)"));
+      TEST_EQ(to_string(d1.parts.mantissa), run("(ieee754-mantissa 0.15625)"));
+
+      d1.d = -0.15625;
+
+      TEST_EQ(to_string(d1.parts.sign), run("(ieee754-sign -0.15625)"));
+      TEST_EQ(to_string(d1.parts.exponent), run("(ieee754-exponent -0.15625)"));
+      TEST_EQ(to_string(d1.parts.mantissa), run("(ieee754-mantissa -0.15625)"));
+
+      TEST_EQ("3.14159", run("(ieee754-pi)"));
+
+      TEST_EQ("3", run("(ieee754-sqrt 9)"));
+      TEST_EQ("1.41421", run("(ieee754-sqrt 2.0)"));
+      
+      TEST_EQ("0.841471", run("(ieee754-sin 1.0)"));
+      TEST_EQ("0.841471", run("(ieee754-sin 1)"));
+      TEST_EQ("0.909297", run("(ieee754-sin 2.0)"));
+      TEST_EQ("0.909297", run("(ieee754-sin 2)"));
+      TEST_EQ("1.22465e-16", run("(ieee754-sin (ieee754-pi))"));
+      TEST_EQ("1", run("(ieee754-sin (/ (ieee754-pi) 2))"));
+      
+      TEST_EQ("0.540302", run("(ieee754-cos 1.0)"));
+      TEST_EQ("0.540302", run("(ieee754-cos 1)"));
+
+      TEST_EQ("1.55741", run("(ieee754-tan 1.0)"));
+      TEST_EQ("1.55741", run("(ieee754-tan 1)"));
+
+      TEST_EQ("1.5708", run("(ieee754-asin 1.0)"));
+      TEST_EQ("1.5708", run("(ieee754-asin 1)"));
+      
+      TEST_EQ("1.0472", run("(ieee754-acos 0.5)"));
+      TEST_EQ("0", run("(ieee754-acos 1)"));
+
+      TEST_EQ("0.785398", run("(ieee754-atan1 1.0)"));
+      TEST_EQ("0.785398", run("(ieee754-atan1 1)"));
+
+      TEST_EQ("2.07944", run("(ieee754-log 8.0)"));
+      TEST_EQ("2.07944", run("(ieee754-log 8)"));
+
+      TEST_EQ("8", run("(ieee754-round 8.0)"));
+      TEST_EQ("8", run("(ieee754-round 8.4)"));
+      TEST_EQ("8", run("(ieee754-round 7.5)"));
+      TEST_EQ("8", run("(ieee754-round 8)"));
+
+      TEST_EQ("8", run("(ieee754-truncate 8.0)"));
+      TEST_EQ("8", run("(ieee754-truncate 8.4)"));
+      TEST_EQ("7", run("(ieee754-truncate 7.5)"));
+      TEST_EQ("8", run("(ieee754-truncate 8)"));
+      
+      TEST_EQ("8", run("(fixnum-expt 2 3)"));
+      TEST_EQ("1", run("(fixnum-expt 2 0)"));
+      TEST_EQ("1", run("(fixnum-expt 0 0)"));
+      TEST_EQ("1024", run("(fixnum-expt 2 10)"));
+      TEST_EQ("16", run("(fixnum-expt 4 2)"));
+      
+      TEST_EQ("16", run("(flonum-expt 4.0 2.0)"));
+      TEST_EQ("2", run("(flonum-expt 4.0 0.5)"));
+      TEST_EQ("1.41421", run("(flonum-expt 2.0 0.5)"));
+      TEST_EQ("343", run("(flonum-expt 7 3)"));
+      TEST_EQ("907.493", run("(flonum-expt 7 3.5)"));
+      /*
+      TEST_EQ("1.41421", run("(expt 2.0 0.5)"));
+      TEST_EQ("8", run("(expt 2 3)"));
+      TEST_EQ("1", run("(expt 2 0)"));
+      TEST_EQ("1", run("(expt 0 0)"));
+      TEST_EQ("1024", run("(expt 2 10)"));
+      TEST_EQ("16", run("(expt 4 2)"));
+      TEST_EQ("16", run("(expt 4.0 2.0)"));
+      TEST_EQ("2", run("(expt 4.0 0.5)"));
+      TEST_EQ("0.5", run("(expt 4.0 -0.5)"));
+      TEST_EQ("0.125", run("(expt 2 -3)"));
+
+      TEST_EQ("343", run("(expt 7 3)"));
+      TEST_EQ("907.493", run("(expt 7 3.5)"));
+
+      TEST_EQ("2.71828", run("(exp 1)"));
+      TEST_EQ("2.71828", run("(exp 1.0)"));
+      TEST_EQ("1", run("(exp 0.0)"));
+      TEST_EQ("1", run("(exp 0)"));
+
+
+      TEST_EQ("3", run("(sqrt 9)"));
+      TEST_EQ("1.41421", run("(sqrt 2.0)"));
+
+      TEST_EQ("0.841471", run("(sin 1.0)"));
+      TEST_EQ("0.841471", run("(sin 1)"));
+      TEST_EQ("0.909297", run("(sin 2.0)"));
+      TEST_EQ("0.909297", run("(sin 2)"));
+      TEST_EQ("1.22461e-16", run("(sin (ieee754-pi))"));
+      TEST_EQ("1", run("(sin (/ (ieee754-pi) 2))"));
+
+      TEST_EQ("0.540302", run("(cos 1.0)"));
+      TEST_EQ("0.540302", run("(cos 1)"));
+
+      TEST_EQ("1.55741", run("(tan 1.0)"));
+      TEST_EQ("1.55741", run("(tan 1)"));
+
+      TEST_EQ("1.5708", run("(asin 1.0)"));
+      TEST_EQ("1.5708", run("(asin 1)"));
+
+      TEST_EQ("1.0472", run("(acos 0.5)"));
+      TEST_EQ("0", run("(acos 1)"));
+
+      TEST_EQ("0.785398", run("(atan 1.0)"));
+      TEST_EQ("0.785398", run("(atan 1)"));
+
+      TEST_EQ("2.07944", run("(log 8.0)"));
+      TEST_EQ("2.07944", run("(log 8)"));
+
+      TEST_EQ("8", run("(round 8.0)"));
+      TEST_EQ("8", run("(round 8.4)"));
+      TEST_EQ("8", run("(round 7.5)"));
+      TEST_EQ("8", run("(round 8)"));
+
+      TEST_EQ("0.554307", run("(atan 1.3 2.1)"));
+      TEST_EQ("-0.554307", run("(atan -1.3 2.1)"));
+      TEST_EQ("2.58729", run("(atan 1.3 -2.1)"));
+      TEST_EQ("-2.58729", run("(atan -1.3 -2.1)"));
+
+      TEST_EQ("8", run("(truncate 8.0)"));
+      TEST_EQ("8", run("(truncate 8.4)"));
+      TEST_EQ("7", run("(truncate 7.5)"));
+      TEST_EQ("8", run("(truncate 8)"));
+      */
+      }
+    };
+
+  struct minmax_test : public compile_fixture {
+    void test()
+      {
+      build_libs();
+
+      TEST_EQ("1", run("(max 1)"));
+      TEST_EQ("2", run("(min 2)"));
+      TEST_EQ("1.5", run("(max 1.5)"));
+      TEST_EQ("2.2", run("(min 2.2)"));
+      TEST_EQ("2", run("(max 1.0 2.0)"));
+      TEST_EQ("7.2", run("(max 1.0 2.0 -0.4 7.2 2.3 7.1 -11.0)"));
+      TEST_EQ("2", run("(max 1 2.0)"));
+      TEST_EQ("2", run("(max 1.0 2)"));
+      TEST_EQ("2", run("(max 1 2)"));
+      TEST_EQ("7", run("(max 1 2 7 -3 -11 6 3)"));
+
+      TEST_EQ("1", run("(min 1.0 2.0)"));
+      TEST_EQ("-11", run("(min 1.0 2.0 -0.4 7.2 2.3 7.1 -11.0)"));
+      TEST_EQ("1", run("(min 1 2.0)"));
+      TEST_EQ("1", run("(min 1.0 2)"));
+      TEST_EQ("1", run("(min 1 2)"));
+      TEST_EQ("-11", run("(min 1 2 7 -3 -11 6 3)"));
+      TEST_EQ("1024", run("(arithmetic-shift 1 10)"));
+      TEST_EQ("31", run("(arithmetic-shift 255 -3)"));
+
+      TEST_EQ("3", run("(quotient 10 3)"));
+      TEST_EQ("-3", run("(quotient -10 3)"));
+      TEST_EQ("3", run("(quotient 10.0 3)"));
+      TEST_EQ("-3", run("(quotient -10.0 3)"));
+      TEST_EQ("3", run("(quotient 10.0 3.0)"));
+      TEST_EQ("-3", run("(quotient -10.0 3.0)"));
+      TEST_EQ("3", run("(quotient 10 3.0)"));
+      TEST_EQ("-3", run("(quotient -10 3.0)"));
+
+      TEST_EQ("1", run("(remainder 10 3)"));
+      TEST_EQ("-1", run("(remainder -10 3)"));
+      TEST_EQ("1", run("(remainder 10.0 3)"));
+      TEST_EQ("-1", run("(remainder -10.0 3)"));
+      TEST_EQ("1", run("(remainder 10.0 3.0)"));
+      TEST_EQ("-1", run("(remainder -10.0 3.0)"));
+      TEST_EQ("1", run("(remainder 10 3.0)"));
+      TEST_EQ("-1", run("(remainder -10 3.0)"));
+
+
+      TEST_EQ("#t", run("(let ([a 1324] [b 324]) (= (+ (* (quotient a b) b)  (remainder a b) )  a)  )"));
+      TEST_EQ("#t", run("(let ([a 1324] [b -324.0]) (= (+ (* (quotient a b) b)  (remainder a b) )  a)  )"));
+      TEST_EQ("-4", run("(let ([a 1324] [b -324.0]) (quotient a b ))"));
+      TEST_EQ("28", run("(let ([a 1324] [b -324.0]) (remainder a b ))"));
+      TEST_EQ("1324", run("(let ([a 1324] [b -324.0]) (+ (* (quotient a b) b)  (remainder a b) ))"));
+
+      TEST_EQ("1", run("(modulo 10 3)"));
+      TEST_EQ("2", run("(modulo -10 3)"));
+      TEST_EQ("1", run("(modulo 10.0 3)"));
+      TEST_EQ("-1", run("(modulo -10.0 -3)"));
+      TEST_EQ("1", run("(modulo 10.0 3.0)"));
+      TEST_EQ("2", run("(modulo -10.0 3.0)"));
+      TEST_EQ("-2", run("(modulo 10 -3.0)"));
+      TEST_EQ("2", run("(modulo -10 3.0)"));
+
+      TEST_EQ("3", run("(abs 3)"));
+      TEST_EQ("3.2", run("(abs 3.2)"));
+      TEST_EQ("3", run("(abs -3)"));
+      TEST_EQ("3.2", run("(abs -3.2)"));
+      TEST_EQ("0", run("(abs 0)"));
+      TEST_EQ("0", run("(abs 0.0)"));
+
+      TEST_EQ("3", run("(flonum->fixnum 3.143)"));
+      TEST_EQ("-3", run("(flonum->fixnum -3.143)"));
+
+      TEST_EQ("3", run("(fixnum->flonum 3)"));
+      TEST_EQ("#t", run("(flonum? (fixnum->flonum 3))"));     
+
+      TEST_EQ("3", run("(inexact->exact 3.14)"));
+      TEST_EQ("3", run("(inexact->exact 3)"));
+
+      TEST_EQ("3.14", run("(exact->inexact 3.14)"));
+      TEST_EQ("3", run("(exact->inexact 3)"));
+      TEST_EQ("#t", run("(flonum? (exact->inexact 3))"));
+      TEST_EQ("#t", run("(inexact? (exact->inexact 3))"));
+
+      TEST_EQ("#t", run("(finite? 3.14)"));
+      TEST_EQ("#t", run("(finite? 2)"));
+      TEST_EQ("#f", run("(finite? (/ 1.0 0.0))"));
+      TEST_EQ("#f", run("(finite? (/ 0.0 0.0))"));
+
+      TEST_EQ("#f", run("(nan? 3.14)"));
+      TEST_EQ("#f", run("(nan? 2)"));
+      TEST_EQ("#f", run("(nan? (/ 1.0 0.0))"));
+      TEST_EQ("#t", run("(nan? (/ 0.0 0.0))"));
+
+      TEST_EQ("#f", run("(inf? 3.14)"));
+      TEST_EQ("#f", run("(inf? 2)"));
+      TEST_EQ("#t", run("(inf? (/ 1.0 0.0))"));
+      TEST_EQ("#f", run("(inf? (/ 0.0 0.0))"));
+
+#ifdef _WIN32
+      TEST_EQ("-nan(ind)", run("(/ 0.0 0.0)"));
+#elif defined(unix)
+      TEST_EQ("-nan", run("(/ 0.0 0.0)"));
+#else
+      TEST_EQ("nan", run("(/ 0.0 0.0)"));
+#endif
+
+      TEST_EQ("#t", run("(integer? 3)"));
+      TEST_EQ("#f", run("(integer? 3.2)"));
+      TEST_EQ("#t", run("(integer? 3.0)"));
+
+      TEST_EQ("3", run("(ceiling 3)"));
+      TEST_EQ("3", run("(ceiling 3.0)"));
+      TEST_EQ("4", run("(ceiling 3.0000000001)"));
+      TEST_EQ("3", run("(ceiling 2.9)"));
+      TEST_EQ("-3", run("(ceiling -3)"));
+      TEST_EQ("-3", run("(ceiling -3.1)"));
+      TEST_EQ("-2", run("(ceiling -2.9)"));
+      TEST_EQ("-2", run("(ceiling -2.5)"));
+      TEST_EQ("-2", run("(ceiling -2.1)"));
+
+      TEST_EQ("3", run("(floor 3)"));
+      TEST_EQ("3", run("(floor 3.0)"));
+      TEST_EQ("3", run("(floor 3.0000000001)"));
+      TEST_EQ("2", run("(floor 2.9)"));
+      TEST_EQ("-3", run("(floor -3)"));
+      TEST_EQ("-4", run("(floor -3.1)"));
+      TEST_EQ("-3", run("(floor -2.9)"));
+      TEST_EQ("-3", run("(floor -2.5)"));
+      TEST_EQ("-3", run("(floor -2.1)"));
+      }
+    };
+
   }
 
 SKIWI_END
@@ -2770,5 +3363,22 @@ void run_all_compile_vm_tests()
   foreign_call_9().test();
   foreign_call_10().test();
   foreign_call_11().test();
+  case_examples().test();
+  memv().test();
+  memq().test();
+  member().test();
+  equality().test();
+  equality_inlined().test();
+  apply().test();
+  fib_iterative_perf_test().test();
+  fib_perf_test().test();
+  r5rs_test().test();
 #endif     
+
+  
+  //make_port_test().test();
+  //make_port2_test().test();
+
+  ieee745_test().test();
+  //minmax_test().test();
   }

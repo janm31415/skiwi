@@ -49,7 +49,7 @@ namespace
       case asmcode::DIVSD: return 2;
       case asmcode::EXTERN: return 0;
       case asmcode::F2XM1:return 0;
-      case asmcode::FADD: return 0;
+      case asmcode::FADD: return 2;
       case asmcode::FISTPQ: return 1;
       case asmcode::FILD:return 1;
       case asmcode::FLD: return 1;
@@ -65,8 +65,8 @@ namespace
       case asmcode::FSCALE: return 0;
       case asmcode::FSQRT:return 0;
       case asmcode::FSTP: return 1;
-      case asmcode::FSUB: return 0;
-      case asmcode::FSUBRP:return 0;
+      case asmcode::FSUB: return 2;
+      case asmcode::FSUBRP:return 2;
       case asmcode::FXCH: return 0;
       case asmcode::FYL2X: return 0;
       case asmcode::GLOBAL:return 0;
@@ -881,6 +881,7 @@ registers::registers()
   {
   rbp = (uint64_t)(&stack[0]);
   rsp = (uint64_t)(&stack[256]);
+  fpstackptr = &fpstack[16];
   eflags = 0;
   }
 
@@ -1039,14 +1040,14 @@ namespace
       case asmcode::BYTE_MEM_R14: return nullptr;
       case asmcode::BYTE_MEM_R15: return nullptr;
       case asmcode::NUMBER: return nullptr;
-      case asmcode::ST0:  return nullptr;
-      case asmcode::ST1:  return nullptr;
-      case asmcode::ST2:  return nullptr;
-      case asmcode::ST3:  return nullptr;
-      case asmcode::ST4:  return nullptr;
-      case asmcode::ST5:  return nullptr;
-      case asmcode::ST6:  return nullptr;
-      case asmcode::ST7:  return nullptr;
+      case asmcode::ST0:  return (uint64_t*)(regs.fpstackptr);
+      case asmcode::ST1:  return (uint64_t*)(regs.fpstackptr-1);
+      case asmcode::ST2:  return (uint64_t*)(regs.fpstackptr-2);
+      case asmcode::ST3:  return (uint64_t*)(regs.fpstackptr-3);
+      case asmcode::ST4:  return (uint64_t*)(regs.fpstackptr-4);
+      case asmcode::ST5:  return (uint64_t*)(regs.fpstackptr-5);
+      case asmcode::ST6:  return (uint64_t*)(regs.fpstackptr-6);
+      case asmcode::ST7:  return (uint64_t*)(regs.fpstackptr-7);
       case asmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case asmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case asmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -2113,6 +2114,141 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case asmcode::DIVSD:
       {
       execute_double_operation<DivsdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::F2XM1:
+      {
+      double v = std::pow(2.0, *regs.fpstack) - 1.0;
+      *regs.fpstack = v;
+      break;
+      }
+      case asmcode::FADD: 
+      {
+      break;
+      }
+      case asmcode::FILD:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = (double)((int64_t)(*oprnd1));
+      break;
+      }
+      case asmcode::FISTPQ:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      *oprnd1 = (int64_t)(*regs.fpstackptr);
+      regs.fpstackptr += 1;
+      break;
+      }
+      case asmcode::FLD:
+      {      
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      double v = *reinterpret_cast<double*>(oprnd1);
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = v;
+      break;
+      }
+      case asmcode::FLD1:
+      {
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = 1.0;
+      break;
+      }
+      case asmcode::FLDLN2:
+      {
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = std::log(2.0);
+      break;
+      }
+      case asmcode::FLDPI:
+      {
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = 3.141592653589793238462643383;
+      break;
+      }
+      case asmcode::FMUL:
+      {
+      break;
+      }
+      case asmcode::FSIN:
+      {
+      *regs.fpstackptr = std::sin(*regs.fpstackptr);
+      break;
+      }
+      case asmcode::FCOS:
+      {
+      *regs.fpstackptr = std::cos(*regs.fpstackptr);
+      break;
+      }
+      case asmcode::FPATAN:
+      {
+      double y = *(regs.fpstackptr - 1);
+      double x = *(regs.fpstackptr);
+      regs.fpstackptr += 1;
+      *regs.fpstackptr = std::atan2(y, x);
+      break;
+      }
+      case asmcode::FPTAN:
+      {
+      *regs.fpstackptr = std::tan(*regs.fpstackptr);
+      regs.fpstackptr -= 1;
+      *regs.fpstackptr = 1.0;
+      break;
+      }
+      case asmcode::FRNDINT:
+      {
+      *regs.fpstackptr = std::round(*regs.fpstackptr);
+      break;
+      }
+      case asmcode::FSCALE:
+      {
+      double s = std::trunc(*(regs.fpstackptr - 1));
+      *regs.fpstackptr *= std::pow(2.0, s);
+      break;
+      }
+      case asmcode::FSQRT:
+      {
+      *regs.fpstackptr = std::sqrt(*regs.fpstackptr);
+      break;
+      }
+      case asmcode::FSTP:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      *oprnd1 = *reinterpret_cast<uint64_t*>(regs.fpstackptr);
+      regs.fpstackptr += 1;
+      break;
+      }
+      case asmcode::FSUB:
+      {
+      break;
+      }
+      case asmcode::FSUBRP:
+      {
+      regs.fpstackptr += 1;
+      break;
+      }
+      case asmcode::FXCH:
+      {
+      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
+      if (oprnd1)
+        {
+        double tmp = *(regs.fpstackptr);
+        *(regs.fpstackptr) = *oprnd1;
+        *oprnd1 = tmp;
+        }
+      else
+        {
+        double tmp = *(regs.fpstackptr);
+        *(regs.fpstackptr) = *(regs.fpstackptr - 1);
+        *(regs.fpstackptr - 1) = tmp;
+        }
+      break;
+      }
+      case asmcode::FYL2X:
+      {
+      double tmp = std::log(*(regs.fpstackptr));
+      regs.fpstackptr += 1;
+      *regs.fpstackptr *= tmp;
       break;
       }
       case asmcode::IMUL:
