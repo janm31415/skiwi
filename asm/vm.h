@@ -69,6 +69,22 @@ struct registers
   uint64_t stack[256];
   };
 
-ASSEMBLER_API void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs);
+struct external_function
+  {
+  enum argtype
+    {
+    T_BOOL,
+    T_CHAR_POINTER,
+    T_DOUBLE,
+    T_INT64,
+    T_VOID
+    };
+  std::string name;
+  uint64_t address;
+  std::vector<argtype> arguments;
+  argtype return_type;
+  };
+
+ASSEMBLER_API void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const std::vector<external_function>& externals = std::vector<external_function>());
 
 ASM_END

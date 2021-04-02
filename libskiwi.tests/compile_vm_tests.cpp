@@ -61,7 +61,8 @@ namespace
     bool stream_out;
     std::vector<std::pair<void*, uint64_t>> compiled_bytecode;
     primitive_map pm;
-    std::map<std::string, external_function> externals;
+    std::map<std::string, SKIWI::external_function> externals;
+    std::vector<ASM::external_function> externals_for_vm;
     registers reg;
 
     compile_fixture()
@@ -174,7 +175,7 @@ namespace
       str << std::setprecision(precision);
       reg.rcx = (uint64_t)(&ctxt);
       try {
-        run_bytecode(f, size, reg);
+        run_bytecode(f, size, reg, externals_for_vm);
         }
       catch (std::logic_error e)
         {
@@ -338,6 +339,37 @@ namespace
       catch (std::logic_error e)
         {
         std::cout << e.what() << " while compiling primitives library\n\n";
+        }
+      }
+
+    ASM::external_function::argtype convert(SKIWI::external_function::argtype arg)
+      {
+      switch (arg)
+        {
+        case SKIWI::external_function::T_BOOL: return ASM::external_function::T_BOOL;
+        case SKIWI::external_function::T_CHAR_POINTER: return ASM::external_function::T_CHAR_POINTER;
+        case SKIWI::external_function::T_DOUBLE: return ASM::external_function::T_DOUBLE;
+        case SKIWI::external_function::T_INT64: return ASM::external_function::T_INT64;
+        case SKIWI::external_function::T_VOID: return ASM::external_function::T_VOID;
+        case SKIWI::external_function::T_SCM: return ASM::external_function::T_INT64;
+        default: return ASM::external_function::T_VOID;
+        }
+      }
+
+    void convert_externals_to_vm()
+      {
+      externals_for_vm.clear();
+      for (const auto& e : externals)
+        {
+        ASM::external_function ef;
+        ef.name = e.second.name;
+        ef.address = e.second.address;
+        ef.return_type = convert(e.second.return_type);
+        for (auto arg : e.second.arguments)
+          {
+          ef.arguments.push_back(convert(arg));
+          }
+        externals_for_vm.push_back(ef);
         }
       }
     };
@@ -2379,11 +2411,264 @@ namespace
       }
     };
 
+  uint64_t seventeen()
+    {
+    return 17;
+    }
+
+
+  struct foreign_call_1 : public compile_fixture {
+    void test()
+      {
+      SKIWI::external_function ef;
+      ef.name = "seventeen";
+      ef.address = (uint64_t)&seventeen;
+      ef.return_type = external_function::T_INT64;
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+  
+      TEST_EQ("17", run("(foreign-call seventeen)"));
+      }
+    };
+
+
+  int64_t add_two_integers(int64_t a, int64_t b)
+    {
+    return a + b;
+    }
+
+
+  struct foreign_call_2 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "add_two_integers";
+      ef.address = (uint64_t)&add_two_integers;
+      ef.return_type = external_function::T_INT64;
+      ef.arguments.push_back(external_function::T_INT64);
+      ef.arguments.push_back(external_function::T_INT64);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("15", run("(foreign-call add_two_integers 7 8)"));
+      }
+    };
+
+
+  double add_two_doubles(double a, double b)
+    {
+    return a + b;
+    }
+
+
+  struct foreign_call_3 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "add_two_doubles";
+      ef.address = (uint64_t)&add_two_doubles;
+      ef.return_type = external_function::T_DOUBLE;
+      ef.arguments.push_back(external_function::T_DOUBLE);
+      ef.arguments.push_back(external_function::T_DOUBLE);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("15", run("(foreign-call add_two_doubles 7.0 8.0)"));
+      }
+    };
+
+  double add_two_doubles_and_two_integers(double a, double b, int64_t c, int64_t d)
+    {
+    return a + b + c + d;
+    }
+
+
+  struct foreign_call_4 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "add_two_doubles_and_two_integers";
+      ef.address = (uint64_t)&add_two_doubles_and_two_integers;
+      ef.return_type = external_function::T_DOUBLE;
+      ef.arguments.push_back(external_function::T_DOUBLE);
+      ef.arguments.push_back(external_function::T_DOUBLE);
+      ef.arguments.push_back(external_function::T_INT64);
+      ef.arguments.push_back(external_function::T_INT64);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("18.6", run("(foreign-call add_two_doubles_and_two_integers 7.5 8.1 1 2)"));
+      }
+    };
+
+
+  void print_a_text(const char* txt)
+    {
+    printf("%s\n", txt);
+    }
+
+
+
+  struct foreign_call_5 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "print_a_text";
+      ef.address = (uint64_t)&print_a_text;
+      ef.return_type = external_function::T_VOID;
+      ef.arguments.push_back(external_function::T_CHAR_POINTER);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("0", run("(foreign-call print_a_text \"Hello world!\")"));
+      }
+    };
+
+  const char* get_a_text()
+    {
+    return "This is a text";
+    }
+
+
+
+  struct foreign_call_6 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "get_a_text";
+      ef.address = (uint64_t)&get_a_text;
+      ef.return_type = external_function::T_CHAR_POINTER;
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("\"This is a text\"", run("(foreign-call get_a_text)"));
+      }
+    };
+
+  struct foreign_call_7 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "printf";
+      ef.address = (uint64_t)&printf;
+      ef.return_type = external_function::T_VOID;
+      ef.arguments.push_back(external_function::T_CHAR_POINTER);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("0", run("(foreign-call printf \"Hello world!\n\")"));
+      }
+    };
+
+
+  int64_t get_a_boolean(bool b)
+    {
+    if (b)
+      return 100;
+    else
+      return 200;
+    }
+
+
+  struct foreign_call_8 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "get_a_boolean";
+      ef.address = (uint64_t)&get_a_boolean;
+      ef.return_type = external_function::T_INT64;
+      ef.arguments.push_back(external_function::T_BOOL);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("100", run("(foreign-call get_a_boolean #t)"));
+      TEST_EQ("200", run("(foreign-call get_a_boolean #f)"));
+      TEST_EQ("100", run("(foreign-call get_a_boolean 34859)"));
+      }
+    };
+
+
+
+  bool is_even(int64_t i)
+    {
+    return (i % 2 == 0);
+    }
+
+
+  struct foreign_call_9 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "is_even";
+      ef.address = (uint64_t)&is_even;
+      ef.return_type = external_function::T_BOOL;
+      ef.arguments.push_back(external_function::T_INT64);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      TEST_EQ("#f", run("(foreign-call is_even 1)"));
+      TEST_EQ("#t", run("(foreign-call is_even 2)"));
+      TEST_EQ("#f", run("(foreign-call is_even 3)"));
+      TEST_EQ("#t", run("(foreign-call is_even 4)"));
+      }
+    };
+
+  struct foreign_call_10 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "add-two-integers";
+      ef.address = (uint64_t)&add_two_integers;
+      ef.return_type = external_function::T_INT64;
+      ef.arguments.push_back(external_function::T_INT64);
+      ef.arguments.push_back(external_function::T_INT64);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      run("(define (add-two-integers a b) (foreign-call add-two-integers a b))");
+      TEST_EQ("15", run("(add-two-integers 7 8)"));
+      }
+    };
+
+  void print_scheme_variable(uint64_t i)
+    {
+    std::shared_ptr<SKIWI::environment<SKIWI::environment_entry>> env;
+    repl_data rd;
+    scheme_runtime(i, std::cout, env, rd, nullptr);
+    }
+
+  struct foreign_call_11 : public compile_fixture {
+    void test()
+      {
+      external_function ef;
+      ef.name = "print-scheme-variable";
+      ef.address = (uint64_t)&print_scheme_variable;
+      ef.return_type = external_function::T_VOID;
+      ef.arguments.push_back(external_function::T_SCM);
+      externals[ef.name] = ef;
+
+      convert_externals_to_vm();
+
+      run("(define a (vector 1 0 0 0 0 1 0 0 0 0 1 0 20 30 40 1))");
+      run("(foreign-call print-scheme-variable a)");
+      std::cout << std::endl;
+      }
+    };
   }
 
 SKIWI_END
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 void run_all_compile_vm_tests()
   {
@@ -2474,6 +2759,16 @@ void run_all_compile_vm_tests()
   lambda_variable_arity_while_using_rest_arg().test();
   lambda_bug().test();
   lambda_variable_arity_while_using_rest_arg_and_closure().test();
+  foreign_call_1().test();
+  foreign_call_2().test();
+  foreign_call_3().test();
+  foreign_call_4().test();
+  foreign_call_5().test();
+  foreign_call_6().test();
+  foreign_call_7().test();
+  foreign_call_8().test();
+  foreign_call_9().test();
+  foreign_call_10().test();
+  foreign_call_11().test();
 #endif     
-  
   }

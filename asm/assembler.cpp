@@ -28,6 +28,7 @@ namespace
         auto instr = (*it)[i];
         switch (instr.oper)
           {
+          case asmcode::CALLEXTERNAL:
           case asmcode::CALL:
           {
           auto it2 = externals.find(instr.text);
@@ -152,6 +153,7 @@ namespace
           }      
         switch (instr.oper)
           {
+          case asmcode::CALLEXTERNAL:
           case asmcode::CALL:
           {
           if (instr.operand1 != asmcode::EMPTY)

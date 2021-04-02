@@ -19,6 +19,7 @@ class asmcode
       ADDSD,      
       AND,
       CALL,
+      CALLEXTERNAL,
       CMP,
       CMPEQPD,
       CMPLTPD,

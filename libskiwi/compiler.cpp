@@ -1454,7 +1454,7 @@ namespace
     code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif
     code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, ext.address);
-    code.add(asmcode::CALL, asmcode::R11);
+    code.add(asmcode::CALLEXTERNAL, asmcode::R11);
     code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
     restore_stack(code);
     restore_after_foreign_call(code);

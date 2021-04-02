@@ -383,6 +383,7 @@ void asmcode::instruction::stream(std::ostream& out) const
     out << "extern " << text << std::endl;
     break;
     }
+    case CALLEXTERNAL:
     case CALL:
     {
     out << "\tcall";
@@ -1887,7 +1888,7 @@ namespace
     table["ADD"] = make_add_table();
     table["ADDSD"] = make_addsd_table();    
     table["AND"] = make_and_table();
-    table["CALL"] = make_call_table();
+    table["CALL"] = make_call_table();   
     table["CMP"] = make_cmp_table();
     table["CMPEQPD"] = make_cmpeqpd_table();
     table["CMPLTPD"] = make_cmpltpd_table();
@@ -2272,7 +2273,8 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::ADD: return fill(opcode_stream, *this, g_table.find("ADD")->second);
     case asmcode::ADDSD: return fill(opcode_stream, *this, g_table.find("ADDSD")->second);
     case asmcode::AND: return fill(opcode_stream, *this, g_table.find("AND")->second);
-    case asmcode::CALL: return fill(opcode_stream, *this, g_table.find("CALL")->second);
+    case asmcode::CALLEXTERNAL:
+    case asmcode::CALL: return fill(opcode_stream, *this, g_table.find("CALL")->second);    
     case asmcode::COMMENT: return 0;
     case asmcode::CMP: return fill(opcode_stream, *this, g_table.find("CMP")->second);
     case asmcode::CMPEQPD: return fill(opcode_stream, *this, g_table.find("CMPEQPD")->second);
@@ -2374,6 +2376,7 @@ std::string asmcode::operation_to_string(operation oper)
     case asmcode::ADDSD: return std::string("ADDSD");
     case asmcode::AND: return std::string("AND");
     case asmcode::CALL:return std::string("CALL");
+    case asmcode::CALLEXTERNAL:return std::string("CALLEXTERNAL");
     case asmcode::COMMENT: return std::string("COMMENT");
     case asmcode::CMP: return std::string("CMP");
     case asmcode::CMPEQPD: return std::string("CMPEQPD");
