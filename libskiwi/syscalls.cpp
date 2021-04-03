@@ -147,7 +147,7 @@ void add_system_calls(std::map<std::string, external_function>& externals)
   ef.address = (uint64_t)&strtoll;
   ef.return_type = external_function::T_INT64;
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
-  ef.arguments.push_back(external_function::T_CHAR_POINTER);
+  ef.arguments.push_back(external_function::T_INT64);
   ef.arguments.push_back(external_function::T_INT64);
   externals[ef.name] = ef;
 
@@ -156,13 +156,14 @@ void add_system_calls(std::map<std::string, external_function>& externals)
   ef.address = (uint64_t)&strtod;
   ef.return_type = external_function::T_DOUBLE;
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
-  ef.arguments.push_back(external_function::T_CHAR_POINTER);
+  ef.arguments.push_back(external_function::T_INT64);
   externals[ef.name] = ef;
   
   ef.arguments.clear();
   ef.name = "sprintf";
   ef.address = (uint64_t)&sprintf;
   ef.return_type = external_function::T_INT64;
+  ef.arguments.push_back(external_function::T_CHAR_POINTER);
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
   externals[ef.name] = ef;

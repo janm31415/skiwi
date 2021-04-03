@@ -3260,6 +3260,685 @@ namespace
       }
     };
 
+    struct make_port3_test : public compile_fixture
+      {
+      void test()
+        {
+        build_libs();
+        TEST_EQ("#t", run("(port? standard-input-port)"));
+        TEST_EQ("#t", run("(input-port? standard-input-port)"));
+        TEST_EQ("#f", run("(output-port? standard-input-port)"));
+        TEST_EQ("#t", run("(port? standard-output-port)"));
+        TEST_EQ("#f", run("(input-port? standard-output-port)"));
+        TEST_EQ("#t", run("(output-port? standard-output-port)"));
+        TEST_EQ("#t", run("(port? standard-error-port)"));
+        TEST_EQ("#f", run("(input-port? standard-error-port)"));
+        TEST_EQ("#t", run("(output-port? standard-error-port)"));
+
+        TEST_EQ("<port>: \"altout\"", run("(define alternative-output-port (make-port #f \"altout\" 1 (make-string 1024) 0 1024))"));
+
+        TEST_EQ("<port>: \"stdout\"", run("(current-output-port)"));
+        TEST_EQ("<port>: \"altout\"", run("(current-output-port alternative-output-port)"));
+        TEST_EQ("<port>: \"altout\"", run("(current-output-port)"));
+        TEST_EQ("<port>: \"stdin\"", run("(current-input-port)"));
+        TEST_EQ("<port>: \"stderr\"", run("(current-error-port)"));
+
+        TEST_EQ("", run("(write-char #\\f)(write-char #\\l)(write-char #\\u)(write-char #\\s)(write-char #\\h)(write-char #\\010)"));
+        TEST_EQ("", run("(flush-output-port)"));
+
+        TEST_EQ("3", run("(open-file \"out.txt\" #f)"));
+        TEST_EQ("0", run("(close-file 3)"));
+
+        TEST_EQ("<port>: \"out.txt\"", run("(define my_file (open-output-file \"out.txt\"))"));
+        TEST_EQ("3", run("(%slot-ref my_file 2)")); // gets file handle id
+        TEST_EQ("", run("(write-char #\\o my_file)"));
+        TEST_EQ("", run("(write-char #\\u my_file)"));
+        TEST_EQ("", run("(write-char #\\t my_file)"));
+        TEST_EQ("", run("(write-char #\\p my_file)"));
+        TEST_EQ("", run("(write-char #\\u my_file)"));
+        TEST_EQ("", run("(write-char #\\t my_file)"));
+        TEST_EQ("0", run("(close-output-port my_file)"));
+        TEST_EQ("-1", run("(close-output-port my_file)"));
+
+        TEST_EQ("<port>: \"out.txt\"", run("(define my_file (open-input-file \"out.txt\"))"));
+        TEST_EQ("#t", run("(input-port? my_file)"));
+        TEST_EQ("#\\o", run("(read-char my_file)"));
+        TEST_EQ("#\\u", run("(read-char my_file)"));
+        TEST_EQ("#\\t", run("(read-char my_file)"));
+        TEST_EQ("#\\p", run("(read-char my_file)"));
+        TEST_EQ("#\\u", run("(read-char my_file)"));
+        TEST_EQ("#\\t", run("(read-char my_file)"));
+        TEST_EQ("#eof", run("(read-char my_file)"));
+        TEST_EQ("#eof", run("(read-char my_file)"));
+        TEST_EQ("0", run("(close-input-port my_file)"));
+        TEST_EQ("-1", run("(close-input-port my_file)"));
+
+        TEST_EQ("<port>: \"out.txt\"", run("(set! my_file (let ([fh (open-file \"out.txt\" #t)])(make-port #t \"out.txt\" fh (make-string 3) 3 3)))"));
+        TEST_EQ("3", run("(%slot-ref my_file 5)")); // size of buffer
+        TEST_EQ("#t", run("(input-port? my_file)"));
+        TEST_EQ("#\\o", run("(read-char my_file)"));
+        TEST_EQ("#\\u", run("(peek-char my_file)"));
+        TEST_EQ("#\\u", run("(peek-char my_file)"));
+        TEST_EQ("#\\u", run("(read-char my_file)"));
+        TEST_EQ("#\\t", run("(peek-char my_file)"));
+        TEST_EQ("#\\t", run("(read-char my_file)"));
+        TEST_EQ("#\\p", run("(peek-char my_file)"));
+        TEST_EQ("#\\p", run("(read-char my_file)"));
+        TEST_EQ("#\\u", run("(peek-char my_file)"));
+        TEST_EQ("#\\u", run("(read-char my_file)"));
+        TEST_EQ("#\\t", run("(peek-char my_file)"));
+        TEST_EQ("#\\t", run("(read-char my_file)"));
+        TEST_EQ("#eof", run("(peek-char my_file)"));
+        TEST_EQ("#eof", run("(read-char my_file)"));
+        TEST_EQ("#eof", run("(read-char my_file)"));
+        TEST_EQ("#t", run("(eof-object? (read-char my_file))"));
+        TEST_EQ("0", run("(close-input-port my_file)"));
+        TEST_EQ("#f", run("(eof-object? 3)"));
+        }
+      };
+
+    struct writetests : public compile_fixture
+      {
+      void test()
+        {
+        build_libs();
+
+        char buffer[1024];
+        double d = 3.1415984351384361;
+        sprintf(buffer, "%.20g", d);
+        TEST_EQ("3.1415984351384360629", std::string(buffer));
+
+        TEST_EQ("\"3.1415984351384360629\"", run("(num2str 3.1415984351384361 10)"));
+        TEST_EQ("\"25\"", run("(num2str 25 10)"));
+        TEST_EQ("\"31\"", run("(num2str 25 8)"));
+        TEST_EQ("\"19\"", run("(num2str 25 16)"));
+        TEST_EQ("\"1a\"", run("(num2str 26 16)"));
+        TEST_EQ("\"3.1400000000000001243\"", run("(num2str 3.14 10)"));
+
+        TEST_EQ("\"3.1415984351384360629\"", run("(number->string 3.1415984351384361)"));
+        TEST_EQ("\"25\"", run("(number->string 25)"));
+        TEST_EQ("\"31\"", run("(number->string 25 8)"));
+        TEST_EQ("\"1a\"", run("(number->string 26 16)"));
+        TEST_EQ("\"+nan.0\"", run("(number->string (/ 0.0 0.0))"));
+        TEST_EQ("\"+inf.0\"", run("(number->string (/ 1.0 0.0))"));
+        TEST_EQ("\"-inf.0\"", run("(number->string (/ -1.0 0.0))"));
+
+        TEST_EQ("runtime error: str2num: contract violation", run("(str2num 25 10)"));
+        TEST_EQ("#f", run("(str2num \"\" 10)"));
+        TEST_EQ("25", run("(str2num \"25\" 10)"));
+        TEST_EQ("21", run("(str2num \"25\" 8)"));
+        TEST_EQ("255", run("(str2num \"ff\" 16)"));
+        TEST_EQ("#f", run("(str2num \"3.14asdf\" 10)"));
+        TEST_EQ("3.14", run("(str2num \"3.14\" 10)"));
+
+        TEST_EQ("#f", run("(string->number \"\")"));
+        TEST_EQ("25", run("(string->number \"25\")"));
+        TEST_EQ("21", run("(string->number \"25\" 8)"));
+        TEST_EQ("255", run("(string->number \"ff\" 16)"));
+        TEST_EQ("#f", run("(string->number \"3.14asdf\")"));
+        TEST_EQ("3.14", run("(string->number \"3.14\")"));
+
+        TEST_EQ("<port>: \"out\"", run("(define out (make-port #f \"out\" 1 (make-string 3) 0 3))"));
+        TEST_EQ("", run("(write-char #\\a out)"));
+        TEST_EQ("", run("(write-string \" test\" out)"));
+        TEST_EQ("", run("(flush-output-port out)"));
+        TEST_EQ("", run("(write-string \"cd\" out)"));
+        TEST_EQ("", run("(flush-output-port out)"));
+
+        TEST_EQ("", run("(write-string \"\n\")"));
+        TEST_EQ("", run("(write-string \"Hello\")"));
+        TEST_EQ("", run("(write-string \" \")"));
+        TEST_EQ("", run("(write-string \"world!\")"));
+        TEST_EQ("", run("(write-string \"\n\")"));
+        TEST_EQ("", run("(flush-output-port)"));
+        }
+      };
+
+    struct char_comp : public compile_fixture {
+      void test()
+        {
+        build_libs();
+
+        TEST_EQ("#t", run(R"((char=? #\A #\A))"));
+        TEST_EQ("#f", run(R"((char=? #\A #\a))"));
+
+        TEST_EQ("runtime error: char=?: contract violation", run(R"((char=? #\A 2))"));
+        TEST_EQ("runtime error: char=?: contract violation", run(R"((char=? #\A #\A #\b))"));
+
+        TEST_EQ("#t", run(R"((char<? #\a #\b))"));
+        TEST_EQ("#f", run(R"((char<? #\b #\a))"));
+        TEST_EQ("#f", run(R"((char<? #\a #\a))"));
+
+        TEST_EQ("#f", run(R"((char>? #\a #\b))"));
+        TEST_EQ("#t", run(R"((char>? #\b #\a))"));
+        TEST_EQ("#f", run(R"((char>? #\a #\a))"));
+
+        TEST_EQ("#t", run(R"((char<=? #\a #\b))"));
+        TEST_EQ("#f", run(R"((char<=? #\b #\a))"));
+        TEST_EQ("#t", run(R"((char<=? #\a #\a))"));
+
+        TEST_EQ("#f", run(R"((char>=? #\a #\b))"));
+        TEST_EQ("#t", run(R"((char>=? #\b #\a))"));
+        TEST_EQ("#t", run(R"((char>=? #\a #\a))"));
+
+        TEST_EQ("#\\a", run(R"((char-downcase #\A))"));
+        TEST_EQ("#\\a", run(R"((char-downcase #\a))"));
+        TEST_EQ("#\\z", run(R"((char-downcase #\Z))"));
+        TEST_EQ("#\\z", run(R"((char-downcase #\z))"));
+
+        TEST_EQ("#\\A", run(R"((char-upcase #\A))"));
+        TEST_EQ("#\\A", run(R"((char-upcase #\a))"));
+        TEST_EQ("#\\Z", run(R"((char-upcase #\Z))"));
+        TEST_EQ("#\\Z", run(R"((char-upcase #\z))"));
+
+        TEST_EQ("#t", run(R"((char-ci=? #\A #\A))"));
+        TEST_EQ("#t", run(R"((char-ci=? #\A #\a))"));
+        TEST_EQ("#f", run(R"((char-ci=? #\b #\a))"));
+        TEST_EQ("#f", run(R"((char-ci=? #\B #\a))"));
+        TEST_EQ("#f", run(R"((char-ci=? #\b #\A))"));
+        TEST_EQ("#f", run(R"((char-ci=? #\B #\A))"));
+
+        TEST_EQ("#f", run(R"((char-ci<? #\A #\A))"));
+        TEST_EQ("#f", run(R"((char-ci<? #\A #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<? #\b #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<? #\B #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<? #\b #\A))"));
+        TEST_EQ("#f", run(R"((char-ci<? #\B #\A))"));
+
+        TEST_EQ("#f", run(R"((char-ci>? #\A #\A))"));
+        TEST_EQ("#f", run(R"((char-ci>? #\A #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>? #\b #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>? #\B #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>? #\b #\A))"));
+        TEST_EQ("#t", run(R"((char-ci>? #\B #\A))"));
+
+        TEST_EQ("#t", run(R"((char-ci<=? #\A #\A))"));
+        TEST_EQ("#t", run(R"((char-ci<=? #\A #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<=? #\b #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<=? #\B #\a))"));
+        TEST_EQ("#f", run(R"((char-ci<=? #\b #\A))"));
+        TEST_EQ("#f", run(R"((char-ci<=? #\B #\A))"));
+
+        TEST_EQ("#t", run(R"((char-ci>=? #\A #\A))"));
+        TEST_EQ("#t", run(R"((char-ci>=? #\A #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>=? #\b #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>=? #\B #\a))"));
+        TEST_EQ("#t", run(R"((char-ci>=? #\b #\A))"));
+        TEST_EQ("#t", run(R"((char-ci>=? #\B #\A))"));
+
+        TEST_EQ("#t", run(R"((char-upper-case? #\B))"));
+        TEST_EQ("#f", run(R"((char-upper-case? #\b))"));
+        TEST_EQ("#f", run(R"((char-upper-case? #\3))"));
+        TEST_EQ("#f", run(R"((char-lower-case? #\B))"));
+        TEST_EQ("#t", run(R"((char-lower-case? #\b))"));
+        TEST_EQ("#f", run(R"((char-lower-case? #\3))"));
+        TEST_EQ("#t", run(R"((char-alphabetic? #\B))"));
+        TEST_EQ("#t", run(R"((char-alphabetic? #\b))"));
+        TEST_EQ("#f", run(R"((char-alphabetic? #\3))"));
+        TEST_EQ("#f", run(R"((char-numeric? #\B))"));
+        TEST_EQ("#f", run(R"((char-numeric? #\b))"));
+        TEST_EQ("#t", run(R"((char-numeric? #\3))"));
+        TEST_EQ("#f", run(R"((char-whitespace? #\B))"));
+        TEST_EQ("#f", run(R"((char-whitespace? #\b))"));
+        TEST_EQ("#f", run(R"((char-whitespace? #\3))"));
+        TEST_EQ("#t", run(R"((char-whitespace? #\space))"));
+        TEST_EQ("#t", run(R"((char-whitespace? #\newline))"));
+        TEST_EQ("#t", run(R"((char-whitespace? #\tab))"));
+        }
+      };
+
+    struct fx_comp : public compile_fixture {
+      void test()
+        {
+        TEST_EQ("#f", run("(fx=? 12 13)"));
+        TEST_EQ("#f", run("(fx=? 13 12)"));
+        TEST_EQ("#t", run("(fx=? 12 12)"));
+
+        TEST_EQ("#t", run("(fx<? 12 13)"));
+        TEST_EQ("#f", run("(fx<? 13 12)"));
+        TEST_EQ("#f", run("(fx<? 12 12)"));
+
+        TEST_EQ("#f", run("(fx>? 12 13)"));
+        TEST_EQ("#t", run("(fx>? 13 12)"));
+        TEST_EQ("#f", run("(fx>? 12 12)"));
+
+        TEST_EQ("#t", run("(fx<=? 12 13)"));
+        TEST_EQ("#f", run("(fx<=? 13 12)"));
+        TEST_EQ("#t", run("(fx<=? 12 12)"));
+
+        TEST_EQ("#f", run("(fx>=? 12 13)"));
+        TEST_EQ("#t", run("(fx>=? 13 12)"));
+        TEST_EQ("#t", run("(fx>=? 12 12)"));
+
+        TEST_EQ("25", run("(fx+ 12 13)"));
+        TEST_EQ("25", run("(fx+ 13 12)"));
+        TEST_EQ("24", run("(fx+ 12 12)"));
+        TEST_EQ("-1", run("(fx- 12 13)"));
+        TEST_EQ("1", run("(fx- 13 12)"));
+        TEST_EQ("0", run("(fx- 12 12)"));
+        TEST_EQ("156", run("(fx* 12 13)"));
+        TEST_EQ("156", run("(fx* 13 12)"));
+        TEST_EQ("144", run("(fx* 12 12)"));
+        TEST_EQ("-156", run("(fx* 12 -13)"));
+        TEST_EQ("-156", run("(fx* -13 12)"));
+        TEST_EQ("-144", run("(fx* 12 -12)"));
+        TEST_EQ("6", run("(fx/ 12 2)"));
+        TEST_EQ("1", run("(fx/ 13 12)"));
+        TEST_EQ("2", run("(fx/ 12 5)"));
+        TEST_EQ("-6", run("(fx/ -12 2)"));
+        TEST_EQ("-1", run("(fx/ 13 -12)"));
+        TEST_EQ("-2", run("(fx/ -12 5)"));
+        }
+      };
+
+    struct named_let : public compile_fixture {
+      void test()
+        {
+        std::string script = R"(
+(let loop ([numbers '(3 -2 1 6 -5)]
+           [nonneg '()]
+           [neg '()])
+  (cond [(null? numbers) (list nonneg neg)]
+        [(>= (car numbers) 0) (loop (cdr numbers)
+                                    (cons (car numbers) nonneg)
+                                    neg)]
+        [(< (car numbers) 0) (loop (cdr numbers)
+                                    nonneg
+                                    (cons (car numbers) neg))]
+   ))
+)";
+        TEST_EQ("((6 1 3) (-5 -2))", run(script));
+        }
+      };
+
+    struct list_ops : public compile_fixture {
+      void test()
+        {
+        build_libs();
+        TEST_EQ("#t", run("(list? '(1 2 3))"));
+        TEST_EQ("#f", run("(list? (cons 1 2))"));
+        TEST_EQ("#t", run("(list? (cons 1 (cons 2 (cons 3 ()))))"));
+        TEST_EQ("#f", run("(list? (cons 1 (cons 2 (cons 3 4))))"));
+        TEST_EQ("#t", run("(list? (list 1 2 3 4 5))"));
+        TEST_EQ("#f", run("(list? (vector 1 2 3 4 5))"));
+        TEST_EQ("#f", run("(list? \"a string\")"));
+
+        TEST_EQ("(a (b) (c))", run("(append '(a (b)) '((c)))"));
+        TEST_EQ("a", run("(append '() 'a)"));
+        TEST_EQ("(4 5 6)", run("(list-tail (list 1 2 3 4 5 6) 3)"));
+        TEST_EQ("(4 5 6)", run("(list-tail '(1 2 3 4 5 6) 3)"));
+        TEST_EQ("(4 5 6)", run("(list-tail '(1 2 3 4 5 6) 3)"));
+        TEST_EQ("4", run("(list-ref '(1 2 3 4 5 6) 3)"));
+        TEST_EQ("4", run("(list-ref (list 1 2 3 4 5 6) 3)"));
+        TEST_EQ("c", run("(list-ref '(a b c d) 2)"));
+        TEST_EQ("c", run("(list-ref '(a b c d) (inexact->exact (round 1.8)))"));
+
+        TEST_EQ("((a 1) (b 2) (c 3))", run("(define e (list (list 'a 1) (list 'b 2) (list 'c 3)))"));
+        TEST_EQ("(a 1)", run("(assq 'a e)"));
+        TEST_EQ("(b 2)", run("(assq 'b e)"));
+        TEST_EQ("(c 3)", run("(assq 'c e)"));
+        TEST_EQ("#f", run("(assq 'd e)"));
+        TEST_EQ("((a))", run("(assoc (list 'a) '(((a)) ((b)) ((c))))"));
+        TEST_EQ("(5 7)", run("(assv 5 '((2 3) (5 7) (11 13)))"));
+        TEST_EQ("((a 1) (b 2) (c 3))", run("(set! e '((a 1 ) ( b 2) (c 3)) )"));
+        TEST_EQ("(a 1)", run("(assv 'a e)"));
+        TEST_EQ("#f", run("(assv 'd e)"));
+        TEST_EQ("(a 1)", run("(assq 'a e)"));
+        TEST_EQ("(a b)", run("(memq 'a '(a b))"));
+
+        TEST_EQ("(5 4 3 2 1)", run("(reverse (list 1 2 3 4 5))"));
+        }
+      };
+
+    struct symbol_ops : public compile_fixture {
+      void test()
+        {
+        build_string_to_symbol();
+
+        TEST_EQ("#t", run("(symbol? 'foo)"));
+        TEST_EQ("#t", run("(symbol? (car '(a b)))"));
+        TEST_EQ("#f", run("(symbol? \"bar\")"));
+        TEST_EQ("#t", run("(symbol? 'nil)"));
+        TEST_EQ("#f", run("(symbol? '())"));
+        TEST_EQ("#f", run("(symbol? #f)"));
+
+        TEST_EQ("abcdefghabcdefghabcdefghabcdefgh1", run("(quote abcdefghabcdefghabcdefghabcdefgh1)"));
+        TEST_EQ("abcdefghabcdefghabcdefghabcdefgh2", run("(quote abcdefghabcdefghabcdefghabcdefgh2)"));
+
+        TEST_EQ("\"sym\"", run("(symbol->string 'sym)"));
+        TEST_EQ("\"thisisaverylongsymbol\"", run("(symbol->string 'thisisaverylongsymbol)"));
+        TEST_EQ("runtime error: symbol->string: contract violation", run("(symbol->string '())"));
+
+        TEST_EQ("((a 1) (b 2) (c 3))", run("(define e '((a 1 ) ( b 2) (c 3)) )"));
+        TEST_EQ("(a 1)", run("(assv 'a e)"));
+        TEST_EQ("#f", run("(assv 'd e)"));
+        TEST_EQ("(a 1)", run("(assq 'a e)"));
+        TEST_EQ("(a b)", run("(memq 'a '(a b))"));
+        }
+      };
+
+    struct string_ops : public compile_fixture {
+      void test()
+        {
+        build_libs();
+
+        TEST_EQ("\"sym\"", run("(string-copy \"sym\")"));
+        TEST_EQ("\"thisisaverylongstring\"", run("(string-copy \"thisisaverylongstring\")"));
+        TEST_EQ("runtime error: string-copy: contract violation", run("(string-copy '())"));
+
+        TEST_EQ("#f", run("(let ([s \"str\"])  (eq? s (string-copy s)))"));
+        TEST_EQ("#t", run("(let ([s \"str\"])  (%eqv? s (string-copy s)))"));
+        TEST_EQ("#t", run("(let ([s \"str\"])  (equal? s (string-copy s)))"));
+
+        TEST_EQ("#t", run("(string=? \"Jan\" \"Jan\")"));
+        TEST_EQ("#f", run("(string=? \"Jan\" \"Jan2\")"));
+        TEST_EQ("#f", run("(string=? \"Jan\" 'Jan)"));
+
+        TEST_EQ("runtime error: compare-strings: contract violation", run("(compare-strings \"Jan\" \"Jan\")"));
+        TEST_EQ("0", run("(compare-strings \"bbb\" \"bbb\" 3)"));
+        TEST_EQ("-1", run("(compare-strings \"aaa\" \"bbb\" 3)"));
+        TEST_EQ("1", run("(compare-strings \"ccc\" \"bbb\" 3)"));
+        TEST_EQ("-1", run("(compare-strings \"aaa\" \"abb\" 3)"));
+        TEST_EQ("1", run("(compare-strings \"ccc\" \"cbb\" 3)"));
+
+        TEST_EQ("#t", run(R"((string<? "abc" "def"))"));
+        TEST_EQ("#f", run(R"((string<? "def" "abc"))"));
+        TEST_EQ("#t", run(R"((string<? "ababc" "abdef"))"));
+        TEST_EQ("#f", run(R"((string<? "abdef" "ababc"))"));
+        TEST_EQ("#t", run(R"((string<? "abc" "abcd"))"));
+        TEST_EQ("#f", run(R"((string<? "abcd" "abc"))"));
+        TEST_EQ("#f", run(R"((string<? "abc" "abc"))"));
+
+        TEST_EQ("#f", run(R"((string>? "abc" "def"))"));
+        TEST_EQ("#t", run(R"((string>? "def" "abc"))"));
+        TEST_EQ("#f", run(R"((string>? "ababc" "abdef"))"));
+        TEST_EQ("#t", run(R"((string>? "abdef" "ababc"))"));
+        TEST_EQ("#f", run(R"((string>? "abc" "abcd"))"));
+        TEST_EQ("#t", run(R"((string>? "abcd" "abc"))"));
+        TEST_EQ("#f", run(R"((string>? "abc" "abc"))"));
+
+        TEST_EQ("#t", run(R"((string<=? "abc" "def"))"));
+        TEST_EQ("#f", run(R"((string<=? "def" "abc"))"));
+        TEST_EQ("#t", run(R"((string<=? "ababc" "abdef"))"));
+        TEST_EQ("#f", run(R"((string<=? "abdef" "ababc"))"));
+        TEST_EQ("#t", run(R"((string<=? "abc" "abcd"))"));
+        TEST_EQ("#f", run(R"((string<=? "abcd" "abc"))"));
+        TEST_EQ("#t", run(R"((string<=? "abc" "abc"))"));
+
+        TEST_EQ("#f", run(R"((string>=? "abc" "def"))"));
+        TEST_EQ("#t", run(R"((string>=? "def" "abc"))"));
+        TEST_EQ("#f", run(R"((string>=? "ababc" "abdef"))"));
+        TEST_EQ("#t", run(R"((string>=? "abdef" "ababc"))"));
+        TEST_EQ("#f", run(R"((string>=? "abc" "abcd"))"));
+        TEST_EQ("#t", run(R"((string>=? "abcd" "abc"))"));
+        TEST_EQ("#t", run(R"((string>=? "abc" "abc"))"));
+
+        TEST_EQ("runtime error: string-length: contract violation", run(R"((string>=? "abc" 5))"));
+
+        TEST_EQ(R"((#\a #\b #\c))", run(R"((string->list "abc"))"));
+        TEST_EQ(R"("abc")", run(R"((list->string (list #\a #\b #\c)))"));
+        TEST_EQ(R"("")", run(R"((list->string '()))"));
+
+        TEST_EQ("\"a\"", run("(char->string #\\a)"));
+
+        TEST_EQ("runtime error: compare-strings-ci: contract violation", run("(compare-strings-ci \"Jan\" \"Jan\")"));
+        TEST_EQ("0", run("(compare-strings-ci \"bbb\" \"bbb\" 3)"));
+        TEST_EQ("0", run("(compare-strings-ci \"bbb\" \"bBb\" 3)"));
+        TEST_EQ("0", run("(compare-strings-ci \"BBb\" \"bBb\" 3)"));
+        TEST_EQ("-1", run("(compare-strings-ci \"aaa\" \"bbb\" 3)"));
+        TEST_EQ("1", run("(compare-strings-ci \"ccc\" \"bbb\" 3)"));
+        TEST_EQ("-1", run("(compare-strings-ci \"aaa\" \"abb\" 3)"));
+        TEST_EQ("1", run("(compare-strings-ci \"ccc\" \"cbb\" 3)"));
+
+
+        TEST_EQ("#t", run(R"((string-ci<? "abc" "DEF"))"));
+        TEST_EQ("#f", run(R"((string-ci<? "def" "ABC"))"));
+        TEST_EQ("#t", run(R"((string-ci<? "ababc" "aBDEf"))"));
+        TEST_EQ("#f", run(R"((string-ci<? "abdef" "aBABc"))"));
+        TEST_EQ("#t", run(R"((string-ci<? "abc" "abCd"))"));
+        TEST_EQ("#f", run(R"((string-ci<? "abcd" "Abc"))"));
+        TEST_EQ("#f", run(R"((string-ci<? "abc" "abC"))"));
+
+        TEST_EQ("#f", run(R"((string-ci>? "abc" "DEF"))"));
+        TEST_EQ("#t", run(R"((string-ci>? "def" "ABC"))"));
+        TEST_EQ("#f", run(R"((string-ci>? "ababc" "aBDEf"))"));
+        TEST_EQ("#t", run(R"((string-ci>? "abdef" "aBABc"))"));
+        TEST_EQ("#f", run(R"((string-ci>? "abc" "abCd"))"));
+        TEST_EQ("#t", run(R"((string-ci>? "abcd" "Abc"))"));
+        TEST_EQ("#f", run(R"((string-ci>? "abc" "abC"))"));
+
+        TEST_EQ("#t", run(R"((string-ci<=? "abc" "DEF"))"));
+        TEST_EQ("#f", run(R"((string-ci<=? "def" "ABC"))"));
+        TEST_EQ("#t", run(R"((string-ci<=? "ababc" "aBDEf"))"));
+        TEST_EQ("#f", run(R"((string-ci<=? "abdef" "aBABc"))"));
+        TEST_EQ("#t", run(R"((string-ci<=? "abc" "abCd"))"));
+        TEST_EQ("#f", run(R"((string-ci<=? "abcd" "Abc"))"));
+        TEST_EQ("#t", run(R"((string-ci<=? "abc" "abC"))"));
+
+        TEST_EQ("#f", run(R"((string-ci>=? "abc" "DEF"))"));
+        TEST_EQ("#t", run(R"((string-ci>=? "def" "ABC"))"));
+        TEST_EQ("#f", run(R"((string-ci>=? "ababc" "aBDEf"))"));
+        TEST_EQ("#t", run(R"((string-ci>=? "abdef" "aBABc"))"));
+        TEST_EQ("#f", run(R"((string-ci>=? "abc" "abCd"))"));
+        TEST_EQ("#t", run(R"((string-ci>=? "abcd" "Abc"))"));
+        TEST_EQ("#t", run(R"((string-ci>=? "abc" "abC"))"));
+
+        TEST_EQ("#f", run(R"((string-ci=? "abc" "DEF"))"));
+        TEST_EQ("#f", run(R"((string-ci=? "def" "ABC"))"));
+        TEST_EQ("#f", run(R"((string-ci=? "ababc" "aBDEf"))"));
+        TEST_EQ("#f", run(R"((string-ci=? "abdef" "aBABc"))"));
+        TEST_EQ("#f", run(R"((string-ci=? "abc" "abCd"))"));
+        TEST_EQ("#f", run(R"((string-ci=? "abcd" "Abc"))"));
+        TEST_EQ("#t", run(R"((string-ci=? "abc" "abC"))"));
+
+        TEST_EQ(R"(("abc" 3 2.1))", run(R"((vector->list (vector "abc" 3 2.1)))"));
+        TEST_EQ(R"(#(#\a #\b #\c))", run(R"((list->vector (list #\a #\b #\c)))"));
+        TEST_EQ(R"(#())", run(R"((list->vector '()))"));
+        TEST_EQ("(dah dah didah)", run("(vector->list '#(dah dah didah))"));
+        TEST_EQ("#(dididit dah)", run("(list->vector '(dididit dah))"));
+
+        TEST_EQ("#(#t #t #t)", run("(let ([v (vector 1 2 3)]) (vector-fill! v #t) v)"));
+
+        TEST_EQ("\"zzzzzzzzzzzzzzzzzzzz\"", run("(let ([s \"thisismylongerstring\"]) (string-fill! s #\\z) s)"));
+
+        TEST_EQ("\"cdefgh\"", run("(substring \"abcdefghijklm\" 2 8)"));
+        TEST_EQ("\"cdefghijklm\"", run("(substring \"abcdefghijklm\" 2 13)"));
+        TEST_EQ("\"cdefghijklm\"", run("(substring \"abcdefghijklm\" 2 14)"));
+        TEST_EQ("\"cdefghijklm\"", run("(substring \"abcdefghijklm\" 2 15)"));
+        TEST_EQ("runtime error: substring: out of bounds", run("(substring \"abcdefghijklm\" 2 16)"));
+        TEST_EQ("runtime error: substring: out of bounds", run("(substring \"abcdefghijklm\" 2 35)"));
+
+        TEST_EQ("\"abcdef\"", run("(string-append1 \"abc\" \"def\")"));
+        TEST_EQ("\"abcddefg\"", run("(string-append1 \"abcd\" \"defg\")"));
+        TEST_EQ("\"abcdefghijklmn\"", run("(string-append1 \"abcdefg\" \"hijklmn\")"));
+        TEST_EQ("\"abcdefg1hijklmn2\"", run("(string-append1 \"abcdefg1\" \"hijklmn2\")"));
+
+        TEST_EQ("\"\"", run("(string-append)"));
+        TEST_EQ("\"Jan\"", run("(string-append \"Jan\")"));
+        TEST_EQ("\"abcdef\"", run("(string-append \"abc\" \"def\")"));
+        TEST_EQ("\"abcddefg\"", run("(string-append \"abcd\" \"defg\")"));
+        TEST_EQ("\"abcdefghijklmn\"", run("(string-append \"abcdefg\" \"hijklmn\")"));
+        TEST_EQ("\"abcdefg1hijklmn2\"", run("(string-append \"abcdefg1\" \"hijklmn2\")"));
+        TEST_EQ("\"abcdefghijklm\"", run("(string-append \"abc\" \"def\" \"ghijklm\")"));
+
+        TEST_EQ("63", run("(string-hash \"abc\")"));
+        TEST_EQ("49", run("(string-hash \"ABC\")"));
+        TEST_EQ("198", run("(string-hash \"a\")"));
+        TEST_EQ("28", run("(string-hash \"aa\")"));
+        TEST_EQ("209", run("(string-hash \"aaa\")"));
+        TEST_EQ("57", run("(string-hash \"A\")"));
+        TEST_EQ("32", run("(string-hash \"AA\")"));
+        TEST_EQ("201", run("(string-hash \"AAA\")"));
+
+        TEST_EQ("7", run("(string-hash (symbol->string 'e))"));
+        TEST_EQ("23", run("(string-hash (symbol->string 'r))"));
+        TEST_EQ("28", run("(string-hash \"aa\")"));
+        TEST_EQ("32", run("(string-hash \"AA\")"));
+        TEST_EQ("48", run("(string-hash (symbol->string 'o))"));
+        TEST_EQ("49", run("(string-hash \"ABC\")"));
+        TEST_EQ("57", run("(string-hash \"A\")"));
+        TEST_EQ("59", run("(string-hash (symbol->string 'v))"));
+        TEST_EQ("63", run("(string-hash \"abc\")"));
+        TEST_EQ("69", run("(string-hash (symbol->string 'd))"));
+        TEST_EQ("71", run("(string-hash (symbol->string 'f))"));
+        TEST_EQ("72", run("(string-hash (symbol->string 'h))"));
+        TEST_EQ("90", run("(string-hash (symbol->string 's))"));
+        TEST_EQ("91", run("(string-hash (symbol->string 't))"));
+        TEST_EQ("108", run("(string-hash (symbol->string 'm))"));
+        TEST_EQ("109", run("(string-hash (symbol->string 'i))"));
+        TEST_EQ("115", run("(string-hash (symbol->string 'l))"));
+        TEST_EQ("121", run("(string-hash (symbol->string 'ad))"));
+        TEST_EQ("123", run("(string-hash (symbol->string 'u))"));
+
+        TEST_EQ("129", run("(string-hash (symbol->string 'z))"));
+        TEST_EQ("129", run("(string-hash (symbol->string 'ah))"));
+
+        TEST_EQ("130", run("(string-hash (symbol->string 'y))"));
+        TEST_EQ("134", run("(string-hash (symbol->string 'j))"));
+        TEST_EQ("137", run("(string-hash (symbol->string 'k))"));
+        TEST_EQ("146", run("(string-hash (symbol->string 'g))"));
+        TEST_EQ("156", run("(string-hash (symbol->string 'x))"));
+        TEST_EQ("162", run("(string-hash (symbol->string 'w))"));
+        TEST_EQ("174", run("(string-hash (symbol->string 'p))"));
+        TEST_EQ("187", run("(string-hash (symbol->string 'af))"));
+        TEST_EQ("195", run("(string-hash (symbol->string 'q))"));
+        TEST_EQ("198", run("(string-hash \"a\")"));
+        TEST_EQ("201", run("(string-hash \"AAA\")"));
+        TEST_EQ("209", run("(string-hash \"aaa\")"));
+        TEST_EQ("210", run("(string-hash (symbol->string 'n))"));
+        TEST_EQ("246", run("(string-hash (symbol->string 'Martin))"));
+        }
+      };
+
+    struct gcd_ops : public compile_fixture {
+      void test()
+        {
+        build_libs();
+        TEST_EQ("4", run("(gcd1 32 -36)"));
+        TEST_EQ("4", run("(gcd1 32.0 -36)"));
+        TEST_EQ("4", run("(gcd 32 -36)"));
+        TEST_EQ("4", run("(gcd 32.0 -36)"));
+        TEST_EQ("0", run("(gcd)"));
+        TEST_EQ("2", run("(gcd 2)"));
+        TEST_EQ("4", run("(gcd 32.0 -36 16 -4)"));
+        TEST_EQ("2", run("(gcd 32.0 -36 16 -4 6)"));
+        TEST_EQ("288", run("(lcm 32 -36)"));
+        TEST_EQ("288", run("(lcm 32.0 -36)"));
+        TEST_EQ("1", run("(lcm)"));
+        TEST_EQ("5", run("(lcm 5.0)"));
+        }
+      };
+
+    struct string_to_symbol_ops : public compile_fixture {
+      void test()
+        {
+        build_string_to_symbol();
+        TEST_EQ("abc", run("(string->symbol \"abc\")"));
+        TEST_EQ("abc", run("(string->symbol \"abc\")"));
+        TEST_EQ("#t", run("(eq? (string->symbol \"abc\") (string->symbol \"abc\"))"));
+        TEST_EQ("#t", run("(eqv? (string->symbol \"abc\") (string->symbol \"abc\"))"));
+        TEST_EQ("#t", run("(equal? (string->symbol \"abc\") (string->symbol \"abc\"))"));
+        TEST_EQ("#f", run("(eq? (string->symbol \"abc\") (string->symbol \"def\"))"));
+        }
+      };
+
+    struct control_ops : public compile_fixture {
+      void test()
+        {
+        build_string_to_symbol();
+        build_apply();
+        build_r5rs();
+        TEST_EQ("(b e h)", run("(map cadr '((a b) (d e) (g h)))"));
+        TEST_EQ("(1 4 27 256 3125)", run("(map (lambda (n) (expt n n)) '(1 2 3 4 5))"));
+        TEST_EQ("(5 7 9)", run("(map + '(1 2 3) '(4 5 6))"));
+        TEST_EQ("(1 2)", run("(let ([count 0]) (map (lambda (ignored) (set! count (+ count 1)) count) '(a b)))"));
+
+        TEST_EQ("#(0 1 4 9 16)", run("(let ([v (make-vector 5)]) (for-each (lambda (i) (vector-set! v i (* i i))) '(0 1 2 3 4)) v)"));
+
+        TEST_EQ("3", run("3 #;(let ([v (make-vector 5)]) (for-each (lambda (i) (vector-set! v i (* i i))) '(0 1 2 3 4)) v)"));
+
+        TEST_EQ("#(0 1 4 9 16)", run(R"(
+#|
+Here is a multiline comment, similar
+to /* and */ in c/c++
+|#
+(let ([v (make-vector 5)]) 
+     (for-each #; here is comment
+        (lambda (i) (vector-set! v i (* i i))) ; here is also comment
+        '(0 1 2 3 4)) 
+     v) #; blabla
+)"));
+
+        TEST_EQ("1", run("(%slot-ref (cons 1 2) 0)"));
+        TEST_EQ("2", run("(%slot-ref (cons 1 2) 1)"));
+
+        TEST_EQ("<promise>", run(R"(
+(define p
+    (let ([result-ready? #f]
+          [result #f])
+          (%make-promise (lambda ()
+                            (if result-ready?
+                                result
+                                (let ([x (+ 1 2)])
+                                    (if result-ready?
+                                        result
+                                        (begin (set! result-ready? #t)
+                                                (set! result x)
+                                                result
+                                        ))))))))
+)"));
+
+        TEST_EQ("#t", run("(closure? (%slot-ref p 0))"));
+        TEST_EQ("#t", run("(promise? p)"));
+        TEST_EQ("3", run("(force p)"));
+        TEST_EQ("3", run("(force p)"));
+
+        TEST_EQ("<promise>", run("(set! p (make-promise (lambda () (+ 5 6))))"));
+        TEST_EQ("#t", run("(closure? (%slot-ref p 0))"));
+        TEST_EQ("#t", run("(promise? p)"));
+        TEST_EQ("11", run("(force p)"));
+        TEST_EQ("11", run("(force p)"));
+        TEST_EQ("13", run("(force 13)"));
+
+        TEST_EQ("<promise>", run("(set! p (delay (* 3 4)))"));
+        TEST_EQ("#t", run("(closure? (%slot-ref p 0))"));
+        TEST_EQ("#t", run("(promise? p)"));
+        TEST_EQ("12", run("(force p)"));
+        TEST_EQ("12", run("(force p)"));
+        }
+      };
+
+    struct do_ops : public compile_fixture {
+      void test()
+        {
+        std::string script = R"(
+(do ([vec (make-vector 5)] [i 0 (+ i 1)])
+    ((= i 5) vec)
+    (vector-set! vec i i))
+)";
+        TEST_EQ("#(0 1 2 3 4)", run(script));
+        }
+      };
+
+
+    struct no_square_brackets : public compile_fixture {
+      void test()
+        {
+        std::string script = R"(
+(do ((vec (make-vector 5)) (i 0 (+ i 1)))
+    ((= i 5) vec)
+    (vector-set! vec i i))
+)";
+        TEST_EQ("#(0 1 2 3 4)", run(script));
+        TEST_EQ("13", run("(cond(#f)(#f 12)(12 13)) "));
+        TEST_EQ("1287", run("(let((b #t))(cond (else 1287))) "));
+        TEST_EQ("2", run("(cond((cons 1 2) => (lambda(x) (cdr x)))) "));
+
+        TEST_EQ("75", run("(case (+ 7 3) ((10 11 12) 75))"));
+        TEST_EQ("41", run("(letrec ((f (lambda (x y) (+ x y))) (g (lambda(x) (+ x 12))))(f 16 (f (g 0) (+ 1 (g 0)))))"));
+        }
+      };
+
   }
 
 SKIWI_END
@@ -3380,7 +4059,20 @@ void run_all_compile_vm_tests()
   minmax_test().test();
   make_port_test().test();
   make_port2_test().test();
+  make_port3_test().test();
+  writetests().test();
+  char_comp().test();
+  fx_comp().test();
+  named_let().test();
+  list_ops().test();
+  gcd_ops().test();
+  string_ops().test();
+  symbol_ops().test();
+  string_to_symbol_ops().test();
+  control_ops().test();
+  do_ops().test();
+  no_square_brackets().test();
 #endif     
-  
 
+ 
   }
