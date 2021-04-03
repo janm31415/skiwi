@@ -1043,13 +1043,13 @@ namespace
       case asmcode::BYTE_MEM_R15: return nullptr;
       case asmcode::NUMBER: return nullptr;
       case asmcode::ST0:  return (uint64_t*)(regs.fpstackptr);
-      case asmcode::ST1:  return (uint64_t*)(regs.fpstackptr-1);
-      case asmcode::ST2:  return (uint64_t*)(regs.fpstackptr-2);
-      case asmcode::ST3:  return (uint64_t*)(regs.fpstackptr-3);
-      case asmcode::ST4:  return (uint64_t*)(regs.fpstackptr-4);
-      case asmcode::ST5:  return (uint64_t*)(regs.fpstackptr-5);
-      case asmcode::ST6:  return (uint64_t*)(regs.fpstackptr-6);
-      case asmcode::ST7:  return (uint64_t*)(regs.fpstackptr-7);
+      case asmcode::ST1:  return (uint64_t*)(regs.fpstackptr+1);
+      case asmcode::ST2:  return (uint64_t*)(regs.fpstackptr+2);
+      case asmcode::ST3:  return (uint64_t*)(regs.fpstackptr+3);
+      case asmcode::ST4:  return (uint64_t*)(regs.fpstackptr+4);
+      case asmcode::ST5:  return (uint64_t*)(regs.fpstackptr+5);
+      case asmcode::ST6:  return (uint64_t*)(regs.fpstackptr+6);
+      case asmcode::ST7:  return (uint64_t*)(regs.fpstackptr+7);
       case asmcode::XMM0: return (uint64_t*)(&regs.xmm0);
       case asmcode::XMM1: return (uint64_t*)(&regs.xmm1);
       case asmcode::XMM2: return (uint64_t*)(&regs.xmm2);
@@ -1288,6 +1288,25 @@ namespace
     static void apply(double& left, double right)
       {
       left -= right;
+      }
+    };
+
+  struct SqrtpdOper
+    {
+    static void apply(double& left, double right)
+      {
+      left = std::sqrt(right);
+      }
+    };
+
+  struct XorpdOper
+    {
+    static void apply(double& left, double right)
+      {
+      uint64_t l = *reinterpret_cast<uint64_t*>(&left);
+      uint64_t r = *reinterpret_cast<uint64_t*>(&right);
+      l ^= r;
+      left = *reinterpret_cast<double*>(&l);
       }
     };
 
@@ -2120,8 +2139,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::F2XM1:
       {
-      double v = std::pow(2.0, *regs.fpstack) - 1.0;
-      *regs.fpstack = v;
+      double v = std::pow(2.0, *regs.fpstackptr) - 1.0;
+      *regs.fpstackptr = v;
       break;
       }
       case asmcode::FADD: 
@@ -2163,10 +2182,9 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FLD:
       {      
-      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
-      double v = *reinterpret_cast<double*>(oprnd1);
+      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);      
       regs.fpstackptr -= 1;
-      *regs.fpstackptr = v;
+      *regs.fpstackptr = *oprnd1;
       break;
       }
       case asmcode::FLD1:
@@ -2215,10 +2233,10 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FPATAN:
       {
-      double y = *(regs.fpstackptr - 1);
+      double y = *(regs.fpstackptr + 1);
       double x = *(regs.fpstackptr);
       regs.fpstackptr += 1;
-      *regs.fpstackptr = std::atan2(y, x);
+      *regs.fpstackptr = std::atan2(y,x);
       break;
       }
       case asmcode::FPTAN:
@@ -2235,7 +2253,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FSCALE:
       {
-      double s = std::trunc(*(regs.fpstackptr - 1));
+      double s = std::trunc(*(regs.fpstackptr + 1));
       *regs.fpstackptr *= std::pow(2.0, s);
       break;
       }
@@ -2293,8 +2311,8 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       else
         {
         double tmp = *(regs.fpstackptr);
-        *(regs.fpstackptr) = *(regs.fpstackptr - 1);
-        *(regs.fpstackptr - 1) = tmp;
+        *(regs.fpstackptr) = *(regs.fpstackptr + 1);
+        *(regs.fpstackptr + 1) = tmp;
         }
       break;
       }
@@ -2695,6 +2713,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       execute_operation<ShrOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::SQRTPD:
+      {
+      execute_double_operation<SqrtpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
       case asmcode::SUB:
       {
       execute_operation<SubOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
@@ -2726,6 +2749,11 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       case asmcode::XOR:
       {
       execute_operation<XorOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
+      break;
+      }
+      case asmcode::XORPD:
+      {
+      execute_double_operation<XorpdOper>(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
       default:
