@@ -2064,6 +2064,14 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       compare_operation(operand1, operand2, operand1_mem, operand2_mem, regs);
       break;
       }
+      case asmcode::CQO:
+      {
+      if (regs.rax & 0x8000000000000000)
+        regs.rdx = 0xffffffffffffffff;
+      else
+        regs.rdx = 0;
+      break;
+      }
       case asmcode::CMPEQPD:
       {
       uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
@@ -2130,6 +2138,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
             regs.eflags |= zero_flag;
           }
         }
+      break;
+      }
+      case asmcode::DIV:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      uint64_t divider = *oprnd1;
+      uint64_t result = regs.rax / divider;
+      uint64_t remainder = regs.rax % divider;
+      regs.rax = result;
+      regs.rdx = remainder;
       break;
       }
       case asmcode::DIVSD:
@@ -2321,6 +2339,16 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       double tmp = std::log2(*(regs.fpstackptr));
       regs.fpstackptr += 1;
       *regs.fpstackptr *= tmp;
+      break;
+      }
+      case asmcode::IDIV:
+      {
+      uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+      int64_t divider = (int64_t)*oprnd1;
+      int64_t result = (int64_t)regs.rax / divider;
+      int64_t remainder = (int64_t)regs.rax % divider;
+      regs.rax = result;
+      regs.rdx = remainder;
       break;
       }
       case asmcode::IMUL:
@@ -2744,6 +2772,29 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
         regs.eflags |= zero_flag;
         regs.eflags &= ~sign_flag;
         }
+      break;
+      }
+      case asmcode::UCOMISD:
+      {
+      double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
+      double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
+      if (*oprnd1 != *oprnd1 || *oprnd2 != *oprnd2)
+        {
+        regs.eflags = zero_flag | carry_flag;
+        }
+      else if (*oprnd1 < *oprnd2)
+        {
+        regs.eflags = carry_flag;
+        }
+      else if (*oprnd2 < *oprnd1)
+        {
+        regs.eflags = 0;
+        }
+      else
+        {
+        regs.eflags = zero_flag;
+        }
+
       break;
       }
       case asmcode::XOR:

@@ -67,6 +67,8 @@ namespace
 
     compile_fixture()
       {
+      add_system_calls(externals);
+      convert_externals_to_vm();
       stream_out = false;
       ctxt = create_context(1024 * 1024, 1024, 1024, 1024);
       env = std::make_shared<environment<environment_entry>>(nullptr);
@@ -3374,11 +3376,11 @@ void run_all_compile_vm_tests()
   fib_iterative_perf_test().test();
   fib_perf_test().test();
   r5rs_test().test();
-#endif     
-
   ieee745_test().test();
-  //minmax_test().test();
-  //make_port_test().test();
-  //make_port2_test().test();
+  minmax_test().test();
+  make_port_test().test();
+  make_port2_test().test();
+#endif     
+  
 
   }

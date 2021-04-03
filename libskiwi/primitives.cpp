@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "inlines.h"
 #include "types.h"
+#include "syscalls.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -16,9 +17,6 @@
 #include <unistd.h>
 #endif
 #include <fcntl.h>
-#include <fstream>
-
-#include <chrono>
 
 SKIWI_BEGIN
 
@@ -5845,42 +5843,6 @@ void compile_is_output_port(asmcode& code, const compiler_options& ops)
     }
   }
 
-namespace
-  {
-  int _my_close(int const fd)
-    {
-    if (fd < 0)
-      return 0;
-#ifdef _WIN32
-    return _close(fd);
-#else
-    return close(fd);
-#endif
-    }
-
-  int _my_read(int const fd, void * const buffer, unsigned const buffer_size)
-    {
-    if (fd < 0)
-      return 0;
-#ifdef _WIN32
-    return _read(fd, buffer, buffer_size);
-#else
-    return ::read(fd, buffer, buffer_size);
-#endif
-    }
-
-  int _my_write(int fd, const void *buffer, unsigned int count)
-    {
-    if (fd < 0)
-      return 0;
-#ifdef _WIN32
-    return _write(fd, buffer, count);
-#else
-    return write(fd, buffer, count);
-#endif
-    }
-  }
-
 void compile_peek_char(asmcode& code, const compiler_options& ops)
   {
   std::string error;
@@ -5941,12 +5903,12 @@ void compile_peek_char(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_read);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_read);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_read);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_read);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6053,12 +6015,12 @@ void compile_read_char(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_read);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_read);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_read);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_read);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6182,12 +6144,12 @@ void compile_write_string(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6238,12 +6200,12 @@ void compile_write_string(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6363,12 +6325,12 @@ void compile_write_char(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6470,12 +6432,12 @@ void compile_flush_output_port(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_write);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_write);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6535,12 +6497,12 @@ void compile_close_file(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_close);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_close);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_close);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_close);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6634,7 +6596,7 @@ void compile_open_file(asmcode& code, const compiler_options& ops)
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&open);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6721,7 +6683,7 @@ void compile_str2num(asmcode& code, const compiler_options& ops)
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&strtoll);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6766,7 +6728,7 @@ void compile_str2num(asmcode& code, const compiler_options& ops)
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&strtod);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6888,7 +6850,7 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 1);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -6944,7 +6906,7 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
 #endif  
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -7930,7 +7892,7 @@ rdi
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&c_prim_load);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -7992,7 +7954,7 @@ rdi
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
   code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&c_prim_eval);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -8007,76 +7969,6 @@ rdi
     }
   }
 
-namespace
-  {
-  const char* _my_getenv(const char* name)
-    {
-    static std::string env_value;
-#ifdef _WIN32
-    std::string s(name);
-    std::wstring ws = convert_string_to_wstring(s);
-    wchar_t* path = _wgetenv(ws.c_str());
-    if (!path)
-      return nullptr;
-    std::wstring wresult(path);
-    env_value = convert_wstring_to_string(wresult);
-    return env_value.c_str();
-#else
-    return ::getenv(name);
-#endif
-    }
-
-  int _my_putenv(const char* name, const char* value)
-    {
-#ifdef _WIN32
-    std::string sname(name);
-    std::string svalue(value);
-    std::wstring wname = convert_string_to_wstring(sname);
-    std::wstring wvalue = convert_string_to_wstring(svalue);
-    return (int)_wputenv_s(wname.c_str(), wvalue.c_str());
-#else
-    return setenv(name, value, 1);
-#endif
-    }
-
-  int _my_file_exists(const char* filename)
-    {
-#ifdef _WIN32
-    int res = 0;
-    std::string sname(filename);
-    std::wstring wname = convert_string_to_wstring(sname);
-    std::ifstream f(wname);
-    if (f.is_open())
-      {
-      res = 1;
-      f.close();
-      }
-    return res;
-#else
-    int res = 0;
-    std::ifstream f(filename);
-    if (f.is_open())
-      {
-      res = 1;
-      f.close();
-      }
-    return res;
-#endif
-    }
-
-  uint64_t _current_seconds()
-    {
-    uint64_t secondsUTC = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    return secondsUTC;
-    }
-
-  uint64_t _current_milliseconds()
-    {
-    uint64_t millisecondsUTC = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    return millisecondsUTC;
-    }
-  }
-
 void compile_current_seconds(ASM::asmcode& code, const compiler_options& /*options*/)
   {
   save_before_foreign_call(code);
@@ -8087,8 +7979,8 @@ void compile_current_seconds(ASM::asmcode& code, const compiler_options& /*optio
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_current_seconds);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_current_seconds);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -8106,8 +7998,8 @@ void compile_current_milliseconds(ASM::asmcode& code, const compiler_options& /*
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_current_milliseconds);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_current_milliseconds);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -8151,8 +8043,8 @@ rdi
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_getenv);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_getenv);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -8273,8 +8165,8 @@ rsi:
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_putenv);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_putenv);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
@@ -8335,8 +8227,8 @@ rdi:
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
 #endif  
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_my_file_exists);
-  code.add(asmcode::CALL, asmcode::R11);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_file_exists);
+  code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
   restore_stack(code);
   restore_after_foreign_call(code);
