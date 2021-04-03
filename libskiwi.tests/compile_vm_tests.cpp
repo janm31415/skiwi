@@ -4722,7 +4722,7 @@ to /* and */ in c/c++
       TEST_EQ("105.623", str2.str());
       }
     };
-  /*
+  
   struct c_input_test_8doubles : public compile_fixture
     {
     void test()
@@ -4748,23 +4748,47 @@ to /* and */ in c/c++
         {
         first_pass_data d;
         uint64_t size;
-        fun_ptr f = (fun_ptr)assemble(size, d, code);
-        if (f)
-          {
-          uint64_t res = f(&ctxt, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8);
-          scheme_runtime(res, str, env, rd, nullptr);
-
-          uint64_t res2 = f(&ctxt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 101.123, 4.5);
-          scheme_runtime(res2, str2, env, rd, nullptr);
-
-          compiled_functions.emplace_back(f, size);
+        uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+        try {
+#ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+          reg.xmm1 = 1.1;
+          reg.xmm2 = 2.2;
+          reg.xmm3 = 3.3;
+          double tmp1 = 4.4;
+          double tmp2 = 5.5;
+          double tmp3 = 6.6;
+          double tmp4 = 7.7;
+          double tmp5 = 8.8;
+          //code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RSP, (40 + addr * 8));
+          reg.stack[255] = *reinterpret_cast<uint64_t*>(&tmp5);
+          reg.stack[254] = *reinterpret_cast<uint64_t*>(&tmp4);
+          reg.stack[253] = *reinterpret_cast<uint64_t*>(&tmp3);
+          reg.stack[252] = *reinterpret_cast<uint64_t*>(&tmp2);
+          reg.stack[251] = *reinterpret_cast<uint64_t*>(&tmp1);
+          reg.rsp = (uint64_t)(&reg.stack[247]);
+#else
+          // need to check this on Linux for correct calling conventions
+          reg.rdi = (uint64_t)(&ctxt);
+          reg.xmm0 = 3.4;
+          reg.xmm1 = 6.7;
+          reg.xmm2 = 1.1;
+          reg.xmm3 = 2.2;
+          reg.xmm4 = 3.3;
+#endif
+          run_bytecode(f, size, reg);
+          scheme_runtime(reg.rax, str, env, rd, nullptr);
           }
+        catch (std::logic_error e)
+          {
+          std::cout << e.what() << "\n";
+          }
+        compiled_bytecode.emplace_back(f, size);
         }
       TEST_EQ("39.6", str.str());
-      TEST_EQ("105.623", str2.str());
       }
     };
-
+  /*
   struct c_input_test_10doubles : public compile_fixture
     {
     void test()
@@ -5014,7 +5038,7 @@ to /* and */ in c/c++
       TEST_EQ("5556", str.str());
       }
     };
-
+    */
   struct current_seconds_test : public compile_fixture
     {
     void test()
@@ -5033,13 +5057,17 @@ to /* and */ in c/c++
         }
       first_pass_data d;
       uint64_t size;
-      fun_ptr f = (fun_ptr)assemble(size, d, code);
-      if (f)
-        {
-        res = f(&ctxt);
-        compiled_functions.emplace_back(f, size);
+      uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+      try {
+        run_bytecode(f, size, reg, externals_for_vm);
+        res = reg.rax;
         res >>= 1;
         }
+      catch (std::logic_error e)
+        {
+        std::cout << e.what() << "\n";
+        }
+      compiled_bytecode.emplace_back(f, size);    
       TEST_ASSERT(secondsUTC <= res);
       secondsUTC = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       TEST_ASSERT(res <= secondsUTC);
@@ -5064,19 +5092,23 @@ to /* and */ in c/c++
         }
       first_pass_data d;
       uint64_t size;
-      fun_ptr f = (fun_ptr)assemble(size, d, code);
-      if (f)
-        {
-        res = f(&ctxt);
-        compiled_functions.emplace_back(f, size);
+      uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+      try {
+        run_bytecode(f, size, reg, externals_for_vm);
+        res = reg.rax;
         res >>= 1;
         }
+      catch (std::logic_error e)
+        {
+        std::cout << e.what() << "\n";
+        }
+      compiled_bytecode.emplace_back(f, size);
       TEST_ASSERT(millisecondsUTC <= res);
       millisecondsUTC = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       TEST_ASSERT(res <= millisecondsUTC);
       }
     };
-    */
+    
   }
 
 SKIWI_END
@@ -5238,15 +5270,16 @@ void run_all_compile_vm_tests()
   c_input_test_2doubles().test();
 
   c_input_test_5doubles().test();
-  /*
+  
   c_input_test_8doubles().test();
+  /*
   c_input_test_10doubles().test();
   c_input_test_2ints().test();
   c_input_test_5ints().test();
   c_input_test_8ints().test();
   c_input_test_mix_ints_doubles().test();
   c_input_test_mix_ints_doubles_2().test();
-  current_seconds_test().test();
-  current_milliseconds_test().test();
   */
+  current_seconds_test().test();
+  current_milliseconds_test().test();  
   }
