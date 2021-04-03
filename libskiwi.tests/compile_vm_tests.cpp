@@ -80,7 +80,11 @@ namespace
         uint64_t size;
         first_pass_data d;
         uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
         reg.rcx = (uint64_t)(&ctxt);
+#else
+        reg.rdi = (uint64_t)(&ctxt);
+#endif
         run_bytecode(f, size, reg);
         compiled_bytecode.emplace_back(f, size);
         assign_primitive_addresses(pm, d, (uint64_t)f);
@@ -175,7 +179,11 @@ namespace
       uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
       std::stringstream str;
       str << std::setprecision(precision);
+#ifdef _WIN32
       reg.rcx = (uint64_t)(&ctxt);
+#else
+      reg.rdi = (uint64_t)(&ctxt);
+#endif
       try {
         run_bytecode(f, size, reg, externals_for_vm);
         }
@@ -202,7 +210,11 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
           reg.rcx = (uint64_t)(&ctxt);
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+#endif
           try {
             run_bytecode(f, size, reg);
             }
@@ -231,7 +243,11 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
           reg.rcx = (uint64_t)(&ctxt);
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+#endif
           try {
             run_bytecode(f, size, reg);
             }
@@ -260,7 +276,11 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
           reg.rcx = (uint64_t)(&ctxt);
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+#endif
           try {
             run_bytecode(f, size, reg);
             }
@@ -289,7 +309,11 @@ namespace
           first_pass_data d;
           uint64_t size;
           uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
           reg.rcx = (uint64_t)(&ctxt);
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+#endif
           try {
             run_bytecode(f, size, reg);
             }
@@ -337,7 +361,11 @@ namespace
         uint64_t size;
         first_pass_data d;
         uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+#ifdef _WIN32
         reg.rcx = (uint64_t)(&ctxt);
+#else
+        reg.rdi = (uint64_t)(&ctxt);
+#endif
         run_bytecode(f, size, reg);
         compiled_bytecode.emplace_back(f, size);
         assign_primitive_addresses(pm, d, (uint64_t)f);
@@ -4550,7 +4578,7 @@ to /* and */ in c/c++
       }
     };
 
-  /*
+
   struct c_input_test_2doubles : public compile_fixture
     {
     void test()
@@ -4576,17 +4604,36 @@ to /* and */ in c/c++
         {
         first_pass_data d;
         uint64_t size;
-        fun_ptr f = (fun_ptr)assemble(size, d, code);
-        if (f)
-          {
-          uint64_t res = f(&ctxt, 3.4, 6.7);
-          scheme_runtime(res, str, env, rd, nullptr);
-
-          uint64_t res2 = f(&ctxt, 101.123, 4.5);
-          scheme_runtime(res2, str2, env, rd, nullptr);
-
-          compiled_functions.emplace_back(f, size);
+        uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+        try {
+#ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+          reg.xmm1 = 3.4;
+          reg.xmm2 = 6.7;
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+          reg.xmm0 = 3.4;
+          reg.xmm1 = 6.7;
+#endif
+          run_bytecode(f, size, reg);
+          scheme_runtime(reg.rax, str, env, rd, nullptr);
+#ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+          reg.xmm1 = 101.123;
+          reg.xmm2 = 4.5;
+#else
+          reg.rdi = (uint64_t)(&ctxt);
+          reg.xmm0 = 101.123;
+          reg.xmm1 = 4.5;
+#endif
+          run_bytecode(f, size, reg);
+          scheme_runtime(reg.rax, str2, env, rd, nullptr);
           }
+        catch (std::logic_error e)
+          {
+          std::cout << e.what() << "\n";
+          }
+        compiled_bytecode.emplace_back(f, size);
         }
       TEST_EQ("10.1", str.str());
       TEST_EQ("105.623", str2.str());
@@ -4618,23 +4665,64 @@ to /* and */ in c/c++
         {
         first_pass_data d;
         uint64_t size;
-        fun_ptr f = (fun_ptr)assemble(size, d, code);
-        if (f)
-          {
-          uint64_t res = f(&ctxt, 3.4, 6.7, 1.1, 2.2, 3.3);
-          scheme_runtime(res, str, env, rd, nullptr);
-
-          uint64_t res2 = f(&ctxt, 0.0, 0.0, 0.0, 101.123, 4.5);
-          scheme_runtime(res2, str2, env, rd, nullptr);
-
-          compiled_functions.emplace_back(f, size);
+        uint8_t* f = (uint8_t*)vm_bytecode(size, d, code);
+        try {
+#ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+          reg.xmm1 = 3.4;
+          reg.xmm2 = 6.7;
+          reg.xmm3 = 1.1;
+          double tmp1 = 2.2;
+          double tmp2 = 3.3;
+          //code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_RSP, (40 + addr * 8));
+          reg.stack[255] = *reinterpret_cast<uint64_t*>(&tmp2);
+          reg.stack[254] = *reinterpret_cast<uint64_t*>(&tmp1);
+          reg.rsp = (uint64_t)(&reg.stack[250]);
+#else
+          // need to check this on Linux for correct calling conventions
+          reg.rdi = (uint64_t)(&ctxt);
+          reg.xmm0 = 3.4;
+          reg.xmm1 = 6.7;
+          reg.xmm2 = 1.1;
+          reg.xmm3 = 2.2;
+          reg.xmm4 = 3.3;
+#endif
+          run_bytecode(f, size, reg);
+          scheme_runtime(reg.rax, str, env, rd, nullptr);
+#ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+          reg.xmm1 = 0.0;
+          reg.xmm2 = 0.0;
+          reg.xmm3 = 0.0;
+          tmp1 = 101.123;
+          tmp2 = 4.5;
+          reg.stack[255] = *reinterpret_cast<uint64_t*>(&tmp2);
+          reg.stack[254] = *reinterpret_cast<uint64_t*>(&tmp1);
+          reg.rsp = (uint64_t)(&reg.stack[250]);
+#else
+          // need to check this on Linux for correct calling conventions
+          reg.rdi = (uint64_t)(&ctxt);
+          reg.xmm0 = 0.0;
+          reg.xmm1 = 0.0;
+          reg.xmm2 = 0.0;
+          reg.xmm3 = 101.123;
+          reg.xmm4 = 4.5;
+#endif
+          run_bytecode(f, size, reg);
+          scheme_runtime(reg.rax, str2, env, rd, nullptr);
           }
+        catch (std::logic_error e)
+          {
+          std::cout << e.what() << "\n";
+          }
+        compiled_bytecode.emplace_back(f, size);
+
         }
       TEST_EQ("16.7", str.str());
       TEST_EQ("105.623", str2.str());
       }
     };
-
+  /*
   struct c_input_test_8doubles : public compile_fixture
     {
     void test()
@@ -4993,7 +5081,7 @@ to /* and */ in c/c++
 
 SKIWI_END
 
-//#define ONLY_LAST
+#define ONLY_LAST
 
 void run_all_compile_vm_tests()
   {
@@ -5146,9 +5234,11 @@ void run_all_compile_vm_tests()
 
   many_vars_in_lambda_test().test();
 #endif     
-  /*
+
   c_input_test_2doubles().test();
+
   c_input_test_5doubles().test();
+  /*
   c_input_test_8doubles().test();
   c_input_test_10doubles().test();
   c_input_test_2ints().test();
