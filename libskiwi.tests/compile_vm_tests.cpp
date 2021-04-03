@@ -3063,7 +3063,7 @@ namespace
       TEST_EQ("907.493", run("(flonum-expt 7 3.5)"));
       
       TEST_EQ("1.41421", run("(expt 2.0 0.5)"));
-      /*
+      
       TEST_EQ("8", run("(expt 2 3)"));
       TEST_EQ("1", run("(expt 2 0)"));
       TEST_EQ("1", run("(expt 0 0)"));
@@ -3081,8 +3081,7 @@ namespace
       TEST_EQ("2.71828", run("(exp 1.0)"));
       TEST_EQ("1", run("(exp 0.0)"));
       TEST_EQ("1", run("(exp 0)"));
-      
-      */
+            
       TEST_EQ("3", run("(sqrt 9)"));
       TEST_EQ("1.41421", run("(sqrt 2.0)"));
 
@@ -3109,8 +3108,8 @@ namespace
       TEST_EQ("0.785398", run("(atan 1.0)"));
       TEST_EQ("0.785398", run("(atan 1)"));
 
-      //TEST_EQ("2.07944", run("(log 8.0)"));
-      //TEST_EQ("2.07944", run("(log 8)"));
+      TEST_EQ("2.07944", run("(log 8.0)"));
+      TEST_EQ("2.07944", run("(log 8)"));
 
       TEST_EQ("8", run("(round 8.0)"));
       TEST_EQ("8", run("(round 8.4)"));

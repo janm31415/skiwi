@@ -2318,7 +2318,7 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FYL2X:
       {
-      double tmp = std::log(*(regs.fpstackptr));
+      double tmp = std::log2(*(regs.fpstackptr));
       regs.fpstackptr += 1;
       *regs.fpstackptr *= tmp;
       break;
