@@ -7629,10 +7629,10 @@ void compile_flonum_expt(asmcode& code, const compiler_options& ops)
   code.add(asmcode::FLD, asmcode::ST0);
   code.add(asmcode::FISTPQ, MEM_ALLOC, CELLS(1));
   code.add(asmcode::FILD, MEM_ALLOC, CELLS(1));
-  code.add(asmcode::FSUB);
+  code.add(asmcode::FSUBP);
   code.add(asmcode::F2XM1);
   code.add(asmcode::FLD1);
-  code.add(asmcode::FADD);
+  code.add(asmcode::FADDP);
   code.add(asmcode::FILD, MEM_ALLOC, CELLS(1));
   code.add(asmcode::FXCH);
   code.add(asmcode::FSCALE);

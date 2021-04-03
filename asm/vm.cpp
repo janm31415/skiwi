@@ -50,6 +50,7 @@ namespace
       case asmcode::EXTERN: return 0;
       case asmcode::F2XM1:return 0;
       case asmcode::FADD: return 2;
+      case asmcode::FADDP: return 0;
       case asmcode::FISTPQ: return 1;
       case asmcode::FILD:return 1;
       case asmcode::FLD: return 1;
@@ -66,7 +67,8 @@ namespace
       case asmcode::FSQRT:return 0;
       case asmcode::FSTP: return 1;
       case asmcode::FSUB: return 2;
-      case asmcode::FSUBRP:return 2;
+      case asmcode::FSUBP: return 0;
+      case asmcode::FSUBRP:return 0;
       case asmcode::FXCH: return 0;
       case asmcode::FYL2X: return 0;
       case asmcode::GLOBAL:return 0;
@@ -2124,6 +2126,25 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FADD: 
       {
+      if (operand2 == asmcode::EMPTY)
+        {
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        double v = *reinterpret_cast<double*>(oprnd1);
+        *regs.fpstackptr += v;
+        }
+      else
+        {
+        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
+        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
+        *oprnd1 += *oprnd2;
+        }
+      break;
+      }
+      case asmcode::FADDP:
+      {
+      double tmp = *(regs.fpstackptr);
+      regs.fpstackptr += 1;
+      *regs.fpstackptr += tmp;
       break;
       }
       case asmcode::FILD:
@@ -2168,6 +2189,18 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FMUL:
       {
+      if (operand2 == asmcode::EMPTY)
+        {
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        double v = *reinterpret_cast<double*>(oprnd1);
+        *regs.fpstackptr *= v;
+        }
+      else
+        {
+        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
+        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
+        *oprnd1 *= *oprnd2;
+        }
       break;
       }
       case asmcode::FSIN:
@@ -2220,11 +2253,32 @@ void run_bytecode(const uint8_t* bytecode, uint64_t size, registers& regs, const
       }
       case asmcode::FSUB:
       {
+      if (operand2 == asmcode::EMPTY)
+        {
+        uint64_t* oprnd1 = get_address_64bit(operand1, operand1_mem, regs);
+        double v = *reinterpret_cast<double*>(oprnd1);
+        *regs.fpstackptr -= v;
+        }
+      else
+        {
+        double* oprnd1 = (double*)get_address_64bit(operand1, operand1_mem, regs);
+        double* oprnd2 = (double*)get_address_64bit(operand2, operand2_mem, regs);
+        *oprnd1 -= *oprnd2;
+        }
       break;
       }
+      case asmcode::FSUBP:
+      {
+      double tmp = *(regs.fpstackptr);
+      regs.fpstackptr += 1;
+      *regs.fpstackptr -= tmp;
+      break;
+      }      
       case asmcode::FSUBRP:
       {
+      double tmp = *(regs.fpstackptr);
       regs.fpstackptr += 1;
+      *regs.fpstackptr = tmp - *regs.fpstackptr;
       break;
       }
       case asmcode::FXCH:

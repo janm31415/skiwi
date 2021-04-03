@@ -849,7 +849,7 @@ namespace
     code.add(asmcode::FLD, asmcode::MEM_RSP, -8);
     code.add(asmcode::FLD, asmcode::MEM_RAX, 0);
 
-    code.add(asmcode::FADD);
+    code.add(asmcode::FADDP);
     code.add(asmcode::FADD, asmcode::ST0, asmcode::ST5);
     code.add(asmcode::FADD, asmcode::ST5, asmcode::ST0);
 

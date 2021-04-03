@@ -205,6 +205,7 @@ namespace
       case asmcode::DIVSD: return "divsd";
       case asmcode::F2XM1: return "f2xm1";
       case asmcode::FADD: return "fadd";
+      case asmcode::FADDP: return "faddp";
       case asmcode::FILD: return "fild";
       case asmcode::FLD: return "fld";
       case asmcode::FLD1: return "fld1";
@@ -221,6 +222,7 @@ namespace
       case asmcode::FSQRT: return "fsqrt";
       case asmcode::FSTP: return "fstp";
       case asmcode::FSUB: return "fsub";
+      case asmcode::FSUBP: return "fsubp";
       case asmcode::FSUBRP: return "fsubrp";
       case asmcode::FXCH: return "fxch";
       case asmcode::FYL2X: return "fyl2x";
@@ -1728,7 +1730,14 @@ namespace
     t.add_opcode(make_opcode("FADD", opcode::digit0, 0xDC, opcode::m64, opcode::none));
     t.add_opcode(make_opcode("FADD", 0, 0xD8, 0xC0, opcode::st0, opcode::sti));
     t.add_opcode(make_opcode("FADD", 0, 0xDC, 0xC0, opcode::sti, opcode::st0));
-    t.add_opcode(make_opcode("FADD", 0, 0xDE, 0xC1, opcode::none, opcode::none));
+    //t.add_opcode(make_opcode("FADD", 0, 0xDE, 0xC1, opcode::none, opcode::none));
+    return t;
+    }
+
+  opcode_table make_faddp_table()
+    {
+    opcode_table t;
+    t.add_opcode(make_opcode("FADDP", 0, 0xDE, 0xC1, opcode::none, opcode::none));
     return t;
     }
 
@@ -1862,7 +1871,14 @@ namespace
     t.add_opcode(make_opcode("FSUB", opcode::digit4, 0xDC, opcode::m64, opcode::none));
     t.add_opcode(make_opcode("FSUB", 0, 0xD8, 0xE0, opcode::st0, opcode::sti));
     t.add_opcode(make_opcode("FSUB", 0, 0xDC, 0xE8, opcode::sti, opcode::st0));
-    t.add_opcode(make_opcode("FSUB", 0, 0xDE, 0xE9, opcode::none, opcode::none));
+    //t.add_opcode(make_opcode("FSUB", 0, 0xDE, 0xE9, opcode::none, opcode::none));
+    return t;
+    }
+
+  opcode_table make_fsubp_table()
+    {
+    opcode_table t;
+    t.add_opcode(make_opcode("FSUBP", 0, 0xDE, 0xE9, opcode::none, opcode::none));
     return t;
     }
 
@@ -1902,6 +1918,7 @@ namespace
 
     table["F2XM1"] = make_f2xm1_table();    
     table["FADD"] = make_fadd_table();   
+    table["FADDP"] = make_faddp_table();
     table["FISTP"] = make_fistp_table();    
     table["FLD"] = make_fld_table();
     table["FILD"] = make_fild_table();
@@ -1918,6 +1935,7 @@ namespace
     table["FSQRT"] = make_fsqrt_table();
     table["FSTP"] = make_fstp_table();
     table["FSUB"] = make_fsub_table();    
+    table["FSUBP"] = make_fsubp_table();
     table["FSUBRP"] = make_fsubrp_table();
     table["FXCH"] = make_fxch_table();
     table["FYL2X"] = make_fyl2x_table();
@@ -2289,6 +2307,7 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::EXTERN: return 0;
     case asmcode::F2XM1: return fill(opcode_stream, *this, g_table.find("F2XM1")->second);
     case asmcode::FADD: return fill(opcode_stream, *this, g_table.find("FADD")->second);   
+    case asmcode::FADDP: return fill(opcode_stream, *this, g_table.find("FADDP")->second);
     case asmcode::FISTPQ: return fill(opcode_stream, *this, g_table.find("FISTP")->second);   
     case asmcode::FILD: return fill(opcode_stream, *this, g_table.find("FILD")->second);
     case asmcode::FLD: return fill(opcode_stream, *this, g_table.find("FLD")->second);
@@ -2305,6 +2324,7 @@ uint64_t asmcode::instruction::fill_opcode(uint8_t* opcode_stream) const
     case asmcode::FSQRT: return fill(opcode_stream, *this, g_table.find("FSQRT")->second);
     case asmcode::FSTP: return fill(opcode_stream, *this, g_table.find("FSTP")->second);    
     case asmcode::FSUB: return fill(opcode_stream, *this, g_table.find("FSUB")->second);   
+    case asmcode::FSUBP: return fill(opcode_stream, *this, g_table.find("FSUBP")->second);
     case asmcode::FSUBRP: return fill(opcode_stream, *this, g_table.find("FSUBRP")->second);
     case asmcode::FXCH: return fill(opcode_stream, *this, g_table.find("FXCH")->second);
     case asmcode::FYL2X: return fill(opcode_stream, *this, g_table.find("FYL2X")->second);
@@ -2391,6 +2411,7 @@ std::string asmcode::operation_to_string(operation oper)
     case asmcode::EXTERN: return std::string("EXTERN");
     case asmcode::F2XM1:return std::string("F2XM1");
     case asmcode::FADD: return std::string("FADD");   
+    case asmcode::FADDP: return std::string("FADDP");
     case asmcode::FISTPQ:return std::string("FISTPQ");  
     case asmcode::FILD:return std::string("FILD");
     case asmcode::FLD: return std::string("FLD");
@@ -2407,6 +2428,7 @@ std::string asmcode::operation_to_string(operation oper)
     case asmcode::FSQRT:return std::string("FSQRT");
     case asmcode::FSTP: return std::string("FSTP");
     case asmcode::FSUB: return std::string("FSUB");
+    case asmcode::FSUBP: return std::string("FSUBP");
     case asmcode::FSUBRP:return std::string("FSUBRP");
     case asmcode::FXCH: return std::string("FXCH");
     case asmcode::FYL2X: return std::string("FYL2X");

@@ -3061,7 +3061,7 @@ namespace
       TEST_EQ("1.41421", run("(flonum-expt 2.0 0.5)"));
       TEST_EQ("343", run("(flonum-expt 7 3)"));
       TEST_EQ("907.493", run("(flonum-expt 7 3.5)"));
-      /*
+      
       TEST_EQ("1.41421", run("(expt 2.0 0.5)"));
       TEST_EQ("8", run("(expt 2 3)"));
       TEST_EQ("1", run("(expt 2 0)"));
@@ -3124,7 +3124,7 @@ namespace
       TEST_EQ("8", run("(truncate 8.4)"));
       TEST_EQ("7", run("(truncate 7.5)"));
       TEST_EQ("8", run("(truncate 8)"));
-      */
+      
       }
     };
 
