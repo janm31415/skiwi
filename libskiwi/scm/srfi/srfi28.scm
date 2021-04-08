@@ -1,3 +1,5 @@
+(import 'srfi-6)
+
 (define format
   (lambda (format-string . objects)
     (let ((buffer (open-output-string)))
