@@ -569,7 +569,7 @@ skiwi_parameters::skiwi_parameters()
   {
   heap_size = 2 * 1024 * 1024;
   globals_stack = 64 * 1024;
-  local_stack = 128;
+  local_stack = 256;
   scheme_stack = 4096;
   trace = &std::cout;
   stderror = &std::cout;
