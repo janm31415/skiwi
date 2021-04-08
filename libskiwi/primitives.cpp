@@ -4723,9 +4723,10 @@ void compile_reclaim_garbage(asmcode& code, const compiler_options&)
 
   code.add(asmcode::PUSH, asmcode::RBX);
 
-  code.add(asmcode::MOV, asmcode::R11, GLOBALS); // run over all registers (in GC_SAVE) and locals. R11 contains the number of items.
-  code.add(asmcode::SUB, asmcode::R11, GC_SAVE);
-  code.add(asmcode::SHR, asmcode::R11, asmcode::NUMBER, 3);
+  //code.add(asmcode::MOV, asmcode::R11, GLOBALS); // run over all registers (in GC_SAVE) and locals. R11 contains the number of items.
+  //code.add(asmcode::SUB, asmcode::R11, GC_SAVE);
+  //code.add(asmcode::SHR, asmcode::R11, asmcode::NUMBER, 3);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, 128 + 8);
 
   code.add(asmcode::MOV, asmcode::RAX, GC_SAVE);
   code.add(asmcode::MOV, asmcode::MEM_RAX, asmcode::RCX);
