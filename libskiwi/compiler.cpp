@@ -1161,8 +1161,8 @@ namespace
         code.add(asmcode::COMMENT, "clean all locals for gc");
         //Here we clear all our registers, so that they can be cleaned up by the gc
         code.add(asmcode::MOV, asmcode::R15, LOCAL);
-        code.add(asmcode::MOV, asmcode::R11, LOCAL);
-        code.add(asmcode::ADD, asmcode::R11, asmcode::NUMBER, CELLS(128));
+        code.add(asmcode::MOV, asmcode::R11, asmcode::R15);
+        code.add(asmcode::ADD, asmcode::R11, asmcode::NUMBER, CELLS(data.local_stack_size));
         auto repeat_clean_locals = label_to_string(label++);
         code.add(asmcode::LABEL, repeat_clean_locals);
         code.add(asmcode::MOV, asmcode::MEM_R15, asmcode::NUMBER, unalloc_tag);

@@ -5,7 +5,15 @@ SKIWI_BEGIN
 context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t local_stack, uint64_t scheme_stack)
   {
   context c;
-  uint64_t total_size = (uint64_t)5 + (uint64_t)256 + (uint64_t)3 + (uint64_t)8 + (uint64_t)local_stack + globals_stack + heap_size + scheme_stack;
+  // The number of locals is not that large, but the buffer for the locals is large, as it equals the heapsize/4.
+  // The reason is that we want to be able to do something like (apply + long-list).
+  // The apply method will rewrite this as (+ a b c ... ) where a,b,c are the elements of long-list.
+  // Theoretically this could be a pretty long list that overflows the local buffer if we only provide for local_stack memory places.
+  // Therefore we provide a large local stack buffer.
+  uint64_t local_stack_buffer = heap_size / 4;
+  if (local_stack > local_stack_buffer)
+    local_stack_buffer = (uint32_t)local_stack;
+  uint64_t total_size = (uint64_t)5 + (uint64_t)256 + (uint64_t)3 + (uint64_t)8 + (uint64_t)local_stack_buffer + globals_stack + heap_size + scheme_stack;
   c.memory_allocated = new uint64_t[total_size];
   uint64_t* ptr = c.memory_allocated;
   for (uint64_t i = 0; i < total_size; ++i, ++ptr)
@@ -19,7 +27,7 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
   c.temporary_flonum = c.rsp_save + 1;
   c.gc_save = c.temporary_flonum + 2;
   c.locals = c.gc_save + 8;
-  c.globals = c.locals + (uint64_t)local_stack;
+  c.globals = c.locals + (uint64_t)local_stack_buffer;
   c.globals_end = c.globals + globals_stack;
   c.stack_top = c.globals + globals_stack;
   c.stack = c.stack_top;

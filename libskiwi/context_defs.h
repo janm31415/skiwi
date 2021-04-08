@@ -29,6 +29,7 @@ SKIWI_BEGIN
 #define TEMP_FLONUM ASM::asmcode::MEM_R10, 152
 #define GC_SAVE ASM::asmcode::MEM_R10, 160
 #define RSP_SAVE ASM::asmcode::MEM_R10, 184
+#define NUMBER_OF_LOCALS ASM::asmcode::MEM_R10, 144
 
 #define GLOBALS ASM::asmcode::MEM_R10, 168
 #define GLOBALS_END ASM::asmcode::MEM_R10, 176

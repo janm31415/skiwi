@@ -5,7 +5,6 @@ int main(int argc, char** argv)
   {
   skiwi::skiwi_parameters pars;
   pars.heap_size = 64 * 1024 * 1024;
-  pars.local_stack = (uint32_t)pars.heap_size / 2;
   skiwi::scheme_with_skiwi(nullptr, nullptr, pars);
 
   skiwi::skiwi_repl(argc, argv);

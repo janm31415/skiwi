@@ -7,8 +7,6 @@ SKIWI_BEGIN
 reg_alloc::reg_alloc(const std::vector<ASM::asmcode::operand>& usable_registers, uint32_t number_of_locals) : available_registers(usable_registers),
   nr_locals(number_of_locals)
   {  
-  if (nr_locals > 128)
-    nr_locals = 128;
   make_all_available();
   }
 
