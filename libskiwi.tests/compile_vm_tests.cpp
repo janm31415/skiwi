@@ -5265,13 +5265,16 @@ void run_all_compile_vm_tests()
   empty_let_crash().test();
 
   many_vars_in_lambda_test().test();
-#endif     
-
   c_input_test_2doubles().test();
 
   c_input_test_5doubles().test();
-  
+
   c_input_test_8doubles().test();
+
+  current_seconds_test().test();
+  current_milliseconds_test().test();
+#endif     
+
   /*
   c_input_test_10doubles().test();
   c_input_test_2ints().test();
@@ -5280,6 +5283,4 @@ void run_all_compile_vm_tests()
   c_input_test_mix_ints_doubles().test();
   c_input_test_mix_ints_doubles_2().test();
   */
-  current_seconds_test().test();
-  current_milliseconds_test().test();  
   }

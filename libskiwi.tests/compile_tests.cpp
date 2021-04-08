@@ -2,7 +2,7 @@
 // Includes
 /////////////////////////////////////////////////////////////////////////////////
 
-#define ONLY_LAST
+//#define ONLY_LAST
 //#define PRINT_OUT_REGISTERS_AND_OPERANDS
 
 #include "compile_tests.h"
@@ -415,7 +415,7 @@ namespace
       skiwi_parameters params;
       params.trace = nullptr;
       params.stderror = &std::cout;
-      params.stdoutput = nullptr;
+      params.stdoutput = nullptr;      
       scheme_with_skiwi(nullptr, nullptr, params);
       }
 
@@ -3329,7 +3329,7 @@ namespace
       TEST_EQ("36", run("(apply + (list 1 2 3 4 5 6 7 8))"));
       TEST_EQ("45", run("(apply + (list 1 2 3 4 5 6 7 8 9))"));
       TEST_EQ("55", run("(apply + (list 1 2 3 4 5 6 7 8 9 10))"));
-      TEST_EQ("55", run("(apply + 1 2 3 4 5 6 7 8 9 (list 10))"));
+      TEST_EQ("55", run("(%apply + 1 2 3 4 5 6 7 8 9 (list 10))"));
 
       TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector '(1 2 3 4 5 6 7 8)) '())"));
       TEST_EQ("(#(1 2 3 4 5 6 7 8))", run("(cons(apply vector 1 '(2 3 4 5 6 7 8)) '())"));
@@ -3364,6 +3364,68 @@ namespace
       TEST_EQ("<lambda>", run("(define compose (lambda(f g)(lambda args(f(apply g args)))))"));
       TEST_EQ("<lambda>", run("(define twice (lambda (x) (* 2 x)))"));
       TEST_EQ("1800", run("((compose twice *) 12 75)"));
+      }
+    };
+
+  struct long_apply_test : public compile_fixture {
+    void test()
+      {
+      make_new_context(1024, 1024, 80, 128);
+      build_string_to_symbol();
+      build_apply();      
+      TEST_EQ("15", run("(apply + (list 1 2 3 4 5))"));
+      TEST_EQ("(8 7 6 5 4 3 2 1)", run("(define dm (list 8 7 6 5 4 3 2 1))"));
+      TEST_EQ("(9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 9 dm))"));
+      TEST_EQ("(10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 10 dm))"));
+      TEST_EQ("(11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 11 dm))"));
+      TEST_EQ("(12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 12 dm))"));
+      TEST_EQ("(13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 13 dm))"));
+      TEST_EQ("(14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 14 dm))"));
+      TEST_EQ("(15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 15 dm))"));
+      TEST_EQ("(16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 16 dm))"));
+      TEST_EQ("(17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 17 dm))"));
+      TEST_EQ("(18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 18 dm))"));
+      TEST_EQ("(19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 19 dm))")); 
+      TEST_EQ("190", run("(apply + dm)"));
+      TEST_EQ("19", run("(length dm)"));
+      TEST_EQ("(20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 20 dm))"));      
+      TEST_EQ("210", run("(apply + dm)"));
+      TEST_EQ("20", run("(length dm)"));
+      TEST_EQ("(21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 21 dm))"));
+      TEST_EQ("(22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 22 dm))"));
+      TEST_EQ("(23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 23 dm))"));
+      TEST_EQ("(24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 24 dm))"));
+      TEST_EQ("(25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)", run("(set! dm (cons 25 dm))"));     
+      TEST_EQ("325", run("(apply + dm)"));
+      TEST_EQ("25", run("(length dm)"));
+      /*
+      TEST_EQ("210", run("(apply + (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("<lambda>", run("(define (rms nums) (sqrt (/ (apply + (map * nums nums))(length nums))))"));      
+      TEST_EQ("11.9791", run("(rms (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("(define dm (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("dm"));
+      TEST_EQ("11.9791", run("(rms dm)"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("dm"));
+      */
+      }
+    };
+
+  struct long_apply_2_test : public compile_fixture_skiwi {
+    void test()
+      {
+      build_srfi1();
+      TEST_EQ("210", run("(%apply + (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("210", run("(apply + (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("<lambda>", run("(define (rms nums) (sqrt (/ (apply + (map * nums nums))(length nums))))"));
+      TEST_EQ("11.9791", run("(rms (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("(define dm (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("dm"));
+      TEST_EQ("11.9791", run("(rms dm)"));
+      TEST_EQ("(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)", run("dm"));
+      TEST_EQ("(0 1 2 3 4)", run("(iota 5)"));
+      TEST_EQ("2000", run("(define dm (iota 2000)) (length dm)"));
+      TEST_EQ("1999000", run("(apply + dm)"));
+      TEST_EQ("2000", run("(length dm)"));
       }
     };
 
@@ -6126,6 +6188,9 @@ void run_all_compile_tests()
   current_milliseconds_test().test();
   test_libskiwi_externals().test();
 #endif
+  apply().test();
+  long_apply_test().test();
+  long_apply_2_test().test();
 
 #ifdef PRINT_OUT_REGISTERS_AND_OPERANDS
   std::sort(operands.begin(), operands.end());
