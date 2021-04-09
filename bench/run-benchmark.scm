@@ -87,14 +87,24 @@
 	(error 'fatal-error args)))
 
 (define run-bench (lambda (count run)
-   (let loop ((count (- count 1)) (run run))
-     ;(display (format "loop ~s~%" count))
-     (cond
-	   ((eq? count 0) (run))
-	   (else (run) (loop (- count 1) run))
-	 )
-   )
-  ))
+  (let ((time-before-bench (current-milliseconds)))
+    (
+    begin
+      (define result
+        (let loop ((count (- count 1)) (run run))         
+          (cond
+	        ((eq? count 0) (run))
+	        (else (run) (loop (- count 1) run))
+	        )
+        )
+      )
+      (let ((time-after-bench (current-milliseconds)))
+        (display (format "Ran for ~s seconds ~%" (/ (- time-after-bench time-before-bench) 1000.0)))
+      )
+      result
+    )
+  )
+))
 
 (define run-benchmark (lambda (name count ok? run-maker . args)
   (display (format "running ~s (~s)~%" name count))
@@ -102,8 +112,8 @@
        (let ((result (if fast-run (run) (run-bench count run))))
 	        (if (ok? result)
 	        (begin
-	          (display result)
-            (newline)
+	          ;(display result)
+            ;(newline)
 			      result
 			    )
 			    (begin (display "I got ")(display result)(display "\n")(error "wrong result")))
