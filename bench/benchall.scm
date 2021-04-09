@@ -28,8 +28,15 @@
 (define (run-named-benchmark name)
   (display  name)
   (newline)
-  (let ((filename (string-append (symbol->string name) ".scm")))
+  (let ((filename (string-append (symbol->string name) ".scm"))
+       (time-before-bench (current-milliseconds)) 
+       )
+    begin
     (run-a-single-bench filename)
+    (let ((time-after-bench (current-milliseconds)))
+      (display (format "Compiled and ran for ~s seconds ~%" (/ (- time-after-bench time-before-bench) 1000.0)))
+
+    )
   )
 )
 
