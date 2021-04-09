@@ -5,14 +5,11 @@
 (import 'io)
 (import 'eval)
 
-(define new-benchmarks
-  '(conform))
-
 (define all-benchmarks
-   '(ack array1 boyer browse cat compiler cpstak ctak dderiv deriv 
-     destruc diviter dynamic earley fft fib fibc fibfp formattest 
-     fpsum gcbench graphs lattice maze mazefun mbrot nboyer 
-     nqueens ntakl paraffins parsing perm9 peval pnpoly primes 
+   '(ack array1 boyer browse cat compiler conform cpstak ctak dderiv 
+     deriv destruc diviter dynamic earley fft fib fibc fibfp 
+     formattest fpsum gcbench graphs lattice maze mazefun mbrot 
+     nboyer nqueens ntakl paraffins parsing perm9 peval pnpoly primes 
      puzzle quicksort ray sboyer scheme simplex slatex string 
      sum sum1 sumfp sumloop tail tak takl trav1 trav2 triangl)
 )
@@ -36,5 +33,5 @@
   )
 )
 
-(for-each run-named-benchmark new-benchmarks)
+(for-each run-named-benchmark all-benchmarks)
 
