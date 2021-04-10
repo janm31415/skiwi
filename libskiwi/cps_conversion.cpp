@@ -7,6 +7,8 @@
 #include <cassert>
 #include <sstream>
 #include <map>
+#include <deque>
+#include <list>
 
 #include "concurrency.h"
 
@@ -988,22 +990,22 @@ namespace {
 
 struct cps_conversion_helper
     {
-    uint64_t index;
-    Expression continuation;
-    bool continuation_can_be_moved;
+    std::vector<uint64_t> index;
+    std::vector<Expression> continuation;
+    std::vector<bool> continuation_can_be_moved;
     
     std::vector<Expression*> expressions_to_treat;
 
-    cps_conversion_helper() : continuation_can_be_moved(true) {}
+    cps_conversion_helper() {}
 
     bool continuation_is_lambda()
       {
-      return std::holds_alternative<Lambda>(continuation);
+      return std::holds_alternative<Lambda>(continuation.back());
       }
 
     bool continuation_is_variable()
       {
-      return std::holds_alternative<Variable>(continuation);
+      return std::holds_alternative<Variable>(continuation.back());
       }
 
     bool continuation_is_valid()
@@ -1011,7 +1013,7 @@ struct cps_conversion_helper
       if (!continuation_is_lambda() && !continuation_is_variable())
         return false;
       Program prog;
-      prog.expressions.push_back(continuation);
+      prog.expressions.push_back(continuation.back());
       tail_call_analysis(prog);
       return only_tail_calls(prog);
       }
@@ -1020,7 +1022,7 @@ struct cps_conversion_helper
       {
       if (!continuation_is_lambda())
         return false;
-      if (std::get<Lambda>(continuation).variables.size() != 1)
+      if (std::get<Lambda>(continuation.back()).variables.size() != 1)
         return false;
 
       return true;
@@ -1031,10 +1033,10 @@ struct cps_conversion_helper
       assert(std::holds_alternative<Literal>(e) || std::holds_alternative<Variable>(e) || std::holds_alternative<Nop>(e) || std::holds_alternative<Quote>(e));
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let l;
         l.bindings.emplace_back(lam.variables.front(), std::move(e));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           l.body.swap(lam.body);
         else
           l.body = lam.body;
@@ -1043,10 +1045,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(e));
         e = std::move(f);
         }
@@ -1060,7 +1062,7 @@ struct cps_conversion_helper
       Expression e1 = s.value.front();
 
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       Lambda l;
       l.variables.emplace_back(make_var_name(ccv.index));
       Set new_s;
@@ -1074,10 +1076,10 @@ struct cps_conversion_helper
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let let;
         let.bindings.emplace_back(lam.variables.front(), std::move(new_s));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           let.body.swap(lam.body);
         else
           let.body = lam.body;
@@ -1086,10 +1088,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(new_s));
         b.arguments.emplace_back(std::move(f));
         }
@@ -1101,7 +1103,7 @@ struct cps_conversion_helper
       assert(ccv.continuation_is_valid());
       e.swap(e1);
       visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-      index = ccv.index;
+      index.back() = ccv.index;
       }
 
     void cps_convert_set_simple(Expression& e)
@@ -1110,10 +1112,10 @@ struct cps_conversion_helper
       assert(is_simple(std::get<Set>(e).value.front()));
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let l;
         l.bindings.emplace_back(lam.variables.front(), std::move(e));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           l.body.swap(lam.body);
         else
           l.body = lam.body;
@@ -1122,10 +1124,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(e));
         e = std::move(f);
         }
@@ -1149,7 +1151,7 @@ struct cps_conversion_helper
       assert(std::holds_alternative<If>(e));
       If& i = std::get<If>(e);
 
-      continuation_can_be_moved = false;
+      continuation_can_be_moved.back() = false;
 
       size_t current_size = expressions_to_treat.size();
       for (size_t j = 1; j < i.arguments.size(); ++j)
@@ -1164,7 +1166,7 @@ struct cps_conversion_helper
         return;
 
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       Lambda l;
       l.variables.emplace_back(make_var_name(ccv.index));
 
@@ -1186,7 +1188,7 @@ struct cps_conversion_helper
       e = std::move(exp0);
       visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
 
-      index = ccv.index;
+      index.back() = ccv.index;
       }
 
     void cps_convert_begin_simple(Expression& e)
@@ -1255,7 +1257,7 @@ struct cps_conversion_helper
           treat_expressions(current_size);
           //visitor<Expression, cps_conversion_visitor>::visit(e2, this);
           cps_conversion_visitor ccv;
-          ccv.index = index + 1;
+          ccv.index = index.back() + 1;
           Lambda l;
           l.variables.emplace_back(make_var_name(ccv.index));
           if (std::holds_alternative<Begin>(e2))
@@ -1274,7 +1276,7 @@ struct cps_conversion_helper
           Expression arg = std::move(b.arguments[0]);
           e = std::move(arg);
           visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-          index = ccv.index;
+          index.back() = ccv.index;
           }
         }
       }
@@ -1296,10 +1298,10 @@ struct cps_conversion_helper
         simple[j] = is_simple(p.arguments[j]);
         if (!simple[j])
           {
-          nonsimple_vars[j] = make_var_name(index + j + 1);
+          nonsimple_vars[j] = make_var_name(index.back() + j + 1);
           }
         }
-      index += p.arguments.size();
+      index.back() += p.arguments.size();
 
       Lambda bottom_l;
       bottom_l.variables.push_back(nonsimple_vars.rbegin()->second);
@@ -1319,10 +1321,10 @@ struct cps_conversion_helper
         }
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let let;
         let.bindings.emplace_back(lam.variables.front(), std::move(bottom_p));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           let.body.swap(lam.body);
         else
           let.body = lam.body;
@@ -1331,22 +1333,22 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(bottom_p));
         bottom_b.arguments.emplace_back(std::move(f));
         }
       bottom_l.body.emplace_back(std::move(bottom_b));
 
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       ccv.continuation = Lambda();
       std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
       visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
-      index = ccv.index;
+      index.back() = ccv.index;
 
       auto it = nonsimple_vars.rbegin();
       auto prev_it = it;
@@ -1359,13 +1361,13 @@ struct cps_conversion_helper
         b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
         l.body.emplace_back(std::move(b));
         cps_conversion_visitor ccv2;
-        ccv2.index = index + 1;
+        ccv2.index = index.back() + 1;
         //ccv2.continuation = l;
         ccv2.continuation = Lambda();
         std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         assert(ccv2.continuation_is_valid());
         visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
-        index = ccv2.index;
+        index.back() = ccv2.index;
         }
 
       Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
@@ -1378,10 +1380,10 @@ struct cps_conversion_helper
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let l;
         l.bindings.emplace_back(lam.variables.front(), std::move(e));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           l.body.swap(lam.body);
         else
           l.body = lam.body;
@@ -1390,10 +1392,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(e));
         e = std::move(f);
         }
@@ -1420,10 +1422,10 @@ struct cps_conversion_helper
         simple[j] = is_simple(p.arguments[j]);
         if (!simple[j])
           {
-          nonsimple_vars[j] = make_var_name(index + j + 1);
+          nonsimple_vars[j] = make_var_name(index.back() + j + 1);
           }
         }
-      index += p.arguments.size();
+      index.back() += p.arguments.size();
 
       Lambda bottom_l;
       bottom_l.variables.push_back(nonsimple_vars.rbegin()->second);
@@ -1443,10 +1445,10 @@ struct cps_conversion_helper
         }
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let let;
         let.bindings.emplace_back(lam.variables.front(), std::move(bottom_p));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           let.body.swap(lam.body);
         else
           let.body = lam.body;
@@ -1455,22 +1457,22 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(bottom_p));
         bottom_b.arguments.emplace_back(std::move(f));
         }
       bottom_l.body.emplace_back(std::move(bottom_b));
 
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       ccv.continuation = Lambda();
       std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
       visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
-      index = ccv.index;
+      index.back() = ccv.index;
 
       auto it = nonsimple_vars.rbegin();
       auto prev_it = it;
@@ -1483,13 +1485,13 @@ struct cps_conversion_helper
         b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
         l.body.emplace_back(std::move(b));
         cps_conversion_visitor ccv2;
-        ccv2.index = index + 1;
+        ccv2.index = index.back() + 1;
         //ccv2.continuation = l;
         ccv2.continuation = Lambda();
         std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         assert(ccv2.continuation_is_valid());
         visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
-        index = ccv2.index;
+        index.back() = ccv2.index;
         }
 
       Expression expr = std::move(p.arguments[nonsimple_vars.begin()->first]);
@@ -1502,10 +1504,10 @@ struct cps_conversion_helper
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let l;
         l.bindings.emplace_back(lam.variables.front(), std::move(e));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           l.body.swap(lam.body);
         else
           l.body = lam.body;
@@ -1514,10 +1516,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(e));
         e = std::move(f);
         }
@@ -1536,21 +1538,21 @@ struct cps_conversion_helper
       assert(std::holds_alternative<Lambda>(e));
       Lambda& l = std::get<Lambda>(e);
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       Variable k;
       k.name = make_var_name(ccv.index);
       ccv.continuation = k;
       assert(ccv.continuation_is_valid());
       visitor<Expression, cps_conversion_visitor>::visit(l.body.front(), &ccv);
-      index = ccv.index;
+      index.back() = ccv.index;
       l.variables.insert(l.variables.begin(), k.name);
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
-        Lambda& lam = std::get<Lambda>(continuation);
+        Lambda& lam = std::get<Lambda>(continuation.back());
         Let let;
         let.bindings.emplace_back(lam.variables.front(), std::move(l));
-        if (continuation_can_be_moved)
+        if (continuation_can_be_moved.back())
           let.body.swap(lam.body);
         else
           let.body = lam.body;
@@ -1559,10 +1561,10 @@ struct cps_conversion_helper
       else
         {
         FunCall f;
-        if (continuation_can_be_moved)
-          f.fun.emplace_back(std::move(continuation));
+        if (continuation_can_be_moved.back())
+          f.fun.emplace_back(std::move(continuation.back()));
         else
-          f.fun.push_back(continuation);
+          f.fun.push_back(continuation.back());
         f.arguments.emplace_back(std::move(l));
         e = std::move(f);
         }
@@ -1583,17 +1585,17 @@ struct cps_conversion_helper
 
       std::map<size_t, std::string> nonsimple_vars;
 
-      std::string r0 = make_var_name(index + 1);
+      std::string r0 = make_var_name(index.back() + 1);
       nonsimple_vars[0] = r0;
       for (size_t j = 1; j < arguments.size(); ++j)
         {
         simple_arg[j] = is_simple(arguments[j]);
         if (!simple_arg[j])
           {
-          nonsimple_vars[j] = make_var_name(index + j + 1);
+          nonsimple_vars[j] = make_var_name(index.back() + j + 1);
           }
         }
-      index += arguments.size();
+      index.back() += arguments.size();
 
 
       Lambda bottom_l;
@@ -1603,10 +1605,10 @@ struct cps_conversion_helper
       Variable bottom_v;
       bottom_v.name = r0;
       bottom_f.fun.emplace_back(std::move(bottom_v));
-      if (continuation_can_be_moved)
-        bottom_f.arguments.emplace_back(std::move(continuation));
+      if (continuation_can_be_moved.back())
+        bottom_f.arguments.emplace_back(std::move(continuation.back()));
       else
-        bottom_f.arguments.push_back(continuation);
+        bottom_f.arguments.push_back(continuation.back());
       for (size_t j = 1; j < arguments.size(); ++j)
         {
         if (simple_arg[j])
@@ -1622,12 +1624,12 @@ struct cps_conversion_helper
       bottom_l.body.emplace_back(std::move(bottom_b));
 
       cps_conversion_visitor ccv;
-      ccv.index = index + 1;
+      ccv.index = index.back() + 1;
       ccv.continuation = Lambda();
       std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
       visitor<Expression, cps_conversion_visitor>::visit(arguments[nonsimple_vars.rbegin()->first], &ccv);
-      index = ccv.index;
+      index.back()= ccv.index;
 
       auto it = nonsimple_vars.rbegin();
       ++it;
@@ -1641,12 +1643,12 @@ struct cps_conversion_helper
         b.arguments.emplace_back(std::move(arguments[prev_it->first]));
         l.body.emplace_back(std::move(b));
         cps_conversion_visitor ccv2;
-        ccv2.index = index + 1;
+        ccv2.index = index.back() + 1;
         ccv2.continuation = Lambda();
         std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         assert(ccv2.continuation_is_valid());
         visitor<Expression, cps_conversion_visitor>::visit(arguments[it->first], &ccv2);
-        index = ccv2.index;
+        index.back()= ccv2.index;
         }
 
       Expression expr = std::move(arguments[nonsimple_vars.begin()->first]);
@@ -1680,13 +1682,13 @@ struct cps_conversion_helper
           lam.body.emplace_back(std::move(b));
           }
         cps_conversion_visitor ccv;
-        ccv.index = index + 1;
+        ccv.index = index.back() + 1;
         ccv.continuation = Lambda();
         std::swap(std::get<Lambda>(ccv.continuation), lam); // this is a very substantial speedup trick!!
         assert(ccv.continuation_is_valid());
         visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
         expr = std::move(l.bindings[id].second);
-        index = ccv.index;
+        index.back() = ccv.index;
         }
       e.swap(expr);
       }
@@ -1812,20 +1814,21 @@ void cps_conversion(Program& prog, const compiler_options& ops)
       parallel_for(size_t(0), sz, [&](size_t i)
         {
         cps_conversion_helper ccv;
-        ccv.index = 0;
+        ccv.continuation_can_be_moved.push_back(true);
+        ccv.index.push_back(0);
         auto& arg = beg.arguments[i];
         Lambda l;
-        l.variables.push_back(make_var_name(ccv.index));
+        l.variables.push_back(make_var_name(ccv.index.back()));
         PrimitiveCall prim;
         prim.primitive_name = "halt";
         Variable v;
-        v.name = make_var_name(ccv.index);
+        v.name = make_var_name(ccv.index.back());
         prim.arguments.emplace_back(std::move(v));
         Begin b;
         b.arguments.emplace_back(std::move(prim));
         l.body.emplace_back(std::move(b));
-        ccv.continuation = Lambda();
-        std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
+        ccv.continuation.push_back(Lambda());
+        std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
         assert(ccv.continuation_is_valid());
         //ccv.visit(arg);
         ccv.expressions_to_treat.push_back(&arg);
@@ -1835,19 +1838,20 @@ void cps_conversion(Program& prog, const compiler_options& ops)
     else
       {
       cps_conversion_helper ccv;
-      ccv.index = 0;
+      ccv.continuation_can_be_moved.push_back(true);
+      ccv.index.push_back(0);
       Lambda l;
-      l.variables.push_back(make_var_name(ccv.index));
+      l.variables.push_back(make_var_name(ccv.index.back()));
       PrimitiveCall prim;
       prim.primitive_name = "halt";
       Variable v;
-      v.name = make_var_name(ccv.index);
+      v.name = make_var_name(ccv.index.back());
       prim.arguments.emplace_back(std::move(v));
       Begin b;
       b.arguments.emplace_back(std::move(prim));
       l.body.emplace_back(std::move(b));
-      ccv.continuation = Lambda();
-      std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
+      ccv.continuation.push_back(Lambda());
+      std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
       //ccv.visit(e);
       ccv.expressions_to_treat.push_back(&e);
