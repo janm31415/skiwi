@@ -1779,14 +1779,24 @@ struct cps_conversion_helper
           b.arguments.emplace_back(std::move(expr));
           lam.body.emplace_back(std::move(b));
           }
-        cps_conversion_visitor ccv;
-        ccv.index = index.back() + 1;
-        ccv.continuation = Lambda();
-        std::swap(std::get<Lambda>(ccv.continuation), lam); // this is a very substantial speedup trick!!
-        assert(ccv.continuation_is_valid());
-        visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
+        //cps_conversion_visitor ccv;
+        //ccv.index = index.back() + 1;
+        //ccv.continuation = Lambda();
+        //std::swap(std::get<Lambda>(ccv.continuation), lam); // this is a very substantial speedup trick!!
+        index.push_back(index.back()+1);
+        continuation.push_back(Lambda());
+        std::swap(std::get<Lambda>(continuation.back()), lam); // this is a very substantial speedup trick!!
+        assert(continuation_is_valid());
+        //visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
+        size_t current_size = expressions_to_treat.size();
+        expressions_to_treat.push_back(&l.bindings[id].second);
+        treat_expressions(current_size);
+        auto ind = index.back();
+        index.pop_back();
+        index.back() = ind;
+        continuation.pop_back();
         expr = std::move(l.bindings[id].second);
-        index.back() = ccv.index;
+        //index.back() = ccv.index;
         }
       e.swap(expr);
       }
