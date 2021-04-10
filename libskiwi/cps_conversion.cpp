@@ -87,7 +87,7 @@ namespace
     str << "#%k" << index;
     return str.str();
     }
-
+/*
   struct cps_conversion_visitor : public base_visitor<cps_conversion_visitor>
     {
     uint64_t index;
@@ -876,8 +876,9 @@ namespace
       return true;
       }
     };
+    */
   }
-
+/*
 void cps_conversion_old(Program& prog, const compiler_options& ops)
   {
   assert(prog.expressions.size() <= 1);
@@ -932,56 +933,9 @@ void cps_conversion_old(Program& prog, const compiler_options& ops)
       }
     }
   prog.cps_converted = true;
-  /*
-  assert(prog.expressions.size() <= 1);
-  cps_conversion_visitor ccv;
-  ccv.index = 0;
-
-  if (prog.expressions.size() == 1)
-    {
-    Expression& e = prog.expressions.front();
-    if (std::holds_alternative<Begin>(e))
-      {
-      Begin& beg = std::get<Begin>(e);
-      for (auto& arg : beg.arguments)
-        {
-        Lambda l;
-        l.variables.push_back(make_var_name(ccv.index));
-        PrimitiveCall prim;
-        prim.primitive_name = "halt";
-        Variable v;
-        v.name = make_var_name(ccv.index);
-        prim.arguments.push_back(v);
-        Begin b;
-        b.arguments.push_back(prim);
-        l.body.push_back(b);
-        ccv.continuation = l;
-        assert(ccv.continuation_is_valid());
-        visitor<Expression, cps_conversion_visitor>::visit(arg, &ccv);
-        ++ccv.index;
-        }
-      }
-    else
-      {
-      Lambda l;
-      l.variables.push_back(make_var_name(ccv.index));
-      PrimitiveCall prim;
-      prim.primitive_name = "halt";
-      Variable v;
-      v.name = make_var_name(ccv.index);
-      prim.arguments.push_back(v);
-      Begin b;
-      b.arguments.push_back(prim);
-      l.body.push_back(b);
-      ccv.continuation = l;
-      assert(ccv.continuation_is_valid());
-      visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-      }
-    }
-  prog.cps_converted = true;
-  */
+  
   }
-
+*/
 
 
 
