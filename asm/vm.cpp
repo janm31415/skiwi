@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <cmath>
+#include <algorithm>
 
 ASM_BEGIN
 
@@ -745,7 +747,7 @@ void* vm_bytecode(uint64_t& size, asmcode& code)
 void free_bytecode(void* f, uint64_t size)
   {
   (void*)size;
-  delete[] f;
+  delete[] (uint8_t*)f;
   }
 
 
