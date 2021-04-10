@@ -178,7 +178,7 @@ namespace
       assert(std::holds_alternative<Set>(e));
       Set& s = std::get<Set>(e);
       assert(!is_simple(s.value.front()));
-      Expression e1 = s.value.front();
+      Expression e1 = std::move(s.value.front());
 
       //cps_conversion_visitor ccv;
       index.push_back(index.back()+1);
@@ -283,7 +283,7 @@ namespace
       size_t current_size = expressions_to_treat.size();
       for (size_t j = 1; j < i.arguments.size(); ++j)
           expressions_to_treat.push_back(&i.arguments[j]);
-      treat_expressions(current_size);
+      //treat_expressions(current_size);
           
       
       //for (size_t j = 1; j < i.arguments.size(); ++j)
@@ -291,6 +291,8 @@ namespace
 
       if (is_simple(i.arguments.front()))
         return;
+        
+      treat_expressions(current_size);
 
       //cps_conversion_visitor ccv;
       //ccv.index = index.back() + 1;
@@ -340,9 +342,9 @@ namespace
         b.arguments.emplace_back(Nop());
         }
       assert(is_simple(e));
-      size_t current_size = expressions_to_treat.size();
+      //size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&b.arguments.back());
-      treat_expressions(current_size);
+      //treat_expressions(current_size);
       //visitor<Expression, cps_conversion_visitor>::visit(b.arguments.back(), this);
       }
 
@@ -354,9 +356,9 @@ namespace
         cps_convert_begin_simple(e);
       else if (b.arguments.size() == 1)
         {
-        size_t current_size = expressions_to_treat.size();
+        //size_t current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&b.arguments.front());
-        treat_expressions(current_size);
+        //treat_expressions(current_size);
         //visitor<Expression, cps_conversion_visitor>::visit(b.arguments.front(), this);
         }
       else
@@ -1070,9 +1072,9 @@ namespace
       else if (all_simple)
         {
         //_previsit(l.body.front());
-        size_t current_size = expressions_to_treat.size();
+        //size_t current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&l.body.front());
-        treat_expressions(current_size);
+        //treat_expressions(current_size);
         }
       else
         {
