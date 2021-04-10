@@ -1606,14 +1606,23 @@ struct cps_conversion_helper
       {
       assert(std::holds_alternative<Lambda>(e));
       Lambda& l = std::get<Lambda>(e);
-      cps_conversion_visitor ccv;
-      ccv.index = index.back() + 1;
+      //cps_conversion_visitor ccv;
+      //ccv.index = index.back() + 1;
+      index.push_back(index.back()+1);
       Variable k;
-      k.name = make_var_name(ccv.index);
-      ccv.continuation = k;
-      assert(ccv.continuation_is_valid());
-      visitor<Expression, cps_conversion_visitor>::visit(l.body.front(), &ccv);
-      index.back() = ccv.index;
+      k.name = make_var_name(index.back());
+      //ccv.continuation = k;
+      continuation.push_back(k);
+      assert(continuation_is_valid());
+      size_t current_size = expressions_to_treat.size();
+      expressions_to_treat.push_back(&l.body.front());
+      treat_expressions(current_size);
+      //visitor<Expression, cps_conversion_visitor>::visit(l.body.front(), &ccv);
+      //index.back() = ccv.index;
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
       l.variables.insert(l.variables.begin(), k.name);
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
