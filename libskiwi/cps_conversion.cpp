@@ -1516,13 +1516,23 @@ struct cps_conversion_helper
         }
       bottom_l.body.emplace_back(std::move(bottom_b));
 
-      cps_conversion_visitor ccv;
-      ccv.index = index.back() + 1;
-      ccv.continuation = Lambda();
-      std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
-      assert(ccv.continuation_is_valid());
-      visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
-      index.back() = ccv.index;
+      //cps_conversion_visitor ccv;
+      //ccv.index = index.back() + 1;
+      //ccv.continuation = Lambda();
+      index.push_back(index.back()+1);
+      continuation.emplace_back(Lambda());
+      //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
+      std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
+      assert(continuation_is_valid());
+      //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
+      size_t current_size = expressions_to_treat.size();
+      expressions_to_treat.push_back(&p.arguments[nonsimple_vars.rbegin()->first]);
+      treat_expressions(current_size);
+      //index.back() = ccv.index;
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
 
       auto it = nonsimple_vars.rbegin();
       auto prev_it = it;
@@ -1534,14 +1544,23 @@ struct cps_conversion_helper
         Begin b;
         b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
         l.body.emplace_back(std::move(b));
-        cps_conversion_visitor ccv2;
-        ccv2.index = index.back() + 1;
+        //cps_conversion_visitor ccv2;
+        //ccv2.index = index.back() + 1;
         //ccv2.continuation = l;
-        ccv2.continuation = Lambda();
-        std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
-        assert(ccv2.continuation_is_valid());
-        visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
-        index.back() = ccv2.index;
+        //ccv2.continuation = Lambda();
+        index.push_back(index.back()+1);
+        continuation.emplace_back(Lambda());
+        //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
+        std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
+        assert(continuation_is_valid());
+        //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
+        current_size = expressions_to_treat.size();
+        expressions_to_treat.push_back(&p.arguments[it->first]);
+        treat_expressions(current_size);
+        ind = index.back();
+        index.pop_back();
+        index.back() = ind;
+        continuation.pop_back();
         }
 
       Expression expr = std::move(p.arguments[nonsimple_vars.begin()->first]);
