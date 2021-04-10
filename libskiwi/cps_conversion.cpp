@@ -1276,10 +1276,11 @@ struct cps_conversion_helper
           expressions_to_treat.push_back(&e2);
           treat_expressions(current_size);
           //visitor<Expression, cps_conversion_visitor>::visit(e2, this);
-          cps_conversion_visitor ccv;
-          ccv.index = index.back() + 1;
+          //cps_conversion_visitor ccv;
+          //ccv.index = index.back() + 1;
+          index.push_back(index.back()+1);
           Lambda l;
-          l.variables.emplace_back(make_var_name(ccv.index));
+          l.variables.emplace_back(make_var_name(index.back()));
           if (std::holds_alternative<Begin>(e2))
             l.body.emplace_back(std::move(e2));
           else
@@ -1290,13 +1291,22 @@ struct cps_conversion_helper
             //this scenario is triggered by CHECK_EQUAL("130", run("(letrec([f 12][g(lambda(n) (set! f n))])(g 130) f) "));
             }
           //ccv.continuation = l;
-          ccv.continuation = Lambda();
-          std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
-          assert(ccv.continuation_is_valid());
+          //continuation = Lambda();
+          //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
+          continuation.emplace_back(Lambda());
+          std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
+          assert(continuation_is_valid());
           Expression arg = std::move(b.arguments[0]);
           e = std::move(arg);
-          visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-          index.back() = ccv.index;
+          //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
+          current_size = expressions_to_treat.size();
+          expressions_to_treat.push_back(&e);
+          treat_expressions(current_size);
+          auto ind = index.back();
+          index.pop_back();
+          index.back() = ind;
+          continuation.pop_back();
+          //index.back() = ccv.index;
           }
         }
       }
