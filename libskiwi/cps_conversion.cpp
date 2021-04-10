@@ -1061,16 +1061,17 @@ struct cps_conversion_helper
       assert(!is_simple(s.value.front()));
       Expression e1 = s.value.front();
 
-      cps_conversion_visitor ccv;
-      ccv.index = index.back() + 1;
+      //cps_conversion_visitor ccv;
+      index.push_back(index.back()+1);
+      //ccv.index = index.back() + 1;
       Lambda l;
-      l.variables.emplace_back(make_var_name(ccv.index));
+      l.variables.emplace_back(make_var_name(index.back()));
       Set new_s;
       new_s.name = s.name;
       new_s.originates_from_define = s.originates_from_define;
       new_s.originates_from_quote = s.originates_from_quote;
       Variable v;
-      v.name = make_var_name(ccv.index);
+      v.name = make_var_name(index.back());
       new_s.value.emplace_back(std::move(v));
       Begin b;
 
@@ -1098,12 +1099,18 @@ struct cps_conversion_helper
       l.body.emplace_back(std::move(b));
 
       //ccv.continuation = l;
-      ccv.continuation = Lambda();
-      std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
+      continuation.emplace_back(l);
+      //ccv.continuation = Lambda();
+      //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
       assert(ccv.continuation_is_valid());
       e.swap(e1);
-      visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-      index.back() = ccv.index;
+      //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
+      size_t current_size = expressions_to_treat.size();
+      expressions_to_treat.push_back(&e);
+      treat_expressions(current_size);
+      //index.back() = ccv.index;
+      index.pop_back();
+      continuation.pop_back();
       }
 
     void cps_convert_set_simple(Expression& e)
