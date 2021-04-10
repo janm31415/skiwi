@@ -14,8 +14,13 @@
 
 SKIWI_BEGIN
 
+#define cps_assert(EX)
+
+//#define cps_assert(EX) assert(EX)
+
 namespace
   {
+  
 
   bool is_simple(const Expression& e)
     {
@@ -149,14 +154,14 @@ namespace
 
     void cps_convert_literal_or_variable_or_nop_or_quote(Expression& e)
       {
-      assert(std::holds_alternative<Literal>(e) || std::holds_alternative<Variable>(e) || std::holds_alternative<Nop>(e) || std::holds_alternative<Quote>(e));
+      cps_assert(std::holds_alternative<Literal>(e) || std::holds_alternative<Variable>(e) || std::holds_alternative<Nop>(e) || std::holds_alternative<Quote>(e));
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
         Lambda& lam = std::get<Lambda>(continuation.back());
         Let l;
         l.bindings.emplace_back(lam.variables.front(), std::move(e));
         if (continuation_can_be_moved.back())
-          l.body.swap(lam.body);
+          l.body = std::move(lam.body);
         else
           l.body = lam.body;
         e = std::move(l);
@@ -175,9 +180,9 @@ namespace
 
     void cps_convert_set_nonsimple(Expression& e)
       {
-      assert(std::holds_alternative<Set>(e));
+      cps_assert(std::holds_alternative<Set>(e));
       Set& s = std::get<Set>(e);
-      assert(!is_simple(s.value.front()));
+      cps_assert(!is_simple(s.value.front()));
       Expression e1 = std::move(s.value.front());
 
       //cps_conversion_visitor ccv;
@@ -222,7 +227,7 @@ namespace
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
       //ccv.continuation = Lambda();
       //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       e.swap(e1);
       //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
       size_t current_size = expressions_to_treat.size();
@@ -235,8 +240,8 @@ namespace
 
     void cps_convert_set_simple(Expression& e)
       {
-      assert(std::holds_alternative<Set>(e));
-      assert(is_simple(std::get<Set>(e).value.front()));
+      cps_assert(std::holds_alternative<Set>(e));
+      cps_assert(is_simple(std::get<Set>(e).value.front()));
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
         Lambda& lam = std::get<Lambda>(continuation.back());
@@ -262,7 +267,7 @@ namespace
 
     void cps_convert_set(Expression& e)
       {
-      assert(std::holds_alternative<Set>(e));
+      cps_assert(std::holds_alternative<Set>(e));
       Set& s = std::get<Set>(e);
 
       if (is_simple(s.value.front()))
@@ -270,12 +275,12 @@ namespace
       else
         cps_convert_set_nonsimple(e);
 
-      assert(find(e, [](const Expression& e) {return std::holds_alternative<Set>(e); }));
+      cps_assert(find(e, [](const Expression& e) {return std::holds_alternative<Set>(e); }));
       }
 
     void cps_convert_if(Expression& e)
       {
-      assert(std::holds_alternative<If>(e));
+      cps_assert(std::holds_alternative<If>(e));
       If& i = std::get<If>(e);
 
       continuation_can_be_moved.back() = false;
@@ -315,7 +320,7 @@ namespace
       //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
       continuation.emplace_back(Lambda());
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
 
       continuation_can_be_moved.push_back(true);
       e = std::move(exp0);
@@ -334,14 +339,14 @@ namespace
 
     void cps_convert_begin_simple(Expression& e)
       {
-      assert(std::holds_alternative<Begin>(e));
+      cps_assert(std::holds_alternative<Begin>(e));
       Begin& b = std::get<Begin>(e);
       if (b.arguments.empty())
         {
         Nop n;
         b.arguments.emplace_back(Nop());
         }
-      assert(is_simple(e));
+      cps_assert(is_simple(e));
       //size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&b.arguments.back());
       //treat_expressions(current_size);
@@ -350,7 +355,7 @@ namespace
 
     void cps_convert_begin(Expression& e)
       {
-      assert(std::holds_alternative<Begin>(e));
+      cps_assert(std::holds_alternative<Begin>(e));
       Begin& b = std::get<Begin>(e);
       if (is_simple(e) || b.arguments.empty())
         cps_convert_begin_simple(e);
@@ -416,7 +421,7 @@ namespace
           //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
           continuation.emplace_back(Lambda());
           std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-          assert(continuation_is_valid());
+          cps_assert(continuation_is_valid());
           Expression arg = std::move(b.arguments[0]);
           e = std::move(arg);
           //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
@@ -434,14 +439,14 @@ namespace
 
     void cps_convert_prim_nonsimple(Expression& e)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
       if (p.arguments.empty())
         {
         cps_convert_prim_simple(e);
         return;
         }
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       std::vector<std::pair<size_t, std::string>> nonsimple_vars;
       std::vector<bool> simple(p.arguments.size());
       for (size_t j = 0; j < p.arguments.size(); ++j)
@@ -501,7 +506,7 @@ namespace
       continuation.emplace_back(Lambda());
       //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
       //size_t current_size = expressions_to_treat.size();
       
@@ -514,9 +519,9 @@ namespace
       
     void cps_convert_prim_nonsimple_step3(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       
       auto ind = index.back();
       index.pop_back();
@@ -529,9 +534,9 @@ namespace
       
     void cps_convert_prim_nonsimple_step2(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars, uint32_t var_index)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       
      
            
@@ -563,7 +568,7 @@ namespace
       continuation.emplace_back(Lambda());
       //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
       //size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&p.arguments[it->first]);
@@ -573,9 +578,9 @@ namespace
       
     void cps_convert_prim_nonsimple_step1(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       
       expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_3);
       expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
@@ -613,7 +618,7 @@ namespace
         continuation.emplace_back(Lambda());
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-        assert(continuation_is_valid());
+        cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
         size_t current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&p.arguments[it->first]);
@@ -631,9 +636,9 @@ namespace
       
     void cps_convert_prim_nonsimple_step1_old(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       
       //index.back() = ccv.index;
       auto ind = index.back();
@@ -659,7 +664,7 @@ namespace
         continuation.emplace_back(Lambda());
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-        assert(continuation_is_valid());
+        cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
         size_t current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&p.arguments[it->first]);
@@ -677,7 +682,7 @@ namespace
 
     void cps_convert_prim_simple(Expression& e)
       {
-      assert(std::holds_alternative<PrimitiveCall>(e));
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
@@ -713,9 +718,9 @@ namespace
 
     void cps_convert_foreign_nonsimple(Expression& e)
       {
-      assert(std::holds_alternative<ForeignCall>(e));
+      cps_assert(std::holds_alternative<ForeignCall>(e));
       ForeignCall& p = std::get<ForeignCall>(e);
-      assert(!p.arguments.empty());
+      cps_assert(!p.arguments.empty());
       std::map<size_t, std::string> nonsimple_vars;
       std::vector<bool> simple(p.arguments.size());
       for (size_t j = 0; j < p.arguments.size(); ++j)
@@ -774,7 +779,7 @@ namespace
       continuation.emplace_back(Lambda());
       //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
       size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&p.arguments[nonsimple_vars.rbegin()->first]);
@@ -803,7 +808,7 @@ namespace
         continuation.emplace_back(Lambda());
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-        assert(continuation_is_valid());
+        cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
         current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&p.arguments[it->first]);
@@ -820,7 +825,7 @@ namespace
 
     void cps_convert_foreign_simple(Expression& e)
       {
-      assert(std::holds_alternative<ForeignCall>(e));
+      cps_assert(std::holds_alternative<ForeignCall>(e));
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
         {
@@ -855,7 +860,7 @@ namespace
 
     void cps_convert_lambda(Expression& e)
       {
-      assert(std::holds_alternative<Lambda>(e));
+      cps_assert(std::holds_alternative<Lambda>(e));
       Lambda& l = std::get<Lambda>(e);
       //cps_conversion_visitor ccv;
       //ccv.index = index.back() + 1;
@@ -864,7 +869,7 @@ namespace
       k.name = make_var_name(index.back());
       //ccv.continuation = k;
       continuation.push_back(k);
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&l.body.front());
       treat_expressions(current_size);
@@ -901,7 +906,7 @@ namespace
 
     void cps_convert_funcall(Expression& e)
       {
-      assert(std::holds_alternative<FunCall>(e));
+      cps_assert(std::holds_alternative<FunCall>(e));
       FunCall& f = std::get<FunCall>(e);
 
       std::vector<Expression> arguments;
@@ -959,7 +964,7 @@ namespace
       index.push_back(index.back()+1);
       continuation.emplace_back(Lambda());
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
-      assert(continuation_is_valid());
+      cps_assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(arguments[nonsimple_vars.rbegin()->first], &ccv);
       size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&arguments[nonsimple_vars.rbegin()->first]);
@@ -988,7 +993,7 @@ namespace
         index.push_back(index.back()+1);
         continuation.emplace_back(Lambda());
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-        assert(continuation_is_valid());
+        cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(arguments[it->first], &ccv2);
         //index.back()= ccv2.index;
         current_size = expressions_to_treat.size();
@@ -1007,7 +1012,7 @@ namespace
 
     void cps_convert_let_nonsimple(Expression& e)
       {
-      assert(std::holds_alternative<Let>(e));
+      cps_assert(std::holds_alternative<Let>(e));
       Let& l = std::get<Let>(e);
       //_previsit(l.body.front());
       size_t current_size = expressions_to_treat.size();
@@ -1037,7 +1042,7 @@ namespace
         index.push_back(index.back()+1);
         continuation.push_back(Lambda());
         std::swap(std::get<Lambda>(continuation.back()), lam); // this is a very substantial speedup trick!!
-        assert(continuation_is_valid());
+        cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
         size_t current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&l.bindings[id].second);
@@ -1054,7 +1059,7 @@ namespace
 
     void cps_convert_let(Expression& e)
       {
-      assert(std::holds_alternative<Let>(e));
+      cps_assert(std::holds_alternative<Let>(e));
       Let& l = std::get<Let>(e);
 
       std::vector<bool> simple(l.bindings.size());
@@ -1204,7 +1209,7 @@ namespace
 
 void cps_conversion(Program& prog, const compiler_options& ops)
   {
-  assert(prog.expressions.size() <= 1);
+  cps_assert(prog.expressions.size() <= 1);
 
 
   if (prog.expressions.size() == 1)
@@ -1232,7 +1237,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
         l.body.emplace_back(std::move(b));
         ccv.continuation.push_back(Lambda());
         std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
-        assert(ccv.continuation_is_valid());
+        cps_assert(ccv.continuation_is_valid());
         //ccv.visit(arg);
         ccv.expressions_to_treat.push_back(&arg);
         ccv.treat_expressions(0);
@@ -1255,7 +1260,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
       l.body.emplace_back(std::move(b));
       ccv.continuation.push_back(Lambda());
       std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
-      assert(ccv.continuation_is_valid());
+      cps_assert(ccv.continuation_is_valid());
       //ccv.visit(e);
       ccv.expressions_to_treat.push_back(&e);
       ccv.treat_expressions(0);
