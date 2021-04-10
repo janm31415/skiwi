@@ -87,6 +87,22 @@ namespace
     str << "#%k" << index;
     return str.str();
     }
+    
+  struct cps_conversion_state
+    {
+    enum struct e_conversion_state
+      {
+      T_INIT,
+      T_STEP_1
+      };
+    Expression* p_expr;
+    e_conversion_state state;
+    std::map<size_t, std::string> nonsimple_vars;
+    
+    cps_conversion_state() : p_expr(nullptr), state(e_conversion_state::T_INIT) {}
+    cps_conversion_state(Expression* ip_expr) : p_expr(ip_expr), state(e_conversion_state::T_INIT) {}
+    cps_conversion_state(Expression* ip_expr, e_conversion_state s) : p_expr(ip_expr), state(s) {}
+    };
 
   struct cps_conversion_helper
     {
@@ -94,7 +110,7 @@ namespace
     std::vector<Expression> continuation;
     std::vector<bool> continuation_can_be_moved;
     
-    std::vector<Expression*> expressions_to_treat;
+    std::vector<cps_conversion_state> expressions_to_treat;
 
     cps_conversion_helper() {}
 
@@ -481,9 +497,21 @@ namespace
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
       assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[nonsimple_vars.rbegin()->first], &ccv);
-      size_t current_size = expressions_to_treat.size();
-      expressions_to_treat.push_back(&p.arguments[nonsimple_vars.rbegin()->first]);
-      treat_expressions(current_size);
+      //size_t current_size = expressions_to_treat.size();
+      
+      expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_1);
+      expressions_to_treat.back().nonsimple_vars.swap(nonsimple_vars);
+      expressions_to_treat.emplace_back(&p.arguments[expressions_to_treat.back().nonsimple_vars.rbegin()->first]);
+      //expressions_to_treat.emplace_back(&std::get<PrimitiveCall>(*expressions_to_treat.back().p_expr).arguments[nonsimple_vars.rbegin()->first]);
+      //treat_expressions(current_size);
+      }
+      
+    void cps_convert_prim_nonsimple_step1(Expression& e, std::map<size_t, std::string>& nonsimple_vars)
+      {
+      assert(std::holds_alternative<PrimitiveCall>(e));
+      PrimitiveCall& p = std::get<PrimitiveCall>(e);
+      assert(!p.arguments.empty());
+      
       //index.back() = ccv.index;
       auto ind = index.back();
       index.pop_back();
@@ -951,57 +979,77 @@ namespace
       {
       while (expressions_to_treat.size() > target)
         {
-        Expression* p_expr = expressions_to_treat.back();
+        //Expression* p_expr = expressions_to_treat.back();
+        cps_conversion_state cps_state = expressions_to_treat.back();
         expressions_to_treat.pop_back();
-        Expression& e = *p_expr;
-        if (std::holds_alternative<Literal>(e))
+        Expression& e = *cps_state.p_expr;
+        switch (cps_state.state)
           {
-          cps_convert_literal_or_variable_or_nop_or_quote(e);
-          }
-        else if (std::holds_alternative<Variable>(e))
-          {
-          cps_convert_literal_or_variable_or_nop_or_quote(e);
-          }
-        else if (std::holds_alternative<Nop>(e))
-          {
-          cps_convert_literal_or_variable_or_nop_or_quote(e);
-          }
-        else if (std::holds_alternative<Quote>(e))
-          {
-          cps_convert_literal_or_variable_or_nop_or_quote(e);
-          }
-        else if (std::holds_alternative<Set>(e))
-          {
-          cps_convert_set(e);
-          }
-        else if (std::holds_alternative<If>(e))
-          {
-          cps_convert_if(e);
-          }
-        else if (std::holds_alternative<Begin>(e))
-          {
-          cps_convert_begin(e);
-          }
-        else if (std::holds_alternative<PrimitiveCall>(e))
-          {
-          cps_convert_prim(e);
-          }
-        else if (std::holds_alternative<ForeignCall>(e))
-          {
-          cps_convert_foreign(e);
-          }
-        else if (std::holds_alternative<Lambda>(e))
-          {
-          cps_convert_lambda(e);
-          }
-        else if (std::holds_alternative<FunCall>(e))
-          {
-          cps_convert_funcall(e);
-          }
-        else if (std::holds_alternative<Let>(e))
-          {
-          cps_convert_let(e);
-          }
+          case cps_conversion_state::e_conversion_state::T_INIT:
+            {
+            if (std::holds_alternative<Literal>(e))
+              {
+              cps_convert_literal_or_variable_or_nop_or_quote(e);
+              }
+            else if (std::holds_alternative<Variable>(e))
+              {
+              cps_convert_literal_or_variable_or_nop_or_quote(e);
+              }
+            else if (std::holds_alternative<Nop>(e))
+              {
+              cps_convert_literal_or_variable_or_nop_or_quote(e);
+              }
+            else if (std::holds_alternative<Quote>(e))
+              {
+              cps_convert_literal_or_variable_or_nop_or_quote(e);
+              }
+            else if (std::holds_alternative<Set>(e))
+              {
+              cps_convert_set(e);
+              }
+            else if (std::holds_alternative<If>(e))
+              {
+              cps_convert_if(e);
+              }
+            else if (std::holds_alternative<Begin>(e))
+              {
+              cps_convert_begin(e);
+              }
+            else if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              cps_convert_prim(e);
+              }
+            else if (std::holds_alternative<ForeignCall>(e))
+              {
+              cps_convert_foreign(e);
+              }
+            else if (std::holds_alternative<Lambda>(e))
+              {
+              cps_convert_lambda(e);
+              }
+            else if (std::holds_alternative<FunCall>(e))
+              {
+              cps_convert_funcall(e);
+              }
+            else if (std::holds_alternative<Let>(e))
+              {
+              cps_convert_let(e);
+              }
+            break;
+            }
+          case cps_conversion_state::e_conversion_state::T_STEP_1:
+            {
+            if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              cps_convert_prim_nonsimple_step1(e, cps_state.nonsimple_vars);
+              }
+            else
+              {
+              throw std::runtime_error("Compiler error!: cps conversion: not implemented");
+              }
+            break;
+            }
+          } // switch
         }
       }
     };
