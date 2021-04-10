@@ -224,6 +224,7 @@ namespace
 
       //ccv.continuation = l;
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
       //ccv.continuation = Lambda();
       //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
@@ -236,6 +237,7 @@ namespace
       //index.back() = ccv.index;
       index.pop_back();
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
       }
 
     void cps_convert_set_simple(Expression& e)
@@ -319,10 +321,10 @@ namespace
       //ccv.continuation = Lambda();
       //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
-
-      continuation_can_be_moved.push_back(true);
+      
       e = std::move(exp0);
       //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
       current_size = expressions_to_treat.size();
@@ -420,6 +422,7 @@ namespace
           //continuation = Lambda();
           //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
           continuation.emplace_back(Lambda());
+          continuation_can_be_moved.push_back(true);
           std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
           cps_assert(continuation_is_valid());
           Expression arg = std::move(b.arguments[0]);
@@ -432,6 +435,7 @@ namespace
           index.pop_back();
           index.back() = ind;
           continuation.pop_back();
+          continuation_can_be_moved.pop_back();
           //index.back() = ccv.index;
           }
         }
@@ -504,6 +508,7 @@ namespace
       index.push_back(index.back()+1);
       //ccv.continuation = Lambda();
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
@@ -527,6 +532,7 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
       
       Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
       e.swap(expr);
@@ -551,6 +557,7 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
       
       auto it = nonsimple_vars.begin() + var_index;
       auto prev_it = it+1;
@@ -566,6 +573,7 @@ namespace
       //ccv2.continuation = l;
       //ccv2.continuation = Lambda();
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
@@ -645,6 +653,7 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
 
       auto it = nonsimple_vars.rbegin();
       auto prev_it = it;
@@ -662,6 +671,7 @@ namespace
         //ccv2.continuation = l;
         //ccv2.continuation = Lambda();
         continuation.emplace_back(Lambda());
+        continuation_can_be_moved.push_back(true);
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
         cps_assert(continuation_is_valid());
@@ -674,6 +684,7 @@ namespace
         index.pop_back();
         index.back() = ind;
         continuation.pop_back();
+        continuation_can_be_moved.pop_back();
         }
 
       Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
@@ -777,6 +788,7 @@ namespace
       //ccv.continuation = Lambda();
       index.push_back(index.back()+1);
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
@@ -789,6 +801,7 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
 
       auto it = nonsimple_vars.rbegin();
       auto prev_it = it;
@@ -806,6 +819,7 @@ namespace
         //ccv2.continuation = Lambda();
         index.push_back(index.back()+1);
         continuation.emplace_back(Lambda());
+        continuation_can_be_moved.push_back(true);
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
         cps_assert(continuation_is_valid());
@@ -817,6 +831,7 @@ namespace
         index.pop_back();
         index.back() = ind;
         continuation.pop_back();
+        continuation_can_be_moved.pop_back();
         }
 
       Expression expr = std::move(p.arguments[nonsimple_vars.begin()->first]);
@@ -869,6 +884,8 @@ namespace
       k.name = make_var_name(index.back());
       //ccv.continuation = k;
       continuation.push_back(k);
+      continuation_can_be_moved.push_back(true);
+
       cps_assert(continuation_is_valid());
       size_t current_size = expressions_to_treat.size();
       expressions_to_treat.push_back(&l.body.front());
@@ -879,6 +896,7 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
+      continuation_can_be_moved.pop_back();
       l.variables.insert(l.variables.begin(), k.name);
 
       if (continuation_is_lambda_with_one_parameter_without_free_vars())
@@ -963,6 +981,7 @@ namespace
       //std::swap(std::get<Lambda>(ccv.continuation), bottom_l); // this is a very substantial speedup trick!!
       index.push_back(index.back()+1);
       continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
       std::swap(std::get<Lambda>(continuation.back()), bottom_l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
       //visitor<Expression, cps_conversion_visitor>::visit(arguments[nonsimple_vars.rbegin()->first], &ccv);
@@ -974,7 +993,8 @@ namespace
       index.pop_back();
       index.back() = ind;
       continuation.pop_back();
-
+      continuation_can_be_moved.pop_back();
+      
       auto it = nonsimple_vars.rbegin();
       ++it;
       for (; it != nonsimple_vars.rend(); ++it)
@@ -992,6 +1012,7 @@ namespace
         //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
         index.push_back(index.back()+1);
         continuation.emplace_back(Lambda());
+        continuation_can_be_moved.push_back(true);
         std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
         cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(arguments[it->first], &ccv2);
@@ -1003,6 +1024,7 @@ namespace
         index.pop_back();
         index.back() = ind;
         continuation.pop_back();
+        continuation_can_be_moved.pop_back();
         }
 
       Expression expr = std::move(arguments[nonsimple_vars.begin()->first]);
@@ -1041,6 +1063,7 @@ namespace
         //std::swap(std::get<Lambda>(ccv.continuation), lam); // this is a very substantial speedup trick!!
         index.push_back(index.back()+1);
         continuation.push_back(Lambda());
+        continuation_can_be_moved.push_back(true);
         std::swap(std::get<Lambda>(continuation.back()), lam); // this is a very substantial speedup trick!!
         cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
@@ -1051,6 +1074,7 @@ namespace
         index.pop_back();
         index.back() = ind;
         continuation.pop_back();
+        continuation_can_be_moved.pop_back();
         expr = std::move(l.bindings[id].second);
         //index.back() = ccv.index;
         }
@@ -1222,7 +1246,6 @@ void cps_conversion(Program& prog, const compiler_options& ops)
       parallel_for(size_t(0), sz, [&](size_t i)
         {
         cps_conversion_helper ccv;
-        ccv.continuation_can_be_moved.push_back(true);
         ccv.index.push_back(0);
         auto& arg = beg.arguments[i];
         Lambda l;
@@ -1236,6 +1259,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
         b.arguments.emplace_back(std::move(prim));
         l.body.emplace_back(std::move(b));
         ccv.continuation.push_back(Lambda());
+        ccv.continuation_can_be_moved.push_back(true);
         std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
         cps_assert(ccv.continuation_is_valid());
         //ccv.visit(arg);
@@ -1246,7 +1270,6 @@ void cps_conversion(Program& prog, const compiler_options& ops)
     else
       {
       cps_conversion_helper ccv;
-      ccv.continuation_can_be_moved.push_back(true);
       ccv.index.push_back(0);
       Lambda l;
       l.variables.push_back(make_var_name(ccv.index.back()));
@@ -1259,6 +1282,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
       b.arguments.emplace_back(std::move(prim));
       l.body.emplace_back(std::move(b));
       ccv.continuation.push_back(Lambda());
+      ccv.continuation_can_be_moved.push_back(true);
       std::swap(std::get<Lambda>(ccv.continuation.back()), l); // this is a very substantial speedup trick!!
       cps_assert(ccv.continuation_is_valid());
       //ccv.visit(e);
