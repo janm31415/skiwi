@@ -93,11 +93,14 @@ namespace
     enum struct e_conversion_state
       {
       T_INIT,
-      T_STEP_1
+      T_STEP_1,
+      T_STEP_2,
+      T_STEP_3
       };
     Expression* p_expr;
     e_conversion_state state;
-    std::map<size_t, std::string> nonsimple_vars;
+    std::vector<std::pair<size_t, std::string>> nonsimple_vars;
+    uint32_t index;
     
     cps_conversion_state() : p_expr(nullptr), state(e_conversion_state::T_INIT) {}
     cps_conversion_state(Expression* ip_expr) : p_expr(ip_expr), state(e_conversion_state::T_INIT) {}
@@ -437,14 +440,14 @@ namespace
         return;
         }
       assert(!p.arguments.empty());
-      std::map<size_t, std::string> nonsimple_vars;
+      std::vector<std::pair<size_t, std::string>> nonsimple_vars;
       std::vector<bool> simple(p.arguments.size());
       for (size_t j = 0; j < p.arguments.size(); ++j)
         {
         simple[j] = is_simple(p.arguments[j]);
         if (!simple[j])
           {
-          nonsimple_vars[j] = make_var_name(index.back() + j + 1);
+          nonsimple_vars.emplace_back(j, make_var_name(index.back() + j + 1));
           }
         }
       index.back() += p.arguments.size();
@@ -461,7 +464,8 @@ namespace
         else
           {
           Variable v;
-          v.name = nonsimple_vars.find(j)->second;
+          //v.name = nonsimple_vars.find(j)->second;
+          v.name = std::find_if(nonsimple_vars.begin(), nonsimple_vars.end(), [&](const auto& item) { return item.first == j; })->second;
           bottom_p.arguments.emplace_back(std::move(v));
           }
         }
@@ -506,7 +510,124 @@ namespace
       //treat_expressions(current_size);
       }
       
-    void cps_convert_prim_nonsimple_step1(Expression& e, std::map<size_t, std::string>& nonsimple_vars)
+    void cps_convert_prim_nonsimple_step3(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
+      {
+      assert(std::holds_alternative<PrimitiveCall>(e));
+      PrimitiveCall& p = std::get<PrimitiveCall>(e);
+      assert(!p.arguments.empty());
+      
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
+      
+      Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
+      e.swap(expr);
+      }
+      
+    void cps_convert_prim_nonsimple_step2(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars, uint32_t var_index)
+      {
+      assert(std::holds_alternative<PrimitiveCall>(e));
+      PrimitiveCall& p = std::get<PrimitiveCall>(e);
+      assert(!p.arguments.empty());
+      
+     
+           
+      if (var_index > 0)
+        {
+        expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_2);
+        expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
+        expressions_to_treat.back().index = var_index-1;
+        }
+        
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
+      
+      auto it = nonsimple_vars.begin() + var_index;
+      auto prev_it = it+1;
+        
+      Lambda l;
+      l.variables.push_back(it->second);
+      Begin b;
+      b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
+      l.body.emplace_back(std::move(b));
+      //cps_conversion_visitor ccv2;
+      //ccv2.index = index.back() + 1;
+      index.push_back(index.back()+1);
+      //ccv2.continuation = l;
+      //ccv2.continuation = Lambda();
+      continuation.emplace_back(Lambda());
+      //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
+      std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
+      assert(continuation_is_valid());
+      //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
+      //size_t current_size = expressions_to_treat.size();
+      expressions_to_treat.push_back(&p.arguments[it->first]);
+      //treat_expressions(current_size);
+
+      }
+      
+    void cps_convert_prim_nonsimple_step1(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
+      {
+      assert(std::holds_alternative<PrimitiveCall>(e));
+      PrimitiveCall& p = std::get<PrimitiveCall>(e);
+      assert(!p.arguments.empty());
+      
+      expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_3);
+      expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
+                  
+      //index.back() = ccv.index;
+      //auto ind = index.back();
+      //index.pop_back();
+      //index.back() = ind;
+      //continuation.pop_back();
+
+      //auto it = nonsimple_vars.rbegin();
+      //auto prev_it = it;
+      //++it;
+      
+      if (expressions_to_treat.back().nonsimple_vars.size() > 1)
+        {
+        expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_2);
+        expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
+        expressions_to_treat.back().index = expressions_to_treat.back().nonsimple_vars.size()-2;
+        //++expressions_to_treat.back().nonsimple_vars_it;
+        }
+      /*
+      for (; it != nonsimple_vars.rend(); ++it, ++prev_it)
+        {
+        Lambda l;
+        l.variables.push_back(it->second);
+        Begin b;
+        b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
+        l.body.emplace_back(std::move(b));
+        //cps_conversion_visitor ccv2;
+        //ccv2.index = index.back() + 1;
+        index.push_back(index.back()+1);
+        //ccv2.continuation = l;
+        //ccv2.continuation = Lambda();
+        continuation.emplace_back(Lambda());
+        //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
+        std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
+        assert(continuation_is_valid());
+        //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
+        size_t current_size = expressions_to_treat.size();
+        expressions_to_treat.push_back(&p.arguments[it->first]);
+        treat_expressions(current_size);
+        //index.back() = ccv2.index;
+        ind = index.back();
+        index.pop_back();
+        index.back() = ind;
+        continuation.pop_back();
+        }
+
+      Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
+      e.swap(expr);*/
+      }
+      
+    void cps_convert_prim_nonsimple_step1_old(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
       {
       assert(std::holds_alternative<PrimitiveCall>(e));
       PrimitiveCall& p = std::get<PrimitiveCall>(e);
@@ -1042,6 +1163,30 @@ namespace
             if (std::holds_alternative<PrimitiveCall>(e))
               {
               cps_convert_prim_nonsimple_step1(e, cps_state.nonsimple_vars);
+              }
+            else
+              {
+              throw std::runtime_error("Compiler error!: cps conversion: not implemented");
+              }
+            break;
+            }
+          case cps_conversion_state::e_conversion_state::T_STEP_2:
+            {
+            if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              cps_convert_prim_nonsimple_step2(e, cps_state.nonsimple_vars, cps_state.index);
+              }
+            else
+              {
+              throw std::runtime_error("Compiler error!: cps conversion: not implemented");
+              }
+            break;
+            }
+          case cps_conversion_state::e_conversion_state::T_STEP_3:
+            {
+            if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              cps_convert_prim_nonsimple_step3(e, cps_state.nonsimple_vars);
               }
             else
               {
