@@ -13,6 +13,138 @@ SKIWI_BEGIN
 
 namespace
   {
+  
+  struct find_assignable_variables_state
+    {
+    enum struct e_fav_state
+      {
+      T_INIT,
+      T_STEP_1,      
+      };
+    Expression* p_expr;
+    e_fav_state state;
+    
+    find_assignable_variables_state() : p_expr(nullptr), state(e_fav_state::T_INIT) {}
+    find_assignable_variables_state(Expression* ip_expr) : p_expr(ip_expr), state(e_fav_state::T_INIT) {}
+    find_assignable_variables_state(Expression* ip_expr, e_fav_state s) : p_expr(ip_expr), state(s) {}
+    };
+  
+  struct find_assignable_variables
+    {
+    std::vector<find_assignable_variables_state> expressions;
+    std::vector<std::set<std::string>> assignable_variables;
+    
+    find_assignable_variables()
+      {
+      assignable_variables.emplace_back();
+      }
+      
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        find_assignable_variables_state st = expressions.back();
+        expressions.pop_back();
+        Expression& e = *st.p_expr;
+        
+        switch (st.state)
+          {
+          case find_assignable_variables_state::e_fav_state::T_INIT:
+          {
+            if (std::holds_alternative<Literal>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Variable>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Nop>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Quote>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Set>(e))
+              {
+              Set& s = std::get<Set>(e);
+              if (!s.originates_from_define && !s.originates_from_quote)
+                assignable_variables.back().insert(s.name);
+              expressions.push_back(&std::get<Set>(e).value.front());
+              }
+            else if (std::holds_alternative<If>(e))
+              {
+              for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Begin>(e))
+              {
+              for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<ForeignCall>(e))
+              {
+              for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Lambda>(e))
+              {
+              Lambda& l = std::get<Lambda>(e);
+              assignable_variables.emplace_back();
+              expressions.emplace_back(&e, find_assignable_variables_state::e_fav_state::T_STEP_1);
+              expressions.push_back(&l.body.front());
+              }
+            else if (std::holds_alternative<FunCall>(e))
+              {
+              expressions.push_back(&std::get<FunCall>(e).fun.front());
+              for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Let>(e))
+              {
+              Let& l = std::get<Let>(e);
+              assignable_variables.emplace_back();
+              expressions.emplace_back(&e, find_assignable_variables_state::e_fav_state::T_STEP_1);
+              expressions.push_back(&l.body.front());
+              for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+                expressions.push_back(&(*rit).second);
+              }
+            else
+              throw std::runtime_error("Compiler error!: assignable var conversion: not implemented");
+            break;
+            }
+          case find_assignable_variables_state::e_fav_state::T_STEP_1:
+            {
+            if (std::holds_alternative<Lambda>(e))
+              {
+              Lambda& l = std::get<Lambda>(e);
+              l.assignable_variables = assignable_variables.back();
+              assignable_variables.pop_back();
+              assignable_variables.back().insert(l.assignable_variables.begin(), l.assignable_variables.end());
+              }
+            else if (std::holds_alternative<Let>(e))
+              {
+              Let& l = std::get<Let>(e);
+              l.assignable_variables = assignable_variables.back();
+              assignable_variables.pop_back();
+              assignable_variables.back().insert(l.assignable_variables.begin(), l.assignable_variables.end());
+              }
+            else
+              throw std::runtime_error("Compiler error!: assignable var conversion: not implemented");
+            break;
+            }
+          }
+        }
+      }
+    };
+  /*
   struct find_assignable_variables : public base_visitor<find_assignable_variables>
     {
     virtual bool _previsit(Lambda& l)
@@ -46,6 +178,7 @@ namespace
 
     std::set<std::string> assignable_variables;
     };
+  */
 
   struct convert_assignable_variables : public base_visitor<convert_assignable_variables>
     {
@@ -228,7 +361,9 @@ void assignable_variable_conversion(Program& prog, const compiler_options& ops)
         {
         auto& arg = beg.arguments[i];
         find_assignable_variables fav;
-        visitor<Expression, find_assignable_variables>::visit(arg, &fav);
+        //visitor<Expression, find_assignable_variables>::visit(arg, &fav);
+        fav.expressions.push_back(&arg);
+        fav.treat_expressions();
         convert_assignable_variables cav;
         visitor<Expression, convert_assignable_variables>::visit(arg, &cav);
         }, ops);
@@ -236,7 +371,11 @@ void assignable_variable_conversion(Program& prog, const compiler_options& ops)
     else
       {
       find_assignable_variables fav;
-      visitor<Program, find_assignable_variables>::visit(prog, &fav);
+      //visitor<Program, find_assignable_variables>::visit(prog, &fav);
+      for (auto& expr : prog.expressions)
+        fav.expressions.push_back(&expr);
+      std::reverse(fav.expressions.begin(), fav.expressions.end());
+      fav.treat_expressions();
       convert_assignable_variables cav;
       visitor<Program, convert_assignable_variables>::visit(prog, &cav);     
       }
