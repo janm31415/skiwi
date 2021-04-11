@@ -119,8 +119,13 @@ namespace
     std::vector<bool> continuation_can_be_moved;
     
     std::vector<cps_conversion_state> expressions_to_treat;
+    
+    Expression dummy_if;
 
-    cps_conversion_helper() {}
+    cps_conversion_helper() 
+      {
+      dummy_if = If();
+      }
 
     bool continuation_is_lambda()
       {
@@ -304,23 +309,29 @@ namespace
 
       continuation_can_be_moved.back() = false;
 
-      size_t current_size = expressions_to_treat.size();
+      if (!is_simple(i.arguments.front()))
+        expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_1);
+
       for (size_t j = 1; j < i.arguments.size(); ++j)
-          expressions_to_treat.push_back(&i.arguments[j]);
+        expressions_to_treat.push_back(&i.arguments[j]);
       //treat_expressions(current_size);
-          
-      
+
+
       //for (size_t j = 1; j < i.arguments.size(); ++j)
       //  visitor<Expression, cps_conversion_visitor>::visit(i.arguments[j], this);
 
-      if (is_simple(i.arguments.front()))
-        return;
-        
-      treat_expressions(current_size);
+      //if (is_simple(i.arguments.front()))
+      //  return;
 
+      }
+
+    void cps_convert_if_step1(Expression& e)
+      {
+      cps_assert(std::holds_alternative<If>(e));
+      If& i = std::get<If>(e);
       //cps_conversion_visitor ccv;
       //ccv.index = index.back() + 1;
-      index.push_back(index.back()+1);
+      index.push_back(index.back() + 1);
       Lambda l;
       l.variables.emplace_back(make_var_name(index.back()));
 
@@ -341,14 +352,18 @@ namespace
       continuation_can_be_moved.push_back(true);
       std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
-      
+
       e = std::move(exp0);
       //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-      current_size = expressions_to_treat.size();
+      //current_size = expressions_to_treat.size();
+      expressions_to_treat.emplace_back(&dummy_if, cps_conversion_state::e_conversion_state::T_STEP_2);
       expressions_to_treat.push_back(&e);
-      treat_expressions(current_size);
+      //treat_expressions(current_size);
+      }
 
-      //index.back() = ccv.index;
+    void cps_convert_if_step2(Expression& e)
+      {
+      cps_assert(std::holds_alternative<If>(e));
       auto ind = index.back();
       index.pop_back();
       index.back() = ind;
@@ -1433,6 +1448,10 @@ namespace
               {
               cps_convert_set_nonsimple_step1(e);
               }
+            else if (std::holds_alternative<If>(e))
+              {
+              cps_convert_if_step1(e);
+              }
             else if (std::holds_alternative<ForeignCall>(e))
               {
               cps_convert_foreign_nonsimple_step1(e, cps_state.nonsimple_vars);
@@ -1452,6 +1471,10 @@ namespace
             else if (std::holds_alternative<FunCall>(e))
               {
               cps_convert_funcall_step2(e, cps_state.nonsimple_vars, cps_state.index);
+              }
+            else if (std::holds_alternative<If>(e))
+              {
+              cps_convert_if_step2(e);
               }
             else if (std::holds_alternative<ForeignCall>(e))
               {
