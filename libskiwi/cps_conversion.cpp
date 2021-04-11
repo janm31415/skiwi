@@ -14,9 +14,9 @@
 
 SKIWI_BEGIN
 
-#define cps_assert(EX)
+//#define cps_assert(EX)
 
-//#define cps_assert(EX) assert(EX)
+#define cps_assert(EX) assert(EX)
 
 namespace
   {
@@ -714,55 +714,7 @@ namespace
       Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
       e.swap(expr);*/
       }
-
-    void cps_convert_prim_nonsimple_step1_old(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
-      {
-      cps_assert(std::holds_alternative<PrimitiveCall>(e));
-      PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      cps_assert(!p.arguments.empty());
-
-      //index.back() = ccv.index;
-      auto ind = index.back();
-      index.pop_back();
-      index.back() = ind;
-      continuation.pop_back();
-      continuation_can_be_moved.pop_back();
-
-      auto it = nonsimple_vars.rbegin();
-      auto prev_it = it;
-      ++it;
-      for (; it != nonsimple_vars.rend(); ++it, ++prev_it)
-        {
-        Lambda l;
-        l.variables.push_back(it->second);
-        Begin b;
-        b.arguments.emplace_back(std::move(p.arguments[prev_it->first]));
-        l.body.emplace_back(std::move(b));
-        //cps_conversion_visitor ccv2;
-        //ccv2.index = index.back() + 1;
-        index.push_back(index.back() + 1);
-        //ccv2.continuation = l;
-        //ccv2.continuation = Lambda();
-        continuation.emplace_back(Lambda());
-        continuation_can_be_moved.push_back(true);
-        //std::swap(std::get<Lambda>(ccv2.continuation), l); // this is a very substantial speedup trick!!
-        std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
-        cps_assert(continuation_is_valid());
-        //visitor<Expression, cps_conversion_visitor>::visit(p.arguments[it->first], &ccv2);
-        size_t current_size = expressions_to_treat.size();
-        expressions_to_treat.push_back(&p.arguments[it->first]);
-        treat_expressions(current_size);
-        //index.back() = ccv2.index;
-        ind = index.back();
-        index.pop_back();
-        index.back() = ind;
-        continuation.pop_back();
-        continuation_can_be_moved.pop_back();
-        }
-
-      Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
-      e.swap(expr);
-      }
+    
 
     void cps_convert_prim_simple(Expression& e)
       {
@@ -1455,11 +1407,10 @@ namespace
         }
       }
 
-    void treat_expressions(size_t target)
+    void treat_expressions()
       {
-      while (expressions_to_treat.size() > target)
-        {
-        //Expression* p_expr = expressions_to_treat.back();
+      while (!expressions_to_treat.empty())
+        {        
         cps_conversion_state cps_state = expressions_to_treat.back();
         expressions_to_treat.pop_back();
         Expression& e = *cps_state.p_expr;
@@ -1652,7 +1603,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
         cps_assert(ccv.continuation_is_valid());
         //ccv.visit(arg);
         ccv.expressions_to_treat.push_back(&arg);
-        ccv.treat_expressions(0);
+        ccv.treat_expressions();
         }, ops);
       }
     else
@@ -1675,7 +1626,7 @@ void cps_conversion(Program& prog, const compiler_options& ops)
       cps_assert(ccv.continuation_is_valid());
       //ccv.visit(e);
       ccv.expressions_to_treat.push_back(&e);
-      ccv.treat_expressions(0);
+      ccv.treat_expressions();
       }
     }
   prog.cps_converted = true;
