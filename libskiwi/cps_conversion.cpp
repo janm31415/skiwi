@@ -121,10 +121,12 @@ namespace
     std::vector<cps_conversion_state> expressions_to_treat;
     
     Expression dummy_if;
+    Expression dummy_begin;
 
     cps_conversion_helper() 
       {
       dummy_if = If();
+      dummy_begin = Begin();
       }
 
     bool continuation_is_lambda()
@@ -361,9 +363,9 @@ namespace
       //treat_expressions(current_size);
       }
 
-    void cps_convert_if_step2(Expression& e)
+    void cps_convert_if_step2()
       {
-      cps_assert(std::holds_alternative<If>(e));
+      //cps_assert(std::holds_alternative<If>(e));
       auto ind = index.back();
       index.pop_back();
       index.back() = ind;
@@ -410,9 +412,9 @@ namespace
           }
         if (first_non_simple_expr == (b.arguments.size() - 1))
           {
-          size_t current_size = expressions_to_treat.size();
+          //size_t current_size = expressions_to_treat.size();
           expressions_to_treat.push_back(&b.arguments.back());
-          treat_expressions(current_size);
+          //treat_expressions(current_size);
           //visitor<Expression, cps_conversion_visitor>::visit(b.arguments.back(), this);
           }
         else if (first_non_simple_expr > 0)
@@ -422,22 +424,22 @@ namespace
           b.arguments.erase(b.arguments.begin(), b.arguments.begin() + first_non_simple_expr);
           new_b.arguments.emplace_back(std::move(b));
           b = std::move(new_b);
-          cps_convert_begin(b.arguments.back());
+          //cps_convert_begin(b.arguments.back());
+          expressions_to_treat.push_back(&b.arguments.back());
           }
         else
           {
           Begin remainder;
-          remainder.arguments.reserve(b.arguments.size()-1);
-          //remainder.arguments.insert(remainder.arguments.end(), b.arguments.begin() + 1, b.arguments.end());
+          remainder.arguments.reserve(b.arguments.size()-1);          
           for (auto it = b.arguments.begin()+1; it != b.arguments.end(); ++it)
             remainder.arguments.emplace_back(std::move(*it));
-          Expression e2(std::move(remainder));
-          size_t current_size = expressions_to_treat.size();
-          expressions_to_treat.push_back(&e2);
-          treat_expressions(current_size);
-          //visitor<Expression, cps_conversion_visitor>::visit(e2, this);
-          //cps_conversion_visitor ccv;
-          //ccv.index = index.back() + 1;
+          //Expression e2(std::move(remainder));
+          b.arguments.resize(2);          
+          b.arguments[1] = std::move(remainder);
+          //size_t current_size = expressions_to_treat.size();
+          expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_1);
+          expressions_to_treat.push_back(&b.arguments[1]);
+          /*
           index.push_back(index.back()+1);
           Lambda l;
           l.variables.emplace_back(make_var_name(index.back()));
@@ -450,16 +452,12 @@ namespace
             l.body.emplace_back(std::move(lb));
             //this scenario is triggered by CHECK_EQUAL("130", run("(letrec([f 12][g(lambda(n) (set! f n))])(g 130) f) "));
             }
-          //ccv.continuation = l;
-          //continuation = Lambda();
-          //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
           continuation.emplace_back(Lambda());
           continuation_can_be_moved.push_back(true);
           std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
           cps_assert(continuation_is_valid());
           Expression arg = std::move(b.arguments[0]);
           e = std::move(arg);
-          //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
           current_size = expressions_to_treat.size();
           expressions_to_treat.push_back(&e);
           treat_expressions(current_size);
@@ -468,9 +466,53 @@ namespace
           index.back() = ind;
           continuation.pop_back();
           continuation_can_be_moved.pop_back();
-          //index.back() = ccv.index;
+          */
           }
         }
+      }
+
+    void cps_convert_begin_step1(Expression& e)
+      {
+      cps_assert(std::holds_alternative<Begin>(e));
+      Begin& b = std::get<Begin>(e);
+      index.push_back(index.back() + 1);
+      Lambda l;
+      Expression& e2 = b.arguments[1];
+      l.variables.emplace_back(make_var_name(index.back()));
+      if (std::holds_alternative<Begin>(e2))
+        l.body.emplace_back(std::move(e2));
+      else
+        {
+        Begin lb;
+        lb.arguments.emplace_back(std::move(e2));
+        l.body.emplace_back(std::move(lb));
+        //this scenario is triggered by CHECK_EQUAL("130", run("(letrec([f 12][g(lambda(n) (set! f n))])(g 130) f) "));
+        }
+      continuation.emplace_back(Lambda());
+      continuation_can_be_moved.push_back(true);
+      std::swap(std::get<Lambda>(continuation.back()), l); // this is a very substantial speedup trick!!
+      cps_assert(continuation_is_valid());
+      Expression arg = std::move(b.arguments[0]);
+      e = std::move(arg);
+      
+      expressions_to_treat.emplace_back(&dummy_begin, cps_conversion_state::e_conversion_state::T_STEP_2);
+      expressions_to_treat.push_back(&e);
+      /*
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
+      continuation_can_be_moved.pop_back();
+      */
+      }
+
+    void cps_convert_begin_step2()
+      {
+      auto ind = index.back();
+      index.pop_back();
+      index.back() = ind;
+      continuation.pop_back();
+      continuation_can_be_moved.pop_back();
       }
 
     void cps_convert_prim_nonsimple(Expression& e)
@@ -1194,7 +1236,7 @@ namespace
       */
       }
 
-      void cps_convert_funcall_step3(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
+      void cps_convert_funcall_step3(Expression& e)
         {
         cps_assert(std::holds_alternative<FunCall>(e));
         FunCall& f = std::get<FunCall>(e);
@@ -1440,6 +1482,10 @@ namespace
               {
               cps_convert_prim_nonsimple_step1(e, cps_state.nonsimple_vars);
               }
+            else if (std::holds_alternative<Begin>(e))
+              {
+              cps_convert_begin_step1(e);
+              }
             else if (std::holds_alternative<FunCall>(e))
               {
               cps_convert_funcall_step1(e, cps_state.nonsimple_vars);
@@ -1468,13 +1514,17 @@ namespace
               {
               cps_convert_prim_nonsimple_step2(e, cps_state.nonsimple_vars, cps_state.index);
               }
+            else if (std::holds_alternative<Begin>(e))
+              {
+              cps_convert_begin_step2();
+              }
             else if (std::holds_alternative<FunCall>(e))
               {
               cps_convert_funcall_step2(e, cps_state.nonsimple_vars, cps_state.index);
               }
             else if (std::holds_alternative<If>(e))
               {
-              cps_convert_if_step2(e);
+              cps_convert_if_step2();
               }
             else if (std::holds_alternative<ForeignCall>(e))
               {
@@ -1494,7 +1544,7 @@ namespace
               }
             else if (std::holds_alternative<FunCall>(e))
               {
-              cps_convert_funcall_step3(e, cps_state.nonsimple_vars);
+              cps_convert_funcall_step3(e);
               }
             else if (std::holds_alternative<ForeignCall>(e))
               {
