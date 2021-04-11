@@ -183,7 +183,7 @@ namespace
       cps_assert(std::holds_alternative<Set>(e));
       Set& s = std::get<Set>(e);
       cps_assert(!is_simple(s.value.front()));
-      Expression e1 = std::move(s.value.front());
+      Expression& e1 = s.value.front();
 
       //cps_conversion_visitor ccv;
       index.push_back(index.back()+1);
@@ -229,15 +229,32 @@ namespace
       //ccv.continuation = Lambda();
       //std::swap(std::get<Lambda>(ccv.continuation), l); // this is a very substantial speedup trick!!
       cps_assert(continuation_is_valid());
-      e.swap(e1);
+      //e.swap(e1);
       //visitor<Expression, cps_conversion_visitor>::visit(e, &ccv);
-      size_t current_size = expressions_to_treat.size();
-      expressions_to_treat.push_back(&e);
-      treat_expressions(current_size);
+      
+      //size_t current_size = expressions_to_treat.size();
+      expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_1);
+      expressions_to_treat.push_back(&e1);
+      //treat_expressions(current_size);
       //index.back() = ccv.index;
+      //index.pop_back();
+      //continuation.pop_back();
+      //continuation_can_be_moved.pop_back();
+      }
+
+    void cps_convert_set_nonsimple_step1(Expression& e)
+      {
+      auto ind = index.back();
       index.pop_back();
+      index.back() = ind;
       continuation.pop_back();
       continuation_can_be_moved.pop_back();
+
+      Set& s = std::get<Set>(e);
+      Expression& e1 = s.value.front();
+      Expression new_expr;
+      new_expr.swap(e);      
+      e = std::move(e1);
       }
 
     void cps_convert_set_simple(Expression& e)
@@ -1411,7 +1428,11 @@ namespace
             else if (std::holds_alternative<FunCall>(e))
               {
               cps_convert_funcall_step1(e, cps_state.nonsimple_vars);
-              }       
+              }    
+            else if (std::holds_alternative<Set>(e))
+              {
+              cps_convert_set_nonsimple_step1(e);
+              }
             else if (std::holds_alternative<ForeignCall>(e))
               {
               cps_convert_foreign_nonsimple_step1(e, cps_state.nonsimple_vars);
