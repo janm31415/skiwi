@@ -88,59 +88,99 @@ namespace
       return true;
       }
     };
-  /*
-  struct find_liveness_of_variable : public base_visitor<find_liveness_of_variable>
+    
+  struct naive_scan_helper
     {
-    liveness_range lr;
-
-    std::string var_name;
-
-    virtual void _postvisit(Variable& v)
+    std::vector<Expression*> expressions;
+      
+    void treat_expressions()
       {
-      if (v.name == var_name)
+      while (!expressions.empty())
         {
-        if (lr.last < v.scan_index)
-          lr.last = v.scan_index;
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          Set& s = std::get<Set>(e);
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          l.live_ranges.clear();
+          for (size_t i = 0; i < l.variables.size(); ++i)
+            {
+            liveness_range lr;
+            lr.first = get_pre_scan_index(l.body.front());
+            lr.last = l.scan_index;
+            l.live_ranges.push_back(lr);
+            }
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          l.live_ranges.clear();
+          for (size_t i = 0; i < l.bindings.size(); ++i)
+            {
+            liveness_range lr;
+            lr.first = get_scan_index(l.bindings[i].second);
+            lr.last = l.scan_index;
+            l.live_ranges.push_back(lr);
+            }
+          }
+        else
+          throw std::runtime_error("Compiler error!: Linear scan conversion: not implemented");
         }
       }
-
-
     };
-
-  struct linear_scan_visitor : public base_visitor<linear_scan_visitor>
-    {
-    virtual bool _previsit(Let& obj)
-      {
-      obj.live_ranges.clear();
-      for (size_t i = 0; i < obj.bindings.size(); ++i)
-        {
-        find_liveness_of_variable flv;
-        flv.var_name = obj.bindings[i].first;
-        flv.lr.first = get_scan_index(obj.bindings[i].second);
-        flv.lr.last = flv.lr.first;
-        visitor<Expression, find_liveness_of_variable>::visit(obj.body.front(), &flv);
-        obj.live_ranges.push_back(flv.lr);
-        }
-      return true;
-      }
-
-    virtual bool _previsit(Lambda& obj)
-      {
-      obj.live_ranges.clear();
-      for (size_t i = 0; i < obj.variables.size(); ++i)
-        {
-        find_liveness_of_variable flv;
-        flv.var_name = obj.variables[i];
-        flv.lr.first = get_pre_scan_index(obj.body.front());
-        flv.lr.last = flv.lr.first;        
-        visitor<Expression, find_liveness_of_variable>::visit(obj.body.front(), &flv);
-        obj.live_ranges.push_back(flv.lr);
-        }
-      return true;
-      }
-    };
-    */
-
+  
   struct find_liveness_of_variable : public base_visitor<find_liveness_of_variable>
     {
     std::map<std::string, uint64_t> var_last_occurence_map;
@@ -156,8 +196,91 @@ namespace
           it->second = v.scan_index;
         }
       }
-
-
+    };
+    
+  struct find_liveness_of_variable_helper
+    {
+    std::vector<Expression*> expressions;
+    std::map<std::string, uint64_t> var_last_occurence_map;
+    
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+          Variable& v = std::get<Variable>(e);
+          auto it = var_last_occurence_map.find(v.name);
+          if (it == var_last_occurence_map.end())
+            var_last_occurence_map[v.name] = v.scan_index;
+          else
+            {
+            if (v.scan_index > it->second)
+              it->second = v.scan_index;
+            }
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          Set& s = std::get<Set>(e);
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          }
+        else
+          throw std::runtime_error("Compiler error!: Linear scan: not implemented");
+        }
+      }
     };
 
   struct linear_scan_visitor : public base_visitor<linear_scan_visitor>
@@ -189,6 +312,99 @@ namespace
       return true;
       }
     };
+    
+  struct linear_scan_helper
+    {
+    std::vector<Expression*> expressions;
+    std::map<std::string, uint64_t>* p_var_last_occurence_map;
+    
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          Set& s = std::get<Set>(e);
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          l.live_ranges.clear();
+          for (size_t i = 0; i < l.variables.size(); ++i)
+            {
+            liveness_range lr;
+            lr.first = get_pre_scan_index(l.body.front());
+            lr.last = (*p_var_last_occurence_map)[l.variables[i]];
+            l.live_ranges.push_back(lr);
+            }
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          l.live_ranges.clear();
+          for (size_t i = 0; i < l.bindings.size(); ++i)
+            {
+            liveness_range lr;
+            lr.first = get_pre_scan_index(l.body.front());
+            lr.last = (*p_var_last_occurence_map)[l.bindings[i].first];
+            l.live_ranges.push_back(lr);
+            }
+          }
+        else
+          throw std::runtime_error("Compiler error!: linear scan: not implemented");
+        }
+      }
+    };
   }
 
 void linear_scan(Program& prog, linear_scan_algorithm lsa, const compiler_options& ops)
@@ -208,16 +424,26 @@ void linear_scan(Program& prog, linear_scan_algorithm lsa, const compiler_option
         auto& arg = beg.arguments[i];
         if (lsa == lsa_naive)
           {
-          naive_scan_visitor nsv;
-          visitor<Expression, naive_scan_visitor>::visit(arg, &nsv);
+          //naive_scan_visitor nsv;
+          //visitor<Expression, naive_scan_visitor>::visit(arg, &nsv);
+          naive_scan_helper nsh;
+          nsh.expressions.push_back(&arg);
+          nsh.treat_expressions();
           }
         else
           {
-          find_liveness_of_variable flov;
-          visitor<Expression, find_liveness_of_variable>::visit(arg, &flov);
-          linear_scan_visitor lsv;
-          lsv.p_var_last_occurence_map = &flov.var_last_occurence_map;
-          visitor<Expression, linear_scan_visitor>::visit(arg, &lsv);
+          //find_liveness_of_variable flov;
+          //visitor<Expression, find_liveness_of_variable>::visit(arg, &flov);
+          //linear_scan_visitor lsv;
+          //lsv.p_var_last_occurence_map = &flov.var_last_occurence_map;
+          //visitor<Expression, linear_scan_visitor>::visit(arg, &lsv);
+          find_liveness_of_variable_helper flovh;
+          flovh.expressions.push_back(&arg);
+          flovh.treat_expressions();
+          linear_scan_helper lsh;
+          lsh.p_var_last_occurence_map = &flovh.var_last_occurence_map;
+          lsh.expressions.push_back(&arg);
+          lsh.treat_expressions();
           }
         }, ops);
       }
@@ -225,31 +451,36 @@ void linear_scan(Program& prog, linear_scan_algorithm lsa, const compiler_option
       {
       if (lsa == lsa_naive)
         {
-        naive_scan_visitor nsv;
-        visitor<Program, naive_scan_visitor>::visit(prog, &nsv);
+        //naive_scan_visitor nsv;
+        //visitor<Program, naive_scan_visitor>::visit(prog, &nsv);
+        naive_scan_helper nsh;
+        for (auto& expr : prog.expressions)
+          nsh.expressions.push_back(&expr);
+        std::reverse(nsh.expressions.begin(), nsh.expressions.end());
+        nsh.treat_expressions();
         }
       else
         {
-        find_liveness_of_variable flov;
-        visitor<Program, find_liveness_of_variable>::visit(prog, &flov);
-        linear_scan_visitor lsv;
-        lsv.p_var_last_occurence_map = &flov.var_last_occurence_map;
-        visitor<Program, linear_scan_visitor>::visit(prog, &lsv);
+        //find_liveness_of_variable flov;
+        //visitor<Program, find_liveness_of_variable>::visit(prog, &flov);
+        //linear_scan_visitor lsv;
+        //lsv.p_var_last_occurence_map = &flov.var_last_occurence_map;
+        //visitor<Program, linear_scan_visitor>::visit(prog, &lsv);
+        find_liveness_of_variable_helper flovh;
+        for (auto& expr : prog.expressions)
+          flovh.expressions.push_back(&expr);
+        std::reverse(flovh.expressions.begin(), flovh.expressions.end());
+        flovh.treat_expressions();
+        linear_scan_helper lsh;
+        lsh.p_var_last_occurence_map = &flovh.var_last_occurence_map;
+        for (auto& expr : prog.expressions)
+          lsh.expressions.push_back(&expr);
+        std::reverse(lsh.expressions.begin(), lsh.expressions.end());
+        lsh.treat_expressions();
         }
       }
     }
-  /*
-  if (lsa == lsa_naive)
-    {
-    naive_scan_visitor nsv;
-    visitor<Program, naive_scan_visitor>::visit(prog, &nsv);
-    }
-  else
-    {
-    linear_scan_visitor lsv;
-    visitor<Program, linear_scan_visitor>::visit(prog, &lsv);
-    }
-    */
+
   prog.linear_scan = true;
   }
 
