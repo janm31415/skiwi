@@ -586,9 +586,8 @@ namespace
       
     void cps_convert_prim_nonsimple_step1(Expression& e, std::vector<std::pair<size_t, std::string>>& nonsimple_vars)
       {
-      cps_assert(std::holds_alternative<PrimitiveCall>(e));
-      PrimitiveCall& p = std::get<PrimitiveCall>(e);
-      cps_assert(!p.arguments.empty());
+      cps_assert(std::holds_alternative<PrimitiveCall>(e));      
+      cps_assert(!std::get<PrimitiveCall>(e).arguments.empty());
       
       expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_3);
       expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
@@ -607,7 +606,7 @@ namespace
         {
         expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_2);
         expressions_to_treat.back().nonsimple_vars = nonsimple_vars;
-        expressions_to_treat.back().index = expressions_to_treat.back().nonsimple_vars.size()-2;
+        expressions_to_treat.back().index = (uint32_t)expressions_to_treat.back().nonsimple_vars.size()-2;
         //++expressions_to_treat.back().nonsimple_vars_it;
         }
       /*
@@ -1020,7 +1019,7 @@ namespace
         current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&arguments[it->first]);
         treat_expressions(current_size);
-        auto ind = index.back();
+        ind = index.back();
         index.pop_back();
         index.back() = ind;
         continuation.pop_back();
@@ -1067,7 +1066,7 @@ namespace
         std::swap(std::get<Lambda>(continuation.back()), lam); // this is a very substantial speedup trick!!
         cps_assert(continuation_is_valid());
         //visitor<Expression, cps_conversion_visitor>::visit(l.bindings[id].second, &ccv);
-        size_t current_size = expressions_to_treat.size();
+        current_size = expressions_to_treat.size();
         expressions_to_treat.push_back(&l.bindings[id].second);
         treat_expressions(current_size);
         auto ind = index.back();
