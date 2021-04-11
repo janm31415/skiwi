@@ -33,6 +33,135 @@ namespace
     return v;
     }
 
+  struct resolve_free_variables_state
+    {
+    enum struct e_rfv_state
+      {
+      T_INIT,
+      T_STEP_1,
+      };
+    Expression* p_expr;
+    e_rfv_state state;
+    
+    resolve_free_variables_state() : p_expr(nullptr), state(e_rfv_state::T_INIT) {}
+    resolve_free_variables_state(Expression* ip_expr) : p_expr(ip_expr), state(e_rfv_state::T_INIT) {}
+    resolve_free_variables_state(Expression* ip_expr, e_rfv_state s) : p_expr(ip_expr), state(s) {}
+    };
+  
+  struct resolve_free_variables_helper
+    {
+    std::vector<resolve_free_variables_state> expressions;
+    std::vector<Lambda*> active_lambda;
+    
+    resolve_free_variables_helper()
+      {
+
+      }
+      
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        resolve_free_variables_state st = expressions.back();
+        expressions.pop_back();
+        Expression& e = *st.p_expr;
+        
+        switch (st.state)
+          {
+          case resolve_free_variables_state::e_rfv_state::T_INIT:
+          {
+            if (std::holds_alternative<Literal>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Variable>(e))
+              {
+              if (active_lambda.empty())
+                continue;
+              Variable& v = std::get<Variable>(e);
+              auto it = std::find(active_lambda.back()->free_variables.begin(), active_lambda.back()->free_variables.end(), v.name);
+              if (it != active_lambda.back()->free_variables.end())
+                {
+                PrimitiveCall p;
+                p.primitive_name = "closure-ref";
+                p.arguments.push_back(_make_var(active_lambda.back()->variables.front()));
+                p.arguments.push_back(_make_fixnum(1 + std::distance(active_lambda.back()->free_variables.begin(), it)));
+                e = PrimitiveCall();
+                std::swap(std::get<PrimitiveCall>(e), p);
+                }
+              }
+            else if (std::holds_alternative<Nop>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Quote>(e))
+              {
+            
+              }
+            else if (std::holds_alternative<Set>(e))
+              {
+              Set& s = std::get<Set>(e);
+              expressions.push_back(&std::get<Set>(e).value.front());
+              }
+            else if (std::holds_alternative<If>(e))
+              {
+              for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Begin>(e))
+              {
+              for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<PrimitiveCall>(e))
+              {
+              for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<ForeignCall>(e))
+              {
+              for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Lambda>(e))
+              {
+              Lambda& l = std::get<Lambda>(e);
+              active_lambda.push_back(&l);
+              expressions.emplace_back(&e, resolve_free_variables_state::e_rfv_state::T_STEP_1);
+              expressions.push_back(&l.body.front());
+              }
+            else if (std::holds_alternative<FunCall>(e))
+              {
+              expressions.push_back(&std::get<FunCall>(e).fun.front());
+              for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+                expressions.push_back(&(*rit));
+              }
+            else if (std::holds_alternative<Let>(e))
+              {
+              Let& l = std::get<Let>(e);
+              expressions.push_back(&l.body.front());
+              for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+                expressions.push_back(&(*rit).second);
+              }
+            else
+              throw std::runtime_error("Compiler error!: closure conversion: not implemented");
+            break;
+            }
+          case resolve_free_variables_state::e_rfv_state::T_STEP_1:
+            {
+            if (std::holds_alternative<Lambda>(e))
+              {
+              //Lambda& l = std::get<Lambda>(e);
+              active_lambda.pop_back();
+              }
+            else
+              throw std::runtime_error("Compiler error!: closure conversion: not implemented");
+            break;
+            }
+          }
+        }
+      }
+    };
  
   struct resolve_free_variables_visitor : public base_visitor< resolve_free_variables_visitor>
     {
@@ -267,8 +396,11 @@ void closure_conversion(Program& prog, const compiler_options& ops)
         cch.expressions.push_back(&arg);
         cch.treat_expressions();
 
-        resolve_free_variables_visitor rfvv;
-        visitor<Expression, resolve_free_variables_visitor>::visit(arg, &rfvv);
+        //resolve_free_variables_visitor rfvv;
+        //visitor<Expression, resolve_free_variables_visitor>::visit(arg, &rfvv);
+        resolve_free_variables_helper rfvh;
+        rfvh.expressions.push_back(&arg);
+        rfvh.treat_expressions();
 
         }, ops);
       }
@@ -283,8 +415,13 @@ void closure_conversion(Program& prog, const compiler_options& ops)
       std::reverse(cch.expressions.begin(), cch.expressions.end());
       cch.treat_expressions();
       
-      resolve_free_variables_visitor rfvv;
-      visitor<Program, resolve_free_variables_visitor>::visit(prog, &rfvv);
+      //resolve_free_variables_visitor rfvv;
+      //visitor<Program, resolve_free_variables_visitor>::visit(prog, &rfvv);
+      resolve_free_variables_helper rfvh;
+      for (auto& expr : prog.expressions)
+        rfvh.expressions.push_back(&expr);
+      std::reverse(rfvh.expressions.begin(), rfvh.expressions.end());
+      rfvh.treat_expressions();
       }
     }
   else
@@ -297,8 +434,13 @@ void closure_conversion(Program& prog, const compiler_options& ops)
       cch.expressions.push_back(&expr);
     std::reverse(cch.expressions.begin(), cch.expressions.end());
     cch.treat_expressions();
-    resolve_free_variables_visitor rfvv;
-    visitor<Program, resolve_free_variables_visitor>::visit(prog, &rfvv);
+    //resolve_free_variables_visitor rfvv;
+    //visitor<Program, resolve_free_variables_visitor>::visit(prog, &rfvv);
+    resolve_free_variables_helper rfvh;
+    for (auto& expr : prog.expressions)
+      rfvh.expressions.push_back(&expr);
+    std::reverse(rfvh.expressions.begin(), rfvh.expressions.end());
+    rfvh.treat_expressions();
     }
 
 
