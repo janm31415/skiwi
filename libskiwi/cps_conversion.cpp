@@ -14,9 +14,9 @@
 
 SKIWI_BEGIN
 
-//#define cps_assert(EX)
+#define cps_assert(EX)
 
-#define cps_assert(EX) assert(EX)
+//#define cps_assert(EX) assert(EX)
 
 namespace
   {
