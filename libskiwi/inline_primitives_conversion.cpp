@@ -1108,6 +1108,215 @@ namespace
       }
 
     };
+    
+    
+  struct inline_primitives_conversion_state
+    {
+    enum struct e_ipc_state
+      {
+      T_INIT,
+      T_STEP_1
+      };
+    Expression* p_expr;
+    e_ipc_state state;
+
+    inline_primitives_conversion_state() : p_expr(nullptr), state(e_ipc_state::T_INIT) {}
+    inline_primitives_conversion_state(Expression* ip_expr) : p_expr(ip_expr), state(e_ipc_state::T_INIT) {}
+    inline_primitives_conversion_state(Expression* ip_expr, e_ipc_state s) : p_expr(ip_expr), state(s) {}
+    };
+
+  struct inline_primitives_conversion_helper
+    {
+    std::vector<inline_primitives_conversion_state> expressions;
+    
+    std::map<std::string, fun_ptr> get_primitives_that_can_be_inlined() const
+      {
+      std::map<std::string, fun_ptr> ptcbi;
+      ptcbi.insert(std::pair<std::string, fun_ptr>("remainder", &inline_remainder));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("quotient", &inline_quotient));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("arithmetic-shift", &inline_arithmetic_shift));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("%quiet-undefined", &inline_skiwi_quiet_undefined));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("%undefined", &inline_undefined));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("vector-length", &inline_vector_length));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fixnum->flonum", &inline_fixnum_to_flonum));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("flonum->fixnum", &inline_flonum_to_fixnum));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fixnum->char", &inline_fixnum_to_char));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char->fixnum", &inline_char_to_fixnum));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("bitwise-and", &inline_bitwise_and));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("bitwise-not", &inline_bitwise_not));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("bitwise-or", &inline_bitwise_or));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("bitwise-xor", &inline_bitwise_xor));
+
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-sign", &inline_ieee754_sign));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-mantissa", &inline_ieee754_mantissa));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-exponent", &inline_ieee754_exponent));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-pi", &inline_ieee754_pi));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-sin", &inline_ieee754_sin));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-cos", &inline_ieee754_cos));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-tan", &inline_ieee754_tan));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-asin", &inline_ieee754_asin));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-acos", &inline_ieee754_acos));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-atan1", &inline_ieee754_atan1));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-log", &inline_ieee754_log));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-round", &inline_ieee754_round));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-truncate", &inline_ieee754_truncate));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("ieee754-sqrt", &inline_ieee754_sqrt));
+      
+
+      ptcbi.insert(std::pair<std::string, fun_ptr>("memq", &inline_memq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("assq", &inline_assq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("not", &inline_not));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("cons", &inline_cons));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("car", &inline_car));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("cdr", &inline_cdr));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("set-car!", &inline_set_car));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("set-cdr!", &inline_set_cdr));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fixnum?", &inline_is_fixnum));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("flonum?", &inline_is_flonum));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("pair?", &inline_is_pair));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("vector?", &inline_is_vector));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("string?", &inline_is_string));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("symbol?", &inline_is_symbol));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("closure?", &inline_is_closure));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("port?", &inline_is_port));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("input-port?", &inline_is_input_port));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("output-port?", &inline_is_output_port));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("procedure?", &inline_is_procedure));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("boolean?", &inline_is_boolean));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("null?", &inline_is_null));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("eof-object?", &inline_is_eof_object));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char?", &inline_is_char));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("promise?", &inline_is_promise));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("eq?", &inline_is_eq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("add1", &inline_add1));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("sub1", &inline_sub1));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("max", &inline_max));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("min", &inline_min));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("zero?", &inline_is_zero));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("+", &inline_add));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("-", &inline_sub));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("*", &inline_mul));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("/", &inline_div));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("<", &inline_less));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("<=", &inline_leq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>(">", &inline_greater));
+      ptcbi.insert(std::pair<std::string, fun_ptr>(">=", &inline_geq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("=", &inline_numerically_equal));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("!=", &inline_numerically_not_equal));
+
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fxadd1", &inline_fxadd1));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fxsub1", &inline_fxsub1));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fxzero?", &inline_fx_is_zero));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx+", &inline_fxadd));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx-", &inline_fxsub));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx*", &inline_fxmul));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx/", &inline_fxdiv));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx<?", &inline_fxless));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx<=?", &inline_fxleq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx>?", &inline_fxgreater));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx>=?", &inline_fxgeq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("fx=?", &inline_fxequal));
+
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char<?", &inline_charless));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char<=?", &inline_charleq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char>?", &inline_chargreater));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char>=?", &inline_chargeq));
+      ptcbi.insert(std::pair<std::string, fun_ptr>("char=?", &inline_charequal));
+
+      return ptcbi;
+      }
+
+    void _check_for_inline(PrimitiveCall& p, Expression& e)
+      {
+      static std::map<std::string, fun_ptr> ptcbi = get_primitives_that_can_be_inlined();
+
+      auto it = ptcbi.find(p.primitive_name);
+      if (it != ptcbi.end())
+        {
+        it->second(p, e);
+        }
+      }
+   
+ 
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        inline_primitives_conversion_state ipc_state = expressions.back();
+        expressions.pop_back();
+        Expression& e = *ipc_state.p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          //Set& s = std::get<Set>(e);
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          if (ipc_state.state == inline_primitives_conversion_state::e_ipc_state::T_INIT)
+            {
+            expressions.emplace_back(&e, inline_primitives_conversion_state::e_ipc_state::T_STEP_1);
+            for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+              expressions.push_back(&(*rit));
+            }
+          else
+            {
+            _check_for_inline(std::get<PrimitiveCall>(e), e);
+            }
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          }
+        else
+          throw std::runtime_error("Compiler error!: constant propagation: not implemented");
+        }
+      }
+    };
   }
 
 void inline_primitives(Program& prog, uint64_t& alpha_conversion_index, bool safe_primitives, bool standard_bindings)
@@ -1115,8 +1324,15 @@ void inline_primitives(Program& prog, uint64_t& alpha_conversion_index, bool saf
   g_safe_primitives = safe_primitives;
   g_standard_bindings = standard_bindings;
   g_alpha_conversion_index = alpha_conversion_index;
-  inline_primitives_visitor ipv;
-  visitor<Program, inline_primitives_visitor>::visit(prog, &ipv);
+  //inline_primitives_visitor ipv;
+  //visitor<Program, inline_primitives_visitor>::visit(prog, &ipv);
+  
+  inline_primitives_conversion_helper ipch;
+  for (auto& expr : prog.expressions)
+    ipch.expressions.push_back(&expr);
+  std::reverse(ipch.expressions.begin(), ipch.expressions.end());
+  ipch.treat_expressions();
+  
   prog.inline_primitives_converted = true;
   alpha_conversion_index = g_alpha_conversion_index;
   }
