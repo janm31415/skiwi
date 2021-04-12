@@ -7,6 +7,7 @@
 
 SKIWI_BEGIN
 
+SKIWI_SCHEME_API void tail_call_analysis(Expression& e);
 SKIWI_SCHEME_API void tail_call_analysis(Program& prog);
 
 SKIWI_END

@@ -183,5 +183,15 @@ bool only_tail_calls(Program& prog)
   
   return tcch.only_tails;
   }
+  
+bool only_tail_calls(Expression& e)
+  {    
+  tail_calls_check_helper tcch;
+  tcch.expressions.push_back(&e);
+    
+  tcch.treat_expressions();
+  
+  return tcch.only_tails;
+  }
 
 SKIWI_END

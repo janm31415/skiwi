@@ -367,6 +367,18 @@ namespace
         expressions.push_back(&expr);
       std::reverse(expressions.begin(), expressions.end());
       }
+      
+    void add_expression(Expression& e)
+      {
+      if (std::holds_alternative<Begin>(e))
+        {
+        for (auto& expr : std::get<Begin>(e).arguments)
+          set_tail_position(expr);
+        }
+      else
+        set_tail_position(e);
+      expressions.push_back(&e);
+      }
     };
   }
 
@@ -389,6 +401,17 @@ void tail_call_analysis(Program& prog)
   tcah.treat_expressions();
   
   prog.tail_call_analysis = true;
+  }
+  
+void tail_call_analysis(Expression& e)
+  {
+  tail_calls_set_helper tcsh(false);
+  tcsh.expressions.push_back(&e);
+  tcsh.treat_expressions();
+  
+  tail_call_analysis_helper tcah;
+  tcah.add_expression(e);
+  tcah.treat_expressions();
   }
 
 SKIWI_END

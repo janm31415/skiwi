@@ -14,9 +14,9 @@
 
 SKIWI_BEGIN
 
-#define cps_assert(EX)
+//#define cps_assert(EX)
 
-//#define cps_assert(EX) assert(EX)
+#define cps_assert(EX) assert(EX)
 
 namespace
   {
@@ -143,10 +143,10 @@ namespace
       {
       if (!continuation_is_lambda() && !continuation_is_variable())
         return false;
-      Program prog;
-      prog.expressions.push_back(continuation.back());
-      tail_call_analysis(prog);
-      return only_tail_calls(prog);
+      //Program prog;
+      //prog.expressions.push_back(continuation.back());
+      tail_call_analysis(continuation.back());
+      return only_tail_calls(continuation.back());
       }
 
     bool continuation_is_lambda_with_one_parameter_without_free_vars()

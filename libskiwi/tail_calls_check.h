@@ -8,5 +8,6 @@
 SKIWI_BEGIN
 
 SKIWI_SCHEME_API bool only_tail_calls(Program& prog);
+SKIWI_SCHEME_API bool only_tail_calls(Expression& e);
 
 SKIWI_END
