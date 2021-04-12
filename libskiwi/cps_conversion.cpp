@@ -1209,7 +1209,7 @@ namespace
       continuation_can_be_moved.pop_back();
 
       //Expression expr(std::move(f.arguments[nonsimple_vars.begin()->first]));
-      Expression expr(f.fun.front());
+      Expression expr(std::move(f.fun.front()));
       e.swap(expr);
       }
 

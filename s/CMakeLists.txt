@@ -10,14 +10,14 @@ main.cpp
 if (WIN32)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8000000")
 endif (WIN32)
-#
-#if (UNIX)
-#  if (APPLE)
-#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,16000000")
-#  else()
-#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,stack-size=16000000")
-#  endif (APPLE)
-#endif (UNIX)
+
+if (UNIX)
+  if (APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,1000000")
+  else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,stack-size=16000000")
+  endif (APPLE)
+endif (UNIX)
 
 # general build definitions
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
