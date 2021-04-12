@@ -1250,7 +1250,7 @@ namespace
       }
     }
 
-  void compile_prim_call(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  inline void compile_prim_call(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     if (is_inlined_primitive(prim.primitive_name))
       compile_prim_call_inlined(env, data, prim);
@@ -1258,7 +1258,7 @@ namespace
       compile_prim_call_not_inlined(env, data, prim);
     }
 
-  void compile_prim_object(environment_map& env, compile_data&, const PrimitiveCall& prim)
+  inline void compile_prim_object(environment_map& env, compile_data&, const PrimitiveCall& prim)
     {
     environment_entry e;
     if (!env->find(e, prim.primitive_name))
@@ -1270,7 +1270,7 @@ namespace
     add_global_variable_to_debug_info(e.pos);
     }
 
-  void compile_prim(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  inline void compile_prim(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     if (prim.as_object)
       compile_prim_object(env, data, prim);
@@ -1632,15 +1632,23 @@ namespace
 
   void compile_begin(environment_map& env, compile_data& data, const Begin& beg)
     {
+    /*
     for (const auto& expr : beg.arguments)
       {
       compile_expression(env, data, expr);
       }
+    */
+    size_t current_size = expressions.size();
+    for (auto rit = beg.arguments.rbegin(); rit != beg.arguments.rend(); ++rit)
+      {
+      push_expression(env, data, *rit);
+      }
+    treat_expressions(current_size);
     }
     
   void treat_expressions(size_t target_size=0);
     
-  void push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+  inline void push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
   };
   
   void compiler::treat_expressions(size_t target_size)
@@ -1704,8 +1712,9 @@ namespace
       }
     }
   
-  void compiler::push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
+  inline void compiler::push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
     {
+    assert(target_is_valid(target));
     expression_data d;
     d.p_env = &env;
     d.p_data = &data;
