@@ -1313,7 +1313,7 @@ namespace
             expressions.push_back(&(*rit).second);
           }
         else
-          throw std::runtime_error("Compiler error!: constant propagation: not implemented");
+          throw std::runtime_error("Compiler error!: inline primitives conversion: not implemented");
         }
       }
     };
