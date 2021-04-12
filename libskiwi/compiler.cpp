@@ -294,8 +294,6 @@ namespace
     return fm;
     }
 
-  //void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
-
   struct get_scan_index_helper
     {
     uint64_t si;
@@ -365,14 +363,9 @@ namespace
 
   struct expression_data
     {
-    registered_functions* p_fns;
     environment_map* p_env;
-    repl_data* p_rd;
     compile_data* p_data;
-    asmcode* p_code;
     const Expression* p_expr;
-    const primitive_map* p_pm;
-    const compiler_options* p_options;
     asmcode::operand target;
     bool expire_registers;
     };
@@ -380,25 +373,33 @@ namespace
   struct compiler
     {
     std::vector<expression_data> expressions;
+    registered_functions& fns;
+    repl_data& rd;
+    asmcode& code;
+    const primitive_map& pm;
+    const compiler_options& options;
+    
+    compiler(registered_functions& fns, repl_data& rd, asmcode& code, const primitive_map& pm, const compiler_options& options) :
+    fns(fns), rd(rd), code(code), pm(pm), options(options) {}
         
-    void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+    void compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
 
-  void compile_nop(asmcode& code, asmcode::operand target)
+  void compile_nop(asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, skiwi_undefined);
     }
 
-  void compile_fixnum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Fixnum& f, const compiler_options&, asmcode::operand target)
+  void compile_fixnum(const Fixnum& f, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, int2fixnum(f.value));
     }
 
-  void compile_flonum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Flonum& f, const compiler_options& ops, asmcode::operand target)
+  void compile_flonum(const Flonum& f, asmcode::operand target)
     {
     assert(target_is_valid(target));
-    if (ops.safe_primitives && ops.safe_flonums)
+    if (options.safe_primitives && options.safe_flonums)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
       check_heap(code, re_flonum_heap_overflow);
@@ -415,25 +416,25 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_true(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  void compile_true(asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_t);
     }
 
-  void compile_false(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  void compile_false(asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_f);
     }
 
-  void compile_nil(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  void compile_nil(asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, nil);
     }
 
-  void compile_character(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Character& c, const compiler_options&, asmcode::operand target)
+  void compile_character(const Character& c, asmcode::operand target)
     {
     assert(target_is_valid(target));
     int64_t i = int64_t(c.value) << 8;
@@ -441,13 +442,13 @@ namespace
     code.add(asmcode::MOV, target, asmcode::NUMBER, i);
     }
 
-  void compile_string(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const String& s, const compiler_options& ops, asmcode::operand target)
+  void compile_string(const String& s, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
     int nr_of_args = (int)str.length();
 
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, ((nr_of_args >> 3) + 2));
       check_heap(code, re_string_heap_overflow);
@@ -479,13 +480,13 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_symbol(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Symbol& s, const compiler_options& ops, asmcode::operand target)
+  void compile_symbol(const Symbol& s, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
     int nr_of_args = (int)str.length();
 
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, ((nr_of_args >> 3) + 2));
       check_heap(code, re_symbol_heap_overflow);
@@ -517,40 +518,40 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_literal(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Literal& lit, const compiler_options& options, asmcode::operand target)
+  void compile_literal(const Literal& lit, asmcode::operand target)
     {
     assert(target_is_valid(target));
     if (std::holds_alternative<Fixnum>(lit))
       {
-      compile_fixnum(fns, env, rd, data, code, std::get<Fixnum>(lit), options, target);
+      compile_fixnum(std::get<Fixnum>(lit), target);
       }
     else if (std::holds_alternative<True>(lit))
       {
-      compile_true(fns, env, rd, data, code, options, target);
+      compile_true(target);
       }
     else if (std::holds_alternative<False>(lit))
       {
-      compile_false(fns, env, rd, data, code, options, target);
+      compile_false(target);
       }
     else if (std::holds_alternative<Nil>(lit))
       {
-      compile_nil(fns, env, rd, data, code, options, target);
+      compile_nil(target);
       }
     else if (std::holds_alternative<Character>(lit))
       {
-      compile_character(fns, env, rd, data, code, std::get<Character>(lit), options, target);
+      compile_character(std::get<Character>(lit), target);
       }
     else if (std::holds_alternative<Flonum>(lit))
       {
-      compile_flonum(fns, env, rd, data, code, std::get<Flonum>(lit), options, target);
+      compile_flonum(std::get<Flonum>(lit), target);
       }
     else if (std::holds_alternative<String>(lit))
       {
-      compile_string(fns, env, rd, data, code, std::get<String>(lit), options, target);
+      compile_string(std::get<String>(lit), target);
       }
     else if (std::holds_alternative<Symbol>(lit))
       {
-      compile_symbol(fns, env, rd, data, code, std::get<Symbol>(lit), options, target);
+      compile_symbol(std::get<Symbol>(lit), target);
       }
     else
       throw_error(not_implemented);
@@ -561,15 +562,15 @@ namespace
     assert(i.arguments.size() == 3);
     if (i.arguments.size() != 3)
       throw_error(i.line_nr, i.column_nr, i.filename, invalid_number_of_arguments);
-    compile_expression(fns, env, rd, cd, code, i.arguments.front(), pm, ops);
+    compile_expression(env, cd, i.arguments.front());
     uint64_t lab1 = label++;
     uint64_t lab2 = label++;
     code.add(asmcode::CMP, asmcode::RAX, asmcode::NUMBER, bool_f);
     code.add(asmcode::JE, label_to_string(lab1));
-    compile_expression(fns, env, rd, cd, code, i.arguments[1], pm, ops);
+    compile_expression(env, cd, i.arguments[1]);
     code.add(asmcode::JMP, label_to_string(lab2));
     code.add(asmcode::LABEL, label_to_string(lab1));
-    compile_expression(fns, env, rd, cd, code, i.arguments[2], pm, ops);
+    compile_expression(env, cd, i.arguments[2]);
     code.add(asmcode::LABEL, label_to_string(lab2));
     }
 
@@ -582,13 +583,13 @@ namespace
       std::stringstream str;
       str << i + 1;
       code.add(asmcode::COMMENT, "push function arg " + str.str() + " to stack");
-      compile_expression(fns, env, rd, cd, code, fun.arguments[i], pm, ops);
+      compile_expression(env, cd, fun.arguments[i]);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
 
     code.add(asmcode::COMMENT, "compute function");
-    compile_expression(fns, env, rd, cd, code, fun.fun.front(), pm, ops); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
+    compile_expression(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
 
     auto no_closure = label_to_string(label++);
     std::string error;
@@ -888,7 +889,7 @@ namespace
       }
     if (lam.body.size() != 1)
       throw_error(lam.line_nr, lam.column_nr, lam.filename, bad_syntax);
-    compile_expression(fns, new_env, rd, new_cd, code, lam.body.front(), pm, ops);
+    compile_expression(new_env, new_cd, lam.body.front());
     code.add(asmcode::RET);
     if (ops.safe_primitives)
       {
@@ -903,7 +904,7 @@ namespace
     {
     if (s.originates_from_define || s.originates_from_quote)
       {
-      compile_expression(fns, env, rd, cd, code, s.value.front(), pm, ops);
+      compile_expression(env, cd, s.value.front());
 
       environment_entry e;
       if (!env->find(e, s.name))
@@ -923,7 +924,7 @@ namespace
         throw_error(s.line_nr, s.column_nr, s.filename, invalid_variable_name);
 
       //set! in global namespace
-      compile_expression(fns, env, rd, cd, code, s.value.front(), pm, ops);
+      compile_expression(env, cd, s.value.front());
 
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, asmcode::MEM_R15, e.pos, asmcode::RAX);
@@ -1013,7 +1014,7 @@ namespace
 
     if (nr_prim_args == 1)
       {
-      compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
+      compile_expression(env, data, prim.arguments.back());
       }
     else if (nr_prim_args > 1)
       {
@@ -1024,7 +1025,7 @@ namespace
       if (expressions_can_be_targetted)
         {
         for (int i = nr_prim_args - 1; i >= 0; --i)
-          compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options, args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
+          compile_expression(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
         }
       else
         {
@@ -1032,11 +1033,11 @@ namespace
           {
           for (size_t i = 0; i < nr_prim_args - 1; ++i)
             {
-            compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options);
+            compile_expression(env, data, prim.arguments[i]);
             //code.add(asmcode::PUSH, asmcode::RAX);
             push(code, asmcode::RAX);
             }
-          compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
+          compile_expression(env, data, prim.arguments.back());
           code.add(asmcode::MOV, args[nr_prim_args - 1], asmcode::RAX);
           for (int i = nr_prim_args - 2; i >= 0; --i)
             {
@@ -1122,7 +1123,7 @@ namespace
       {
       // we choose this order of evaluation as it has most likelyhood to not interact with variables saved in register (I think)
       for (int i = 0; i < prim.arguments.size(); ++i)
-        compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options, arg_reg[i], false);
+        compile_expression(env, data, prim.arguments[i], arg_reg[i], false);
       }
     else
       {
@@ -1130,11 +1131,11 @@ namespace
         {
         for (int i = 0; i < nr_prim_args - 1; ++i)
           {
-          compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options);
+          compile_expression(env, data, prim.arguments[i]);
           //code.add(asmcode::PUSH, asmcode::RAX);
           push(code, asmcode::RAX);
           }
-        compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
+        compile_expression(env, data, prim.arguments.back());
         int i = (int)prim.arguments.size() - 1;
         if (i >= arg_reg.size())
           {
@@ -1374,7 +1375,7 @@ namespace
 
     for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
-      compile_expression(fns, env, rd, data, code, foreign.arguments[i], pm, ops);
+      compile_expression(env, data, foreign.arguments[i]);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
@@ -1600,7 +1601,7 @@ namespace
     auto new_env = std::make_shared<environment<environment_entry>>(env);
     for (int i = 0; i < let.bindings.size(); ++i)
       {
-      compile_expression(fns, env, rd, data, code, let.bindings[i].second, pm, options);
+      compile_expression(env, data, let.bindings[i].second);
       environment_entry e;
       e.live_range = let.live_ranges[i];
       if (data.ra->free_register_available())
@@ -1626,20 +1627,20 @@ namespace
 
       new_env->push(let.bindings[i].first, e);
       }
-    compile_expression(fns, new_env, rd, data, code, let.body.front(), pm, options);
+    compile_expression(new_env, data, let.body.front());
     }
 
-  void compile_begin(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Begin& beg, const primitive_map& pm, const compiler_options& options)
+  void compile_begin(environment_map& env, compile_data& data, const Begin& beg)
     {
     for (const auto& expr : beg.arguments)
       {
-      compile_expression(fns, env, rd, data, code, expr, pm, options);
+      compile_expression(env, data, expr);
       }
     }
     
   void treat_expressions(size_t target_size=0);
     
-  void push_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+  void push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
   };
   
   void compiler::treat_expressions(size_t target_size)
@@ -1648,94 +1649,83 @@ namespace
       {
       expression_data d = expressions.back();
       expressions.pop_back();
-      //compile_expression(*data.p_fns, *data.p_env, *data.p_rd, *data.p_data, *data.p_code, *data.p_expr, *data.p_pm, *data.p_options, data.target, data.expire_registers);
       assert(target_is_valid(d.target));
-      registered_functions& fns = *d.p_fns;
-      environment_map& env = *d.p_env;
-      repl_data& rd = *d.p_rd;
-      compile_data& data = *d.p_data;
-      asmcode& code = *d.p_code;
-      const Expression& expr = *d.p_expr;
-      const primitive_map& pm = *d.p_pm;
-      const compiler_options& options = *d.p_options;
-      if (std::holds_alternative<Literal>(expr))
+      
+      if (std::holds_alternative<Literal>(*d.p_expr))
         {
-        compile_literal(fns, env, rd, data, code, std::get<Literal>(expr), options, d.target);
+        compile_literal(std::get<Literal>(*d.p_expr), d.target);
         }
-      else if (std::holds_alternative<Begin>(expr))
+      else if (std::holds_alternative<Begin>(*d.p_expr))
         {
-        compile_begin(fns, env, rd, data, code, std::get<Begin>(expr), pm, options);
+        compile_begin(*d.p_env, *d.p_data, std::get<Begin>(*d.p_expr));
         }
-      else if (std::holds_alternative<Let>(expr))
+      else if (std::holds_alternative<Let>(*d.p_expr))
         {
-        compile_let(fns, env, rd, data, code, std::get<Let>(expr), pm, options);
+        compile_let(fns, *d.p_env, rd, *d.p_data, code, std::get<Let>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<PrimitiveCall>(expr))
+      else if (std::holds_alternative<PrimitiveCall>(*d.p_expr))
         {
-        compile_prim(fns, env, rd, data, code, std::get<PrimitiveCall>(expr), pm, options);
+        compile_prim(fns, *d.p_env, rd, *d.p_data, code, std::get<PrimitiveCall>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<ForeignCall>(expr))
+      else if (std::holds_alternative<ForeignCall>(*d.p_expr))
         {
-        compile_foreign_call(fns, env, rd, data, code, std::get<ForeignCall>(expr), pm, options);
+        compile_foreign_call(fns, *d.p_env, rd, *d.p_data, code, std::get<ForeignCall>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<Variable>(expr))
+      else if (std::holds_alternative<Variable>(*d.p_expr))
         {
-        compile_variable(fns, env, rd, data, code, std::get<Variable>(expr), options, d.target);
+        compile_variable(fns, *d.p_env, rd, *d.p_data, code, std::get<Variable>(*d.p_expr), options, d.target);
         }
-      else if (std::holds_alternative<If>(expr))
+      else if (std::holds_alternative<If>(*d.p_expr))
         {
-        compile_if(fns, env, rd, data, code, std::get<If>(expr), pm, options);
+        compile_if(fns, *d.p_env, rd, *d.p_data, code, std::get<If>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<Set>(expr))
+      else if (std::holds_alternative<Set>(*d.p_expr))
         {
-        compile_set(fns, env, rd, data, code, std::get<Set>(expr), pm, options);
+        compile_set(fns, *d.p_env, rd, *d.p_data, code, std::get<Set>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<Lambda>(expr))
+      else if (std::holds_alternative<Lambda>(*d.p_expr))
         {
-        compile_lambda(fns, env, rd, data, code, std::get<Lambda>(expr), pm, options);
+        compile_lambda(fns, *d.p_env, rd, *d.p_data, code, std::get<Lambda>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<FunCall>(expr))
+      else if (std::holds_alternative<FunCall>(*d.p_expr))
         {
-        compile_funcall(fns, env, rd, data, code, std::get<FunCall>(expr), pm, options);
+        compile_funcall(fns, *d.p_env, rd, *d.p_data, code, std::get<FunCall>(*d.p_expr), pm, options);
         }
-      else if (std::holds_alternative<Nop>(expr))
+      else if (std::holds_alternative<Nop>(*d.p_expr))
         {
-        compile_nop(code, d.target);
+        compile_nop(d.target);
         }
       else
         throw_error(not_implemented);
       if (d.expire_registers)
-        register_allocation_expire_old_intervals(get_scan_index(expr), data);
+        {
+        register_allocation_expire_old_intervals(get_scan_index(*d.p_expr), *d.p_data);
+        }
       }
     }
   
-  void compiler::push_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target, bool expire_registers)
+  void compiler::push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
     {
     expression_data d;
-    d.p_fns = &fns;
     d.p_env = &env;
-    d.p_rd = &rd;
     d.p_data = &data;
-    d.p_code = &code;
     d.p_expr = &expr;
-    d.p_pm = &pm;
-    d.p_options = &options;
     d.target = target;
     d.expire_registers = expire_registers;
     expressions.push_back(d);
     }
 
-  void compiler::compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target, bool expire_registers)
+  void compiler::compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
     {
     assert(target_is_valid(target));
     size_t current_size = expressions.size();
-    push_expression(fns, env, rd, data, code, expr, pm, options, target, expire_registers);
+    push_expression(env, data, expr, target, expire_registers);
     treat_expressions(current_size);    
     }
 
   void compile_program(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Program& prog, const primitive_map& pm, const compiler_options& options)
     {
-    compiler comp;
+    compiler comp(fns, rd, code, pm, options);
     for (const auto& expr : prog.expressions)
       {
       if (std::holds_alternative<Begin>(expr))
@@ -1743,8 +1733,7 @@ namespace
         for (const auto& expr2 : std::get<Begin>(expr).arguments)
           {
           data.halt_label = label_to_string(label++);
-          //comp.compile_expression(fns, env, rd, data, code, expr2, pm, options);
-          comp.push_expression(fns, env, rd, data, code, expr2, pm, options);
+          comp.push_expression(env, data, expr2);
           comp.treat_expressions();
           code.add(asmcode::LABEL, data.halt_label);
           data.ra->make_all_available();
@@ -1755,8 +1744,7 @@ namespace
       else
         {
         data.halt_label = label_to_string(label++);
-        //comp.compile_expression(fns, env, rd, data, code, expr, pm, options);
-        comp.push_expression(fns, env, rd, data, code, expr, pm, options);
+        comp.push_expression(env, data, expr);
         comp.treat_expressions();
         code.add(asmcode::LABEL, data.halt_label);
         }
