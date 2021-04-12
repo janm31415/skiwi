@@ -152,6 +152,105 @@ namespace
       }
     };
     
+    
+  struct tail_calls_set_helper
+    {
+    std::vector<Expression*> expressions;
+    bool tail_position;
+
+    tail_calls_set_helper(bool target_tail_position) : tail_position(target_tail_position)
+      {
+      }
+      
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+          if (tail_position)
+            {
+            set_tail_pos stp;
+            std::visit(stp, e);
+            }
+          else
+            {
+            unset_tail_pos utp;
+            std::visit(utp, e);
+            }
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+          std::get<Variable>(e).tail_position = tail_position;
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+          std::get<Nop>(e).tail_position = tail_position;
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+          std::get<Quote>(e).tail_position = tail_position;
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          std::get<Set>(e).tail_position = tail_position;
+          //Set& s = std::get<Set>(e);
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          std::get<If>(e).tail_position = tail_position;
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          std::get<Begin>(e).tail_position = tail_position;
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          std::get<PrimitiveCall>(e).tail_position = tail_position;
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          std::get<ForeignCall>(e).tail_position = tail_position;
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          std::get<Lambda>(e).tail_position = tail_position;
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          std::get<FunCall>(e).tail_position = tail_position;
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          std::get<Let>(e).tail_position = tail_position;
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          }
+        else
+          throw std::runtime_error("Compiler error!: Tail call analysis: not implemented");
+        }
+      }
+    };
+    
   struct tail_call_analysis_helper
     {
     std::vector<Expression*> expressions;
@@ -275,8 +374,12 @@ void tail_call_analysis(Program& prog)
   {
   if (prog.tail_call_analysis)
     {
-    tail_call_init tci;
-    visitor<Program, tail_call_init>::visit(prog, &tci);
+    //tail_call_init tci;
+    //visitor<Program, tail_call_init>::visit(prog, &tci);
+    tail_calls_set_helper tcsh(false);
+    for (auto& e : prog.expressions)
+      tcsh.expressions.push_back(&e);
+    tcsh.treat_expressions();
     }
   //tail_call_analysis_visitor tcav;
   //visitor<Program, tail_call_analysis_visitor>::visit(prog, &tcav);
