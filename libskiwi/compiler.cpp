@@ -382,7 +382,7 @@ namespace
     compiler(registered_functions& fns, repl_data& rd, asmcode& code, const primitive_map& pm, const compiler_options& options) :
     fns(fns), rd(rd), code(code), pm(pm), options(options) {}
         
-    void compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+    inline void compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
 
   void compile_nop(asmcode::operand target)
     {
@@ -557,7 +557,7 @@ namespace
       throw_error(not_implemented);
     }
 
-  void compile_if(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const If& i, const primitive_map& pm, const compiler_options& ops)
+  void compile_if(environment_map& env, compile_data& cd, const If& i)
     {
     assert(i.arguments.size() == 3);
     if (i.arguments.size() != 3)
@@ -574,7 +574,7 @@ namespace
     code.add(asmcode::LABEL, label_to_string(lab2));
     }
 
-  void compile_funcall(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const FunCall& fun, const primitive_map& pm, const compiler_options& ops)
+  void compile_funcall(environment_map& env, compile_data& cd, const FunCall& fun)
     {
     const auto& arg_reg = get_argument_registers();
 
@@ -595,7 +595,7 @@ namespace
     std::string error;
     code.add(asmcode::COMMENT, "check whether function is actually closure or primitive object");
     jump_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, no_closure);
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       error = label_to_string(label++);
       code.add(asmcode::MOV, asmcode::R11, asmcode::RAX);
@@ -630,7 +630,7 @@ namespace
     // now is the moment to call garbage collection
     // all arguments are in the registers or locals
     // there are no other local variables due to cps conversion
-    if (ops.garbage_collection)
+    if (options.garbage_collection)
       {
       std::string garbage_error = label_to_string(label++);
       std::string continue_label = label_to_string(label++);
@@ -661,7 +661,7 @@ namespace
 
     code.add(asmcode::LABEL, no_closure);
     // RAX contains address to primitive procedure
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::R15, asmcode::RAX);
       code.add(asmcode::AND, asmcode::R15, asmcode::NUMBER, procedure_mask);
@@ -704,12 +704,12 @@ namespace
     pop(code, asmcode::RCX);
     code.add(asmcode::MOV, asmcode::RDX, asmcode::RAX);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       jump_if_arg_is_not_block(code, asmcode::RAX, asmcode::R11, error);
       }
     code.add(asmcode::AND, asmcode::RAX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       jump_if_arg_does_not_point_to_closure(code, asmcode::RAX, asmcode::R11, error);
       }
@@ -718,13 +718,13 @@ namespace
     code.add(asmcode::COMMENT, "call continuation object after prim object call");
     code.add(asmcode::JMP, asmcode::R15);
 
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       error_label(code, error, re_closure_expected);
       }
     }
 
-  void compile_variable_arity_rest_arg(asmcode& code, const compiler_options& ops, size_t arg_pos)
+  void compile_variable_arity_rest_arg(size_t arg_pos)
     {
     std::string not_empty = label_to_string(label++);
     std::string done = label_to_string(label++);
@@ -737,7 +737,7 @@ namespace
     code.add(asmcode::LABEL, not_empty);
     code.add(asmcode::PUSH, asmcode::RCX);
     code.add(asmcode::PUSH, asmcode::RDX);
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::R11);
       code.add(asmcode::SHL, asmcode::RAX, asmcode::NUMBER, 1);
@@ -821,7 +821,7 @@ namespace
     code.add(asmcode::JMP, CONTINUE);
     }
 
-  void compile_lambda(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Lambda& lam, const primitive_map& pm, const compiler_options& ops)
+  void compile_lambda(environment_map& env, compile_data& cd, const Lambda& lam)
     {
     compile_data new_cd = create_compile_data(cd.heap_size, cd.globals_stack, cd.ra->number_of_locals(), cd.p_ctxt);
     new_cd.halt_label = cd.halt_label;
@@ -858,7 +858,7 @@ namespace
         }
       }
     std::string error;
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       error = label_to_string(label++);
       uint64_t nr_of_args_necessary = lam.variables.size();
@@ -875,7 +875,7 @@ namespace
 
       // R11 = self + cps + real vars + rest where rest counts as 1 => rest = R11 - self - cps - real vars = R11 - (lam.variables.size() - 1)
       code.add(asmcode::SUB, asmcode::R11, asmcode::NUMBER, lam.variables.size() - 1);
-      compile_variable_arity_rest_arg(code, ops, arg_pos);
+      compile_variable_arity_rest_arg(arg_pos);
       code.add(asmcode::LABEL, cont);
       if (arg_pos < get_argument_registers().size())
         {
@@ -891,7 +891,7 @@ namespace
       throw_error(lam.line_nr, lam.column_nr, lam.filename, bad_syntax);
     compile_expression(new_env, new_cd, lam.body.front());
     code.add(asmcode::RET);
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       error_label(code, error, re_lambda_invalid_number_of_arguments);
       }
@@ -900,7 +900,7 @@ namespace
     //code.add(asmcode::OR, asmcode::RAX, asmcode::NUMBER, procedure_tag);
     }
 
-  void compile_set(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Set& s, const primitive_map& pm, const compiler_options& ops)
+  void compile_set(environment_map& env, compile_data& cd, const Set& s)
     {
     if (s.originates_from_define || s.originates_from_quote)
       {
@@ -932,9 +932,9 @@ namespace
       }
     }
 
-  void add_global_variable_to_debug_info(asmcode& code, uint64_t pos, const compiler_options& ops)
+  void add_global_variable_to_debug_info(uint64_t pos)
     {
-    if (ops.keep_variable_stack)
+    if (options.keep_variable_stack)
       {
       code.add(asmcode::COMMENT, "Start debug info");
       code.add(asmcode::COMMENT, "\tCycling the call stack");
@@ -949,7 +949,7 @@ namespace
       }
     }
 
-  void compile_variable(registered_functions&, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Variable& var, const compiler_options& ops, asmcode::operand target)
+  void compile_variable(environment_map& env, compile_data& cd, const Variable& var, asmcode::operand target)
     {
     assert(target_is_valid(target));
     environment_entry e;
@@ -973,7 +973,7 @@ namespace
 
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, target, asmcode::MEM_R15, ne.pos);
-      add_global_variable_to_debug_info(code, ne.pos, ops);
+      add_global_variable_to_debug_info(ne.pos);
       }
     else
       {
@@ -987,7 +987,7 @@ namespace
         case environment_entry::st_global:
           code.add(asmcode::MOV, asmcode::R15, GLOBALS);
           code.add(asmcode::MOV, target, asmcode::MEM_R15, e.pos);
-          add_global_variable_to_debug_info(code, e.pos, ops);
+          add_global_variable_to_debug_info(e.pos);
           break;
         }
       }
@@ -1002,7 +1002,7 @@ namespace
     return vec;
     }
 
-  void compile_prim_call_inlined(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  void compile_prim_call_inlined(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     assert(is_inlined_primitive(prim.primitive_name));
 
@@ -1056,7 +1056,7 @@ namespace
     inlined_pm_it->second(code, options);
     }
 
-  void compile_prim_call_not_inlined(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  void compile_prim_call_not_inlined(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     assert(!is_inlined_primitive(prim.primitive_name));
 
@@ -1250,15 +1250,15 @@ namespace
       }
     }
 
-  void compile_prim_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  void compile_prim_call(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     if (is_inlined_primitive(prim.primitive_name))
-      compile_prim_call_inlined(fns, env, rd, data, code, prim, pm, options);
+      compile_prim_call_inlined(env, data, prim);
     else
-      compile_prim_call_not_inlined(fns, env, rd, data, code, prim, pm, options);
+      compile_prim_call_not_inlined(env, data, prim);
     }
 
-  void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options& ops)
+  void compile_prim_object(environment_map& env, compile_data&, const PrimitiveCall& prim)
     {
     environment_entry e;
     if (!env->find(e, prim.primitive_name))
@@ -1267,15 +1267,15 @@ namespace
       }
     code.add(asmcode::MOV, asmcode::R15, GLOBALS);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);
-    add_global_variable_to_debug_info(code, e.pos, ops);
+    add_global_variable_to_debug_info(e.pos);
     }
 
-  void compile_prim(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  void compile_prim(environment_map& env, compile_data& data, const PrimitiveCall& prim)
     {
     if (prim.as_object)
-      compile_prim_object(fns, env, rd, data, code, prim, pm, options);
+      compile_prim_object(env, data, prim);
     else
-      compile_prim_call(fns, env, rd, data, code, prim, pm, options);
+      compile_prim_call(env, data, prim);
     }
 
   std::vector<asmcode::operand> get_windows_calling_registers()
@@ -1312,10 +1312,10 @@ namespace
     return calling_registers;
     }
 
-  void compile_foreign_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const ForeignCall& foreign, const primitive_map& pm, const compiler_options& ops)
+  void compile_foreign_call(environment_map& env, compile_data& data, const ForeignCall& foreign)
     {
     std::string error;
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       error = label_to_string(label++);
 
 #ifdef _WIN32
@@ -1408,7 +1408,7 @@ namespace
 #endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
-        if (ops.safe_primitives)
+        if (options.safe_primitives)
           {
           code.add(asmcode::TEST, reg, asmcode::NUMBER, 1);
           code.add(asmcode::JNE, error);
@@ -1436,10 +1436,10 @@ namespace
 #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
-        if (ops.safe_primitives)
+        if (options.safe_primitives)
           jump_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::AND, asmcode::R11, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-        if (ops.safe_primitives)
+        if (options.safe_primitives)
           jump_if_arg_does_not_point_to_flonum(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::MOVSD, reg, asmcode::MEM_R11, CELLS(1));
         break;
@@ -1453,10 +1453,10 @@ namespace
 #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
-        if (ops.safe_primitives)
+        if (options.safe_primitives)
           jump_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::AND, asmcode::R11, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-        if (ops.safe_primitives)
+        if (options.safe_primitives)
           jump_if_arg_does_not_point_to_string(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::ADD, asmcode::R11, asmcode::NUMBER, CELLS(1));
         code.add(asmcode::MOV, reg, asmcode::R11);
@@ -1500,7 +1500,7 @@ namespace
       }
       case external_function::T_DOUBLE:
       {
-      if (ops.safe_primitives && ops.safe_flonums)
+      if (options.safe_primitives && options.safe_flonums)
         {
         code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
         check_heap(code, re_flonum_heap_overflow);
@@ -1533,7 +1533,7 @@ namespace
       code.add(asmcode::JMPS, repeat);
       code.add(asmcode::LABEL, done);
 
-      if (ops.safe_primitives)
+      if (options.safe_primitives)
         {
         code.add(asmcode::MOV, asmcode::RAX, asmcode::R11);
         code.add(asmcode::SHR, asmcode::RAX, asmcode::NUMBER, 3);
@@ -1587,7 +1587,7 @@ namespace
       pop(code, *it);
       }
 
-    if (ops.safe_primitives)
+    if (options.safe_primitives)
       {
       auto skip_error = label_to_string(label++);
       code.add(asmcode::JMPS, skip_error);
@@ -1596,7 +1596,7 @@ namespace
       }
     }
 
-  void compile_let(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Let& let, const primitive_map& pm, const compiler_options& options)
+  void compile_let(environment_map& env, compile_data& data, const Let& let)
     {
     auto new_env = std::make_shared<environment<environment_entry>>(env);
     for (int i = 0; i < let.bindings.size(); ++i)
@@ -1661,35 +1661,35 @@ namespace
         }
       else if (std::holds_alternative<Let>(*d.p_expr))
         {
-        compile_let(fns, *d.p_env, rd, *d.p_data, code, std::get<Let>(*d.p_expr), pm, options);
+        compile_let(*d.p_env, *d.p_data, std::get<Let>(*d.p_expr));
         }
       else if (std::holds_alternative<PrimitiveCall>(*d.p_expr))
         {
-        compile_prim(fns, *d.p_env, rd, *d.p_data, code, std::get<PrimitiveCall>(*d.p_expr), pm, options);
+        compile_prim(*d.p_env, *d.p_data, std::get<PrimitiveCall>(*d.p_expr));
         }
       else if (std::holds_alternative<ForeignCall>(*d.p_expr))
         {
-        compile_foreign_call(fns, *d.p_env, rd, *d.p_data, code, std::get<ForeignCall>(*d.p_expr), pm, options);
+        compile_foreign_call(*d.p_env, *d.p_data, std::get<ForeignCall>(*d.p_expr));
         }
       else if (std::holds_alternative<Variable>(*d.p_expr))
         {
-        compile_variable(fns, *d.p_env, rd, *d.p_data, code, std::get<Variable>(*d.p_expr), options, d.target);
+        compile_variable(*d.p_env, *d.p_data, std::get<Variable>(*d.p_expr), d.target);
         }
       else if (std::holds_alternative<If>(*d.p_expr))
         {
-        compile_if(fns, *d.p_env, rd, *d.p_data, code, std::get<If>(*d.p_expr), pm, options);
+        compile_if(*d.p_env, *d.p_data, std::get<If>(*d.p_expr));
         }
       else if (std::holds_alternative<Set>(*d.p_expr))
         {
-        compile_set(fns, *d.p_env, rd, *d.p_data, code, std::get<Set>(*d.p_expr), pm, options);
+        compile_set(*d.p_env, *d.p_data, std::get<Set>(*d.p_expr));
         }
       else if (std::holds_alternative<Lambda>(*d.p_expr))
         {
-        compile_lambda(fns, *d.p_env, rd, *d.p_data, code, std::get<Lambda>(*d.p_expr), pm, options);
+        compile_lambda(*d.p_env, *d.p_data, std::get<Lambda>(*d.p_expr));
         }
       else if (std::holds_alternative<FunCall>(*d.p_expr))
         {
-        compile_funcall(fns, *d.p_env, rd, *d.p_data, code, std::get<FunCall>(*d.p_expr), pm, options);
+        compile_funcall(*d.p_env, *d.p_data, std::get<FunCall>(*d.p_expr));
         }
       else if (std::holds_alternative<Nop>(*d.p_expr))
         {
@@ -1715,7 +1715,7 @@ namespace
     expressions.push_back(d);
     }
 
-  void compiler::compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
+  inline void compiler::compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
     {
     assert(target_is_valid(target));
     size_t current_size = expressions.size();
