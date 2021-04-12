@@ -70,14 +70,14 @@ namespace
 
   void debug_string(const char* txt)
     { 
-    txt;
+    (void)txt;
     //printf(txt); printf("\n");
     }
 
   void toc()
     {
     auto t = g_timer.get_time_elapsed_in_sec();
-    t;
+    (void)t;
     //printf("Time spent: %fs\n", t);
     }
   }
