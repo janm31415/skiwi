@@ -14,6 +14,101 @@ SKIWI_BEGIN
 namespace
   {
 
+  struct is_unmutable_variable_helper
+    {
+    std::vector<Expression*> expressions;
+    std::map<std::string, bool> is_unmutable;
+      
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+          Variable& v = std::get<Variable>(e);
+          auto it = is_unmutable.find(v.name);
+          if (it == is_unmutable.end())
+            {
+            is_unmutable[v.name] = false;
+            }
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          Set& s = std::get<Set>(e);
+          is_unmutable[s.name] = false;
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          for (auto& v : l.variables)
+            {
+            is_unmutable[v] = false;
+            }
+          expressions.push_back(&l.body.front());
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          for (auto& b : l.bindings)
+            {
+            auto it = is_unmutable.find(b.first);
+            if (it == is_unmutable.end())
+              {
+              is_unmutable[b.first] = true;
+              }
+            }
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          }
+        else
+          throw std::runtime_error("Compiler error!: is unmutable variable helper: not implemented");
+        }
+      }
+    };
+
   struct is_unmutable_variable_visitor : public base_visitor<is_unmutable_variable_visitor>
     {
     std::map<std::string, bool> is_unmutable;
@@ -57,6 +152,87 @@ namespace
       }
 
     };
+    
+  struct replace_variable_helper
+    {
+    std::vector<Expression*> expressions;
+    std::string var_name;
+    Expression replace_by_this_expr;
+      
+    void treat_expressions()
+      {
+      while (!expressions.empty())
+        {
+        Expression* p_expr = expressions.back();
+        expressions.pop_back();
+        Expression& e = *p_expr;
+        if (std::holds_alternative<Literal>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Variable>(e))
+          {
+          Variable& v = std::get<Variable>(e);
+          if (v.name == var_name)
+            e = replace_by_this_expr;
+          }
+        else if (std::holds_alternative<Nop>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Quote>(e))
+          {
+        
+          }
+        else if (std::holds_alternative<Set>(e))
+          {
+          Set& s = std::get<Set>(e);
+          
+          expressions.push_back(&std::get<Set>(e).value.front());
+          }
+        else if (std::holds_alternative<If>(e))
+          {
+          for (auto rit = std::get<If>(e).arguments.rbegin(); rit != std::get<If>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Begin>(e))
+          {
+          for (auto rit = std::get<Begin>(e).arguments.rbegin(); rit != std::get<Begin>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<PrimitiveCall>(e))
+          {
+          for (auto rit = std::get<PrimitiveCall>(e).arguments.rbegin(); rit != std::get<PrimitiveCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<ForeignCall>(e))
+          {
+          for (auto rit = std::get<ForeignCall>(e).arguments.rbegin(); rit != std::get<ForeignCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Lambda>(e))
+          {
+          Lambda& l = std::get<Lambda>(e);
+          expressions.push_back(&l.body.front());
+          }
+        else if (std::holds_alternative<FunCall>(e))
+          {
+          expressions.push_back(&std::get<FunCall>(e).fun.front());
+          for (auto rit = std::get<FunCall>(e).arguments.rbegin(); rit != std::get<FunCall>(e).arguments.rend(); ++rit)
+            expressions.push_back(&(*rit));
+          }
+        else if (std::holds_alternative<Let>(e))
+          {
+          Let& l = std::get<Let>(e);
+          expressions.push_back(&l.body.front());
+          for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
+            expressions.push_back(&(*rit).second);
+          }
+        else
+          throw std::runtime_error("Compiler error!: replace variable helper: not implemented");
+        }
+      }
+    };
 
   struct replace_variable_visitor : public base_visitor<replace_variable_visitor>
     {
@@ -97,10 +273,15 @@ namespace
               Literal& lit = std::get<Literal>(it->second);
               if (!std::holds_alternative<String>(lit))
                 {
-                replace_variable_visitor rvv;
-                rvv.var_name = it->first;
-                rvv.replace_by_this_expr = lit;
-                visitor<Expression, replace_variable_visitor>::visit(l.body.front(), &rvv);
+                //replace_variable_visitor rvv;
+                //rvv.var_name = it->first;
+                //rvv.replace_by_this_expr = lit;
+                //visitor<Expression, replace_variable_visitor>::visit(l.body.front(), &rvv);
+                replace_variable_helper rvh;
+                rvh.var_name = it->first;
+                rvh.replace_by_this_expr = lit;
+                rvh.expressions.push_back(&l.body.front());
+                rvh.treat_expressions();
                 it = l.bindings.erase(it);
                 }
               else
@@ -114,10 +295,15 @@ namespace
                 var_is_unmutable = var_iter->second;
               if (var_is_unmutable)
                 {
-                replace_variable_visitor rvv;
-                rvv.var_name = it->first;
-                rvv.replace_by_this_expr = std::get<Variable>(it->second);
-                visitor<Expression, replace_variable_visitor>::visit(l.body.front(), &rvv);
+                //replace_variable_visitor rvv;
+                //rvv.var_name = it->first;
+                //rvv.replace_by_this_expr = std::get<Variable>(it->second);
+                //visitor<Expression, replace_variable_visitor>::visit(l.body.front(), &rvv);
+                replace_variable_helper rvh;
+                rvh.var_name = it->first;
+                rvh.replace_by_this_expr = std::get<Variable>(it->second);
+                rvh.expressions.push_back(&l.body.front());
+                rvh.treat_expressions();
                 it = l.bindings.erase(it);
                 }
               else
@@ -150,11 +336,17 @@ void constant_propagation(Program& prog)
   {    
   //assert(prog.alpha_converted);
 
-  is_unmutable_variable_visitor uvv;
-  visitor<Program, is_unmutable_variable_visitor>::visit(prog, &uvv);
+  //is_unmutable_variable_visitor uvv;
+  //visitor<Program, is_unmutable_variable_visitor>::visit(prog, &uvv);
+  is_unmutable_variable_helper iuvh;
+  for (auto& expr: prog.expressions)
+    iuvh.expressions.push_back(&expr);
+  std::reverse(iuvh.expressions.begin(), iuvh.expressions.end());
+  iuvh.treat_expressions();
 
   constant_propagation_visitor cpv;
-  cpv.p_is_unmutable = &uvv.is_unmutable;
+  //cpv.p_is_unmutable = &uvv.is_unmutable;
+  cpv.p_is_unmutable = &iuvh.is_unmutable;
   visitor<Program, constant_propagation_visitor>::visit(prog, &cpv);
 
   prog.constant_propagated = true;
