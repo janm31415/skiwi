@@ -178,7 +178,7 @@ namespace
     const std::map<std::string, external_function>* externals;
     };
 
-  bool is_inlined_primitive(const std::string& prim_name)
+  inline bool is_inlined_primitive(const std::string& prim_name)
     {
     if (prim_name.size() > 2)
       {
@@ -314,7 +314,7 @@ namespace
       }
     };
 
-  uint64_t get_scan_index(const Expression& expr)
+  inline uint64_t get_scan_index(const Expression& expr)
     {
     get_scan_index_helper gsih;
     std::visit(gsih, expr);
@@ -348,7 +348,7 @@ namespace
     data.first_ra_map_time_point_to_elapse = first_ra_map_time_point_to_elapse;
     }
 
-  bool target_is_valid(asmcode::operand target)
+  inline bool target_is_valid(asmcode::operand target)
     {
     if (target == asmcode::R15)
       return false;
@@ -357,25 +357,25 @@ namespace
     return true;
     }
 
-  bool expression_can_be_targetted(const Expression& expr)
+  inline bool expression_can_be_targetted(const Expression& expr)
     {
     return std::holds_alternative<Variable>(expr) || std::holds_alternative<Literal>(expr);
     //return std::holds_alternative<Literal>(expr);
     }
 
-  void compile_nop(asmcode& code, asmcode::operand target)
+  inline void compile_nop(asmcode& code, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, skiwi_undefined);
     }
 
-  void compile_fixnum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Fixnum& f, const compiler_options&, asmcode::operand target)
+  inline void compile_fixnum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Fixnum& f, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, int2fixnum(f.value));
     }
 
-  void compile_flonum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Flonum& f, const compiler_options& ops, asmcode::operand target)
+  inline void compile_flonum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Flonum& f, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     if (ops.safe_primitives && ops.safe_flonums)
@@ -395,25 +395,25 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_true(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  inline void compile_true(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_t);
     }
 
-  void compile_false(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  inline void compile_false(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_f);
     }
 
-  void compile_nil(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
+  inline void compile_nil(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, nil);
     }
 
-  void compile_character(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Character& c, const compiler_options&, asmcode::operand target)
+  inline void compile_character(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Character& c, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     int64_t i = int64_t(c.value) << 8;
@@ -421,7 +421,7 @@ namespace
     code.add(asmcode::MOV, target, asmcode::NUMBER, i);
     }
 
-  void compile_string(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const String& s, const compiler_options& ops, asmcode::operand target)
+  inline void compile_string(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const String& s, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
@@ -459,7 +459,7 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_symbol(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Symbol& s, const compiler_options& ops, asmcode::operand target)
+  inline void compile_symbol(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Symbol& s, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
@@ -497,7 +497,7 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_literal(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Literal& lit, const compiler_options& options, asmcode::operand target)
+  inline void compile_literal(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Literal& lit, const compiler_options& options, asmcode::operand target)
     {
     assert(target_is_valid(target));
     if (std::holds_alternative<Fixnum>(lit))
@@ -1575,38 +1575,51 @@ namespace
       }
     }
 
-  void compile_let(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Let& let, const primitive_map& pm, const compiler_options& options)
+  void compile_let(registered_functions& fns, environment_map env, repl_data& rd, compile_data& data, asmcode& code, const Let& let, const primitive_map& pm, const compiler_options& options)
     {
-    auto new_env = std::make_shared<environment<environment_entry>>(env);
-    for (int i = 0; i < let.bindings.size(); ++i)
+    const Let* p_let = &let;
+    while (p_let) // for nested let statements we avoid extra function calls to avoid stack usage. Nested lets can occur if you called remove_single_begin during preprocessing.
       {
-      compile_expression(fns, env, rd, data, code, let.bindings[i].second, pm, options);
-      environment_entry e;
-      e.live_range = let.live_ranges[i];
-      if (data.ra->free_register_available())
+      auto new_env = std::make_shared<environment<environment_entry>>(env);
+      for (int i = 0; i < p_let->bindings.size(); ++i)
         {
-        e.st = environment_entry::st_register;
-        e.pos = (uint64_t)data.ra->get_next_available_register();
-        code.add(asmcode::MOV, (asmcode::operand)e.pos, asmcode::RAX);
-        data.ra_map[make_reg_alloc_data(reg_alloc_data::t_register, e.pos, let.live_ranges[i])] = let.bindings[i].first;
-        data.first_ra_map_time_point_to_elapse = std::min<uint64_t>(data.first_ra_map_time_point_to_elapse, let.live_ranges[i].last);
+        compile_expression(fns, env, rd, data, code, p_let->bindings[i].second, pm, options);
+        environment_entry e;
+        e.live_range = p_let->live_ranges[i];
+        if (data.ra->free_register_available())
+          {
+          e.st = environment_entry::st_register;
+          e.pos = (uint64_t)data.ra->get_next_available_register();
+          code.add(asmcode::MOV, (asmcode::operand)e.pos, asmcode::RAX);
+          data.ra_map[make_reg_alloc_data(reg_alloc_data::t_register, e.pos, p_let->live_ranges[i])] = p_let->bindings[i].first;
+          data.first_ra_map_time_point_to_elapse = std::min<uint64_t>(data.first_ra_map_time_point_to_elapse, p_let->live_ranges[i].last);
+          }
+        else if (data.ra->free_local_available())
+          {
+          e.st = environment_entry::st_local;
+          e.pos = (uint64_t)data.ra->get_next_available_local();
+          save_to_local(code, e.pos);
+          data.ra_map[make_reg_alloc_data(reg_alloc_data::t_local, e.pos, p_let->live_ranges[i])] = p_let->bindings[i].first;
+          data.first_ra_map_time_point_to_elapse = std::min<uint64_t>(data.first_ra_map_time_point_to_elapse, p_let->live_ranges[i].last);
+          }
+        else
+          {
+          throw std::runtime_error("no local storage available anymore");
+          }
+
+        new_env->push(p_let->bindings[i].first, e);
         }
-      else if (data.ra->free_local_available())
+      if (std::holds_alternative<Let>(p_let->body.front())) // if this is a nested let
         {
-        e.st = environment_entry::st_local;
-        e.pos = (uint64_t)data.ra->get_next_available_local();
-        save_to_local(code, e.pos);
-        data.ra_map[make_reg_alloc_data(reg_alloc_data::t_local, e.pos, let.live_ranges[i])] = let.bindings[i].first;
-        data.first_ra_map_time_point_to_elapse = std::min<uint64_t>(data.first_ra_map_time_point_to_elapse, let.live_ranges[i].last);
+        p_let = &std::get<Let>(p_let->body.front());
+        env = new_env;
         }
       else
         {
-        throw std::runtime_error("no local storage available anymore");
+        compile_expression(fns, new_env, rd, data, code, p_let->body.front(), pm, options);
+        p_let = nullptr;
         }
-
-      new_env->push(let.bindings[i].first, e);
       }
-    compile_expression(fns, new_env, rd, data, code, let.body.front(), pm, options);
     }
 
   void compile_begin(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Begin& beg, const primitive_map& pm, const compiler_options& options)
