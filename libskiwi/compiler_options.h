@@ -29,6 +29,7 @@ struct compiler_options
   bool do_collect_quotes;
   bool do_quote_conversion;
   bool do_quasiquote_conversion;
+  bool do_remove_single_begins;
   linear_scan_algorithm lsa_algo;
   bool primitives_inlined;
   bool do_constant_folding;

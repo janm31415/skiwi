@@ -18,6 +18,7 @@
 #include "quasiquote_conversion.h"
 #include "quote_collector.h"
 #include "quote_conversion.h"
+#include "remove_single_begins.h"
 #include "simplify_to_core.h"
 #include "single_begin_conversion.h"
 #include "tail_call_analysis.h"
@@ -217,6 +218,14 @@ void preprocess(environment_map& env, repl_data& data, macro_data& md, context& 
     }
   debug_string("done tail_call_analysis");
   toc();
+  
+  tic();
+  debug_string("start remove_single_begins");
+  if (options.do_remove_single_begins)
+    remove_single_begins(prog);
+  debug_string("start remove_single_begins");
+  toc();
+  
   tic();
   debug_string("start do_linear_scan_indices_computation");
   if (options.do_linear_scan_indices_computation)

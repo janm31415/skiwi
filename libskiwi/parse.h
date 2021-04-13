@@ -337,6 +337,7 @@ class Program
       constant_folded = false;
       constant_propagated = false;
       macros_expanded = false;
+      single_begins_removed = false;
       }
     Expressions expressions;
     std::map<std::string, cell> quotes;
@@ -362,6 +363,7 @@ class Program
     bool constant_folded;
     bool constant_propagated;
     bool macros_expanded;
+    bool single_begins_removed;
   };
 
 PrimitiveCall make_primitive_call(std::vector<token>& tokens);

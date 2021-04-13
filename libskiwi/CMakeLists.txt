@@ -50,6 +50,7 @@ quote_conversion.h
 reader.h
 reg_alloc.h
 reg_alloc_map.h
+remove_single_begins.h
 repl_data.h
 runtime.h
 simplify_to_core.h
@@ -105,6 +106,7 @@ quote_conversion.cpp
 reader.cpp
 reg_alloc.cpp
 reg_alloc_map.cpp
+remove_single_begins.cpp
 repl_data.cpp
 runtime.cpp
 simplify_to_core.cpp

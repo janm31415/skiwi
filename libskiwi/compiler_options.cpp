@@ -32,6 +32,7 @@ compiler_options::compiler_options()
   do_constant_folding = true;
   do_constant_propagation = true;
   do_expand_macros = true;
+  do_remove_single_begins = true;
   standard_bindings = false;
 
   fast_expression_targetting = true;
