@@ -294,6 +294,8 @@ namespace
     return fm;
     }
 
+  void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+
   struct get_scan_index_helper
     {
     uint64_t si;
@@ -361,52 +363,22 @@ namespace
     //return std::holds_alternative<Literal>(expr);
     }
 
-  struct expression_data
-    {
-    expression_data() : p_env(nullptr), p_data(nullptr), p_expr(nullptr), target(asmcode::RAX), expire_registers(true) {}
-    expression_data(environment_map& env, compile_data& data, const Expression& expr) :
-      p_env(&env), p_data(&data), p_expr(&expr), target(asmcode::RAX), expire_registers(true) {}
-    expression_data(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers) :
-      p_env(&env), p_data(&data), p_expr(&expr), target(target), expire_registers(expire_registers)
-      {
-      assert(target_is_valid(target));
-      }
-    
-    environment_map* p_env;
-    compile_data* p_data;
-    const Expression* p_expr;
-    asmcode::operand target;
-    bool expire_registers;
-    };
-
-  struct compiler
-    {
-    std::vector<expression_data> expressions;
-    registered_functions& fns;
-    repl_data& rd;
-    asmcode& code;
-    const primitive_map& pm;
-    const compiler_options& options;
-    
-    compiler(registered_functions& fns, repl_data& rd, asmcode& code, const primitive_map& pm, const compiler_options& options) :
-    fns(fns), rd(rd), code(code), pm(pm), options(options) {}
-
-  void compile_nop(asmcode::operand target)
+  void compile_nop(asmcode& code, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, skiwi_undefined);
     }
 
-  void compile_fixnum(const Fixnum& f, asmcode::operand target)
+  void compile_fixnum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Fixnum& f, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, int2fixnum(f.value));
     }
 
-  void compile_flonum(const Flonum& f, asmcode::operand target)
+  void compile_flonum(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Flonum& f, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
-    if (options.safe_primitives && options.safe_flonums)
+    if (ops.safe_primitives && ops.safe_flonums)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
       check_heap(code, re_flonum_heap_overflow);
@@ -423,25 +395,25 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_true(asmcode::operand target)
+  void compile_true(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_t);
     }
 
-  void compile_false(asmcode::operand target)
+  void compile_false(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, bool_f);
     }
 
-  void compile_nil(asmcode::operand target)
+  void compile_nil(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     code.add(asmcode::MOV, target, asmcode::NUMBER, nil);
     }
 
-  void compile_character(const Character& c, asmcode::operand target)
+  void compile_character(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Character& c, const compiler_options&, asmcode::operand target)
     {
     assert(target_is_valid(target));
     int64_t i = int64_t(c.value) << 8;
@@ -449,13 +421,13 @@ namespace
     code.add(asmcode::MOV, target, asmcode::NUMBER, i);
     }
 
-  void compile_string(const String& s, asmcode::operand target)
+  void compile_string(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const String& s, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
     int nr_of_args = (int)str.length();
 
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, ((nr_of_args >> 3) + 2));
       check_heap(code, re_string_heap_overflow);
@@ -487,13 +459,13 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_symbol(const Symbol& s, asmcode::operand target)
+  void compile_symbol(registered_functions&, environment_map&, repl_data&, compile_data&, asmcode& code, const Symbol& s, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     std::string str = s.value;
     int nr_of_args = (int)str.length();
 
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, ((nr_of_args >> 3) + 2));
       check_heap(code, re_symbol_heap_overflow);
@@ -525,73 +497,63 @@ namespace
     code.add(asmcode::MOV, target, asmcode::R15);
     }
 
-  void compile_literal(const Literal& lit, asmcode::operand target)
+  void compile_literal(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Literal& lit, const compiler_options& options, asmcode::operand target)
     {
     assert(target_is_valid(target));
     if (std::holds_alternative<Fixnum>(lit))
       {
-      compile_fixnum(std::get<Fixnum>(lit), target);
+      compile_fixnum(fns, env, rd, data, code, std::get<Fixnum>(lit), options, target);
       }
     else if (std::holds_alternative<True>(lit))
       {
-      compile_true(target);
+      compile_true(fns, env, rd, data, code, options, target);
       }
     else if (std::holds_alternative<False>(lit))
       {
-      compile_false(target);
+      compile_false(fns, env, rd, data, code, options, target);
       }
     else if (std::holds_alternative<Nil>(lit))
       {
-      compile_nil(target);
+      compile_nil(fns, env, rd, data, code, options, target);
       }
     else if (std::holds_alternative<Character>(lit))
       {
-      compile_character(std::get<Character>(lit), target);
+      compile_character(fns, env, rd, data, code, std::get<Character>(lit), options, target);
       }
     else if (std::holds_alternative<Flonum>(lit))
       {
-      compile_flonum(std::get<Flonum>(lit), target);
+      compile_flonum(fns, env, rd, data, code, std::get<Flonum>(lit), options, target);
       }
     else if (std::holds_alternative<String>(lit))
       {
-      compile_string(std::get<String>(lit), target);
+      compile_string(fns, env, rd, data, code, std::get<String>(lit), options, target);
       }
     else if (std::holds_alternative<Symbol>(lit))
       {
-      compile_symbol(std::get<Symbol>(lit), target);
+      compile_symbol(fns, env, rd, data, code, std::get<Symbol>(lit), options, target);
       }
     else
       throw_error(not_implemented);
     }
 
-  void compile_if(environment_map& env, compile_data& cd, const If& i)
+  void compile_if(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const If& i, const primitive_map& pm, const compiler_options& ops)
     {
     assert(i.arguments.size() == 3);
     if (i.arguments.size() != 3)
       throw_error(i.line_nr, i.column_nr, i.filename, invalid_number_of_arguments);
-    //compile_expression(env, cd, i.arguments.front());
-    size_t current_size = expressions.size();
-    expressions.emplace_back(env, cd, i.arguments.front());
-    treat_expressions(current_size);
-    
+    compile_expression(fns, env, rd, cd, code, i.arguments.front(), pm, ops);
     uint64_t lab1 = label++;
     uint64_t lab2 = label++;
     code.add(asmcode::CMP, asmcode::RAX, asmcode::NUMBER, bool_f);
     code.add(asmcode::JE, label_to_string(lab1));
-    //compile_expression(env, cd, i.arguments[1]);
-    current_size = expressions.size();
-    expressions.emplace_back(env, cd, i.arguments[1]);
-    treat_expressions(current_size);
+    compile_expression(fns, env, rd, cd, code, i.arguments[1], pm, ops);
     code.add(asmcode::JMP, label_to_string(lab2));
     code.add(asmcode::LABEL, label_to_string(lab1));
-    //compile_expression(env, cd, i.arguments[2]);
-    current_size = expressions.size();
-    expressions.emplace_back(env, cd, i.arguments[2]);
-    treat_expressions(current_size);
+    compile_expression(fns, env, rd, cd, code, i.arguments[2], pm, ops);
     code.add(asmcode::LABEL, label_to_string(lab2));
     }
 
-  void compile_funcall(environment_map& env, compile_data& cd, const FunCall& fun)
+  void compile_funcall(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const FunCall& fun, const primitive_map& pm, const compiler_options& ops)
     {
     const auto& arg_reg = get_argument_registers();
 
@@ -600,25 +562,19 @@ namespace
       std::stringstream str;
       str << i + 1;
       code.add(asmcode::COMMENT, "push function arg " + str.str() + " to stack");
-      //compile_expression(env, cd, fun.arguments[i]);
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, cd, fun.arguments[i]);
-      treat_expressions(current_size);
+      compile_expression(fns, env, rd, cd, code, fun.arguments[i], pm, ops);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
 
     code.add(asmcode::COMMENT, "compute function");
-    //compile_expression(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
-    size_t current_size = expressions.size();
-    expressions.emplace_back(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
-    treat_expressions(current_size);
+    compile_expression(fns, env, rd, cd, code, fun.fun.front(), pm, ops); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
 
     auto no_closure = label_to_string(label++);
     std::string error;
     code.add(asmcode::COMMENT, "check whether function is actually closure or primitive object");
     jump_if_arg_is_not_block(code, asmcode::RAX, asmcode::R15, no_closure);
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       error = label_to_string(label++);
       code.add(asmcode::MOV, asmcode::R11, asmcode::RAX);
@@ -653,7 +609,7 @@ namespace
     // now is the moment to call garbage collection
     // all arguments are in the registers or locals
     // there are no other local variables due to cps conversion
-    if (options.garbage_collection)
+    if (ops.garbage_collection)
       {
       std::string garbage_error = label_to_string(label++);
       std::string continue_label = label_to_string(label++);
@@ -684,7 +640,7 @@ namespace
 
     code.add(asmcode::LABEL, no_closure);
     // RAX contains address to primitive procedure
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::R15, asmcode::RAX);
       code.add(asmcode::AND, asmcode::R15, asmcode::NUMBER, procedure_mask);
@@ -727,12 +683,12 @@ namespace
     pop(code, asmcode::RCX);
     code.add(asmcode::MOV, asmcode::RDX, asmcode::RAX);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::RCX);
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       jump_if_arg_is_not_block(code, asmcode::RAX, asmcode::R11, error);
       }
     code.add(asmcode::AND, asmcode::RAX, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       jump_if_arg_does_not_point_to_closure(code, asmcode::RAX, asmcode::R11, error);
       }
@@ -741,13 +697,13 @@ namespace
     code.add(asmcode::COMMENT, "call continuation object after prim object call");
     code.add(asmcode::JMP, asmcode::R15);
 
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       error_label(code, error, re_closure_expected);
       }
     }
 
-  void compile_variable_arity_rest_arg(size_t arg_pos)
+  void compile_variable_arity_rest_arg(asmcode& code, const compiler_options& ops, size_t arg_pos)
     {
     std::string not_empty = label_to_string(label++);
     std::string done = label_to_string(label++);
@@ -760,7 +716,7 @@ namespace
     code.add(asmcode::LABEL, not_empty);
     code.add(asmcode::PUSH, asmcode::RCX);
     code.add(asmcode::PUSH, asmcode::RDX);
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       code.add(asmcode::MOV, asmcode::RAX, asmcode::R11);
       code.add(asmcode::SHL, asmcode::RAX, asmcode::NUMBER, 1);
@@ -844,7 +800,7 @@ namespace
     code.add(asmcode::JMP, CONTINUE);
     }
 
-  void compile_lambda(environment_map& env, compile_data& cd, const Lambda& lam)
+  void compile_lambda(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Lambda& lam, const primitive_map& pm, const compiler_options& ops)
     {
     compile_data new_cd = create_compile_data(cd.heap_size, cd.globals_stack, cd.ra->number_of_locals(), cd.p_ctxt);
     new_cd.halt_label = cd.halt_label;
@@ -881,7 +837,7 @@ namespace
         }
       }
     std::string error;
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       error = label_to_string(label++);
       uint64_t nr_of_args_necessary = lam.variables.size();
@@ -898,7 +854,7 @@ namespace
 
       // R11 = self + cps + real vars + rest where rest counts as 1 => rest = R11 - self - cps - real vars = R11 - (lam.variables.size() - 1)
       code.add(asmcode::SUB, asmcode::R11, asmcode::NUMBER, lam.variables.size() - 1);
-      compile_variable_arity_rest_arg(arg_pos);
+      compile_variable_arity_rest_arg(code, ops, arg_pos);
       code.add(asmcode::LABEL, cont);
       if (arg_pos < get_argument_registers().size())
         {
@@ -912,12 +868,9 @@ namespace
       }
     if (lam.body.size() != 1)
       throw_error(lam.line_nr, lam.column_nr, lam.filename, bad_syntax);
-    //compile_expression(new_env, new_cd, lam.body.front());
-    size_t current_size = expressions.size();
-    expressions.emplace_back(new_env, new_cd, lam.body.front());
-    treat_expressions(current_size);
+    compile_expression(fns, new_env, rd, new_cd, code, lam.body.front(), pm, ops);
     code.add(asmcode::RET);
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       error_label(code, error, re_lambda_invalid_number_of_arguments);
       }
@@ -926,14 +879,11 @@ namespace
     //code.add(asmcode::OR, asmcode::RAX, asmcode::NUMBER, procedure_tag);
     }
 
-  void compile_set(environment_map& env, compile_data& cd, const Set& s)
+  void compile_set(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Set& s, const primitive_map& pm, const compiler_options& ops)
     {
     if (s.originates_from_define || s.originates_from_quote)
       {
-      //compile_expression(env, cd, s.value.front());
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, cd, s.value.front());
-      treat_expressions(current_size);
+      compile_expression(fns, env, rd, cd, code, s.value.front(), pm, ops);
 
       environment_entry e;
       if (!env->find(e, s.name))
@@ -942,9 +892,9 @@ namespace
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, asmcode::MEM_R15, e.pos, asmcode::RAX);
 
-      // We don't need to update the environment with the new global variable or quote, as this is 
+      // We don't need to update the environment with the new global variable or quote, as this is
       // already done by the passes global_define_env and quote_conversion.
-      // We do this in the passes so that function names are already known in the body of a recursive function.     
+      // We do this in the passes so that function names are already known in the body of a recursive function.
       }
     else //set! in global namespace, so we are changing the value of a global variable
       {
@@ -953,20 +903,17 @@ namespace
         throw_error(s.line_nr, s.column_nr, s.filename, invalid_variable_name);
 
       //set! in global namespace
-      //compile_expression(env, cd, s.value.front());
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, cd, s.value.front());
-      treat_expressions(current_size);
-      
+      compile_expression(fns, env, rd, cd, code, s.value.front(), pm, ops);
+
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, asmcode::MEM_R15, e.pos, asmcode::RAX);
 
       }
     }
 
-  void add_global_variable_to_debug_info(uint64_t pos)
+  void add_global_variable_to_debug_info(asmcode& code, uint64_t pos, const compiler_options& ops)
     {
-    if (options.keep_variable_stack)
+    if (ops.keep_variable_stack)
       {
       code.add(asmcode::COMMENT, "Start debug info");
       code.add(asmcode::COMMENT, "\tCycling the call stack");
@@ -981,7 +928,7 @@ namespace
       }
     }
 
-  void compile_variable(environment_map& env, compile_data& cd, const Variable& var, asmcode::operand target)
+  void compile_variable(registered_functions&, environment_map& env, repl_data& rd, compile_data& cd, asmcode& code, const Variable& var, const compiler_options& ops, asmcode::operand target)
     {
     assert(target_is_valid(target));
     environment_entry e;
@@ -1005,7 +952,7 @@ namespace
 
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, target, asmcode::MEM_R15, ne.pos);
-      add_global_variable_to_debug_info(ne.pos);
+      add_global_variable_to_debug_info(code, ne.pos, ops);
       }
     else
       {
@@ -1019,7 +966,7 @@ namespace
         case environment_entry::st_global:
           code.add(asmcode::MOV, asmcode::R15, GLOBALS);
           code.add(asmcode::MOV, target, asmcode::MEM_R15, e.pos);
-          add_global_variable_to_debug_info(e.pos);
+          add_global_variable_to_debug_info(code, e.pos, ops);
           break;
         }
       }
@@ -1034,7 +981,7 @@ namespace
     return vec;
     }
 
-  void compile_prim_call_inlined(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  void compile_prim_call_inlined(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
     assert(is_inlined_primitive(prim.primitive_name));
 
@@ -1046,10 +993,7 @@ namespace
 
     if (nr_prim_args == 1)
       {
-      //compile_expression(env, data, prim.arguments.back());
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, data, prim.arguments.back());
-      treat_expressions(current_size);
+      compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
       }
     else if (nr_prim_args > 1)
       {
@@ -1060,12 +1004,7 @@ namespace
       if (expressions_can_be_targetted)
         {
         for (int i = nr_prim_args - 1; i >= 0; --i)
-          {
-          //compile_expression(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
-          size_t current_size = expressions.size();
-          expressions.emplace_back(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
-          treat_expressions(current_size);
-          }
+          compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options, args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
         }
       else
         {
@@ -1073,17 +1012,11 @@ namespace
           {
           for (size_t i = 0; i < nr_prim_args - 1; ++i)
             {
-            //compile_expression(env, data, prim.arguments[i]);
-            size_t current_size = expressions.size();
-            expressions.emplace_back(env, data, prim.arguments[i]);
-            treat_expressions(current_size);
+            compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options);
             //code.add(asmcode::PUSH, asmcode::RAX);
             push(code, asmcode::RAX);
             }
-          //compile_expression(env, data, prim.arguments.back());
-          size_t current_size = expressions.size();
-          expressions.emplace_back(env, data, prim.arguments.back());
-          treat_expressions(current_size);
+          compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
           code.add(asmcode::MOV, args[nr_prim_args - 1], asmcode::RAX);
           for (int i = nr_prim_args - 2; i >= 0; --i)
             {
@@ -1102,7 +1035,7 @@ namespace
     inlined_pm_it->second(code, options);
     }
 
-  void compile_prim_call_not_inlined(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  void compile_prim_call_not_inlined(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
     assert(!is_inlined_primitive(prim.primitive_name));
 
@@ -1169,12 +1102,7 @@ namespace
       {
       // we choose this order of evaluation as it has most likelyhood to not interact with variables saved in register (I think)
       for (int i = 0; i < prim.arguments.size(); ++i)
-        {
-        //compile_expression(env, data, prim.arguments[i], arg_reg[i], false);
-        size_t current_size = expressions.size();
-        expressions.emplace_back(env, data, prim.arguments[i], arg_reg[i], false);
-        treat_expressions(current_size);
-        }
+        compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options, arg_reg[i], false);
       }
     else
       {
@@ -1182,17 +1110,11 @@ namespace
         {
         for (int i = 0; i < nr_prim_args - 1; ++i)
           {
-          //compile_expression(env, data, prim.arguments[i]);
-          size_t current_size = expressions.size();
-          expressions.emplace_back(env, data, prim.arguments[i]);
-          treat_expressions(current_size);
+          compile_expression(fns, env, rd, data, code, prim.arguments[i], pm, options);
           //code.add(asmcode::PUSH, asmcode::RAX);
           push(code, asmcode::RAX);
           }
-        //compile_expression(env, data, prim.arguments.back());
-        size_t current_size = expressions.size();
-        expressions.emplace_back(env, data, prim.arguments.back());
-        treat_expressions(current_size);
+        compile_expression(fns, env, rd, data, code, prim.arguments.back(), pm, options);
         int i = (int)prim.arguments.size() - 1;
         if (i >= arg_reg.size())
           {
@@ -1228,7 +1150,7 @@ namespace
         }
       }
 
-    // here call primitive    
+    // here call primitive
 
     std::string continue_label = label_to_string(label++);
 
@@ -1307,15 +1229,15 @@ namespace
       }
     }
 
-  inline void compile_prim_call(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  void compile_prim_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
     if (is_inlined_primitive(prim.primitive_name))
-      compile_prim_call_inlined(env, data, prim);
+      compile_prim_call_inlined(fns, env, rd, data, code, prim, pm, options);
     else
-      compile_prim_call_not_inlined(env, data, prim);
+      compile_prim_call_not_inlined(fns, env, rd, data, code, prim, pm, options);
     }
 
-  inline void compile_prim_object(environment_map& env, compile_data&, const PrimitiveCall& prim)
+  void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options& ops)
     {
     environment_entry e;
     if (!env->find(e, prim.primitive_name))
@@ -1324,15 +1246,15 @@ namespace
       }
     code.add(asmcode::MOV, asmcode::R15, GLOBALS);
     code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);
-    add_global_variable_to_debug_info(e.pos);
+    add_global_variable_to_debug_info(code, e.pos, ops);
     }
 
-  inline void compile_prim(environment_map& env, compile_data& data, const PrimitiveCall& prim)
+  void compile_prim(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
     if (prim.as_object)
-      compile_prim_object(env, data, prim);
+      compile_prim_object(fns, env, rd, data, code, prim, pm, options);
     else
-      compile_prim_call(env, data, prim);
+      compile_prim_call(fns, env, rd, data, code, prim, pm, options);
     }
 
   std::vector<asmcode::operand> get_windows_calling_registers()
@@ -1369,10 +1291,10 @@ namespace
     return calling_registers;
     }
 
-  void compile_foreign_call(environment_map& env, compile_data& data, const ForeignCall& foreign)
+  void compile_foreign_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const ForeignCall& foreign, const primitive_map& pm, const compiler_options& ops)
     {
     std::string error;
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       error = label_to_string(label++);
 
 #ifdef _WIN32
@@ -1432,10 +1354,7 @@ namespace
 
     for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
-      //compile_expression(env, data, foreign.arguments[i]);
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, data, foreign.arguments[i]);
-      treat_expressions(current_size);
+      compile_expression(fns, env, rd, data, code, foreign.arguments[i], pm, ops);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
@@ -1468,7 +1387,7 @@ namespace
 #endif
         //code.add(asmcode::POP, reg);
         pop(code, reg);
-        if (options.safe_primitives)
+        if (ops.safe_primitives)
           {
           code.add(asmcode::TEST, reg, asmcode::NUMBER, 1);
           code.add(asmcode::JNE, error);
@@ -1496,10 +1415,10 @@ namespace
 #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
-        if (options.safe_primitives)
+        if (ops.safe_primitives)
           jump_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::AND, asmcode::R11, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-        if (options.safe_primitives)
+        if (ops.safe_primitives)
           jump_if_arg_does_not_point_to_flonum(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::MOVSD, reg, asmcode::MEM_R11, CELLS(1));
         break;
@@ -1513,10 +1432,10 @@ namespace
 #endif
         //code.add(asmcode::POP, asmcode::R11);
         pop(code, asmcode::R11);
-        if (options.safe_primitives)
+        if (ops.safe_primitives)
           jump_if_arg_is_not_block(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::AND, asmcode::R11, asmcode::NUMBER, 0xFFFFFFFFFFFFFFF8);
-        if (options.safe_primitives)
+        if (ops.safe_primitives)
           jump_if_arg_does_not_point_to_string(code, asmcode::R11, asmcode::R15, error);
         code.add(asmcode::ADD, asmcode::R11, asmcode::NUMBER, CELLS(1));
         code.add(asmcode::MOV, reg, asmcode::R11);
@@ -1560,7 +1479,7 @@ namespace
       }
       case external_function::T_DOUBLE:
       {
-      if (options.safe_primitives && options.safe_flonums)
+      if (ops.safe_primitives && ops.safe_flonums)
         {
         code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 2);
         check_heap(code, re_flonum_heap_overflow);
@@ -1593,7 +1512,7 @@ namespace
       code.add(asmcode::JMPS, repeat);
       code.add(asmcode::LABEL, done);
 
-      if (options.safe_primitives)
+      if (ops.safe_primitives)
         {
         code.add(asmcode::MOV, asmcode::RAX, asmcode::R11);
         code.add(asmcode::SHR, asmcode::RAX, asmcode::NUMBER, 3);
@@ -1647,7 +1566,7 @@ namespace
       pop(code, *it);
       }
 
-    if (options.safe_primitives)
+    if (ops.safe_primitives)
       {
       auto skip_error = label_to_string(label++);
       code.add(asmcode::JMPS, skip_error);
@@ -1656,15 +1575,12 @@ namespace
       }
     }
 
-  void compile_let(environment_map& env, compile_data& data, const Let& let)
+  void compile_let(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Let& let, const primitive_map& pm, const compiler_options& options)
     {
     auto new_env = std::make_shared<environment<environment_entry>>(env);
     for (int i = 0; i < let.bindings.size(); ++i)
       {
-      //compile_expression(env, data, let.bindings[i].second);
-      size_t current_size = expressions.size();
-      expressions.emplace_back(env, data, let.bindings[i].second);
-      treat_expressions(current_size);
+      compile_expression(fns, env, rd, data, code, let.bindings[i].second, pm, options);
       environment_entry e;
       e.live_range = let.live_ranges[i];
       if (data.ra->free_register_available())
@@ -1690,95 +1606,72 @@ namespace
 
       new_env->push(let.bindings[i].first, e);
       }
-    //compile_expression(new_env, data, let.body.front());
-    size_t current_size = expressions.size();
-    expressions.emplace_back(new_env, data, let.body.front());
-    treat_expressions(current_size);
+    compile_expression(fns, new_env, rd, data, code, let.body.front(), pm, options);
     }
 
-  void compile_begin(environment_map& env, compile_data& data, const Begin& beg)
+  void compile_begin(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Begin& beg, const primitive_map& pm, const compiler_options& options)
     {
-    /*
     for (const auto& expr : beg.arguments)
       {
-      compile_expression(env, data, expr);
+      compile_expression(fns, env, rd, data, code, expr, pm, options);
       }
-    */
-    size_t current_size = expressions.size();
-    for (auto rit = beg.arguments.rbegin(); rit != beg.arguments.rend(); ++rit)
-      {
-      expressions.emplace_back(env, data, *rit);
-      }
-    treat_expressions(current_size);
     }
-    
-  void treat_expressions(size_t target_size=0);
-  };
-  
-  void compiler::treat_expressions(size_t target_size)
+
+  void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target, bool expire_registers)
     {
-    while (expressions.size() > target_size)
+    assert(target_is_valid(target));
+    if (std::holds_alternative<Literal>(expr))
       {
-      expression_data d = expressions.back();
-      expressions.pop_back();
-      assert(target_is_valid(d.target));
-      
-      if (std::holds_alternative<Literal>(*d.p_expr))
-        {
-        compile_literal(std::get<Literal>(*d.p_expr), d.target);
-        }
-      else if (std::holds_alternative<Begin>(*d.p_expr))
-        {
-        compile_begin(*d.p_env, *d.p_data, std::get<Begin>(*d.p_expr));
-        }
-      else if (std::holds_alternative<Let>(*d.p_expr))
-        {
-        compile_let(*d.p_env, *d.p_data, std::get<Let>(*d.p_expr));
-        }
-      else if (std::holds_alternative<PrimitiveCall>(*d.p_expr))
-        {
-        compile_prim(*d.p_env, *d.p_data, std::get<PrimitiveCall>(*d.p_expr));
-        }
-      else if (std::holds_alternative<ForeignCall>(*d.p_expr))
-        {
-        compile_foreign_call(*d.p_env, *d.p_data, std::get<ForeignCall>(*d.p_expr));
-        }
-      else if (std::holds_alternative<Variable>(*d.p_expr))
-        {
-        compile_variable(*d.p_env, *d.p_data, std::get<Variable>(*d.p_expr), d.target);
-        }
-      else if (std::holds_alternative<If>(*d.p_expr))
-        {
-        compile_if(*d.p_env, *d.p_data, std::get<If>(*d.p_expr));
-        }
-      else if (std::holds_alternative<Set>(*d.p_expr))
-        {
-        compile_set(*d.p_env, *d.p_data, std::get<Set>(*d.p_expr));
-        }
-      else if (std::holds_alternative<Lambda>(*d.p_expr))
-        {
-        compile_lambda(*d.p_env, *d.p_data, std::get<Lambda>(*d.p_expr));
-        }
-      else if (std::holds_alternative<FunCall>(*d.p_expr))
-        {
-        compile_funcall(*d.p_env, *d.p_data, std::get<FunCall>(*d.p_expr));
-        }
-      else if (std::holds_alternative<Nop>(*d.p_expr))
-        {
-        compile_nop(d.target);
-        }
-      else
-        throw_error(not_implemented);
-      if (d.expire_registers)
-        {
-        register_allocation_expire_old_intervals(get_scan_index(*d.p_expr), *d.p_data);
-        }
+      compile_literal(fns, env, rd, data, code, std::get<Literal>(expr), options, target);
       }
+    else if (std::holds_alternative<Begin>(expr))
+      {
+      compile_begin(fns, env, rd, data, code, std::get<Begin>(expr), pm, options);
+      }
+    else if (std::holds_alternative<Let>(expr))
+      {
+      compile_let(fns, env, rd, data, code, std::get<Let>(expr), pm, options);
+      }
+    else if (std::holds_alternative<PrimitiveCall>(expr))
+      {
+      compile_prim(fns, env, rd, data, code, std::get<PrimitiveCall>(expr), pm, options);
+      }
+    else if (std::holds_alternative<ForeignCall>(expr))
+      {
+      compile_foreign_call(fns, env, rd, data, code, std::get<ForeignCall>(expr), pm, options);
+      }
+    else if (std::holds_alternative<Variable>(expr))
+      {
+      compile_variable(fns, env, rd, data, code, std::get<Variable>(expr), options, target);
+      }
+    else if (std::holds_alternative<If>(expr))
+      {
+      compile_if(fns, env, rd, data, code, std::get<If>(expr), pm, options);
+      }
+    else if (std::holds_alternative<Set>(expr))
+      {
+      compile_set(fns, env, rd, data, code, std::get<Set>(expr), pm, options);
+      }
+    else if (std::holds_alternative<Lambda>(expr))
+      {
+      compile_lambda(fns, env, rd, data, code, std::get<Lambda>(expr), pm, options);
+      }
+    else if (std::holds_alternative<FunCall>(expr))
+      {
+      compile_funcall(fns, env, rd, data, code, std::get<FunCall>(expr), pm, options);
+      }
+    else if (std::holds_alternative<Nop>(expr))
+      {
+      compile_nop(code, target);
+      }
+    else
+      throw_error(not_implemented);
+    if (expire_registers)
+      register_allocation_expire_old_intervals(get_scan_index(expr), data);
     }
 
   void compile_program(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Program& prog, const primitive_map& pm, const compiler_options& options)
     {
-    compiler comp(fns, rd, code, pm, options);
     for (const auto& expr : prog.expressions)
       {
       if (std::holds_alternative<Begin>(expr))
@@ -1786,8 +1679,7 @@ namespace
         for (const auto& expr2 : std::get<Begin>(expr).arguments)
           {
           data.halt_label = label_to_string(label++);
-          comp.expressions.emplace_back(env, data, expr2);
-          comp.treat_expressions();
+          compile_expression(fns, env, rd, data, code, expr2, pm, options);
           code.add(asmcode::LABEL, data.halt_label);
           data.ra->make_all_available();
           data.ra_map.clear();
@@ -1797,8 +1689,7 @@ namespace
       else
         {
         data.halt_label = label_to_string(label++);
-        comp.expressions.emplace_back(env, data, expr);
-        comp.treat_expressions();
+        compile_expression(fns, env, rd, data, code, expr, pm, options);
         code.add(asmcode::LABEL, data.halt_label);
         }
       }
@@ -1874,7 +1765,7 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R15);
       }
     }
-#else 
+#else
   int int_index = 0;
   int double_index = 0;
   int rsp_index = 1;
@@ -1905,7 +1796,7 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
         }
       else if (int_index == 3)
         {
-        code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1); 
+        code.add(asmcode::SHL, asmcode::R8, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::R8);
         }
       else if (int_index == 4)
@@ -2013,7 +1904,7 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   We store the pointer to the context in register r10.
   */
   code.add(asmcode::MOV, CONTEXT, asmcode::RDI);
-#endif  
+#endif
 
   /*
   Save the current content of the registers in the context
