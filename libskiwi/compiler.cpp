@@ -363,6 +363,15 @@ namespace
 
   struct expression_data
     {
+    expression_data() : p_env(nullptr), p_data(nullptr), p_expr(nullptr), target(asmcode::RAX), expire_registers(true) {}
+    expression_data(environment_map& env, compile_data& data, const Expression& expr) :
+      p_env(&env), p_data(&data), p_expr(&expr), target(asmcode::RAX), expire_registers(true) {}
+    expression_data(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers) :
+      p_env(&env), p_data(&data), p_expr(&expr), target(target), expire_registers(expire_registers)
+      {
+      assert(target_is_valid(target));
+      }
+    
     environment_map* p_env;
     compile_data* p_data;
     const Expression* p_expr;
@@ -381,8 +390,6 @@ namespace
     
     compiler(registered_functions& fns, repl_data& rd, asmcode& code, const primitive_map& pm, const compiler_options& options) :
     fns(fns), rd(rd), code(code), pm(pm), options(options) {}
-        
-    inline void compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
 
   void compile_nop(asmcode::operand target)
     {
@@ -562,15 +569,25 @@ namespace
     assert(i.arguments.size() == 3);
     if (i.arguments.size() != 3)
       throw_error(i.line_nr, i.column_nr, i.filename, invalid_number_of_arguments);
-    compile_expression(env, cd, i.arguments.front());
+    //compile_expression(env, cd, i.arguments.front());
+    size_t current_size = expressions.size();
+    expressions.emplace_back(env, cd, i.arguments.front());
+    treat_expressions(current_size);
+    
     uint64_t lab1 = label++;
     uint64_t lab2 = label++;
     code.add(asmcode::CMP, asmcode::RAX, asmcode::NUMBER, bool_f);
     code.add(asmcode::JE, label_to_string(lab1));
-    compile_expression(env, cd, i.arguments[1]);
+    //compile_expression(env, cd, i.arguments[1]);
+    current_size = expressions.size();
+    expressions.emplace_back(env, cd, i.arguments[1]);
+    treat_expressions(current_size);
     code.add(asmcode::JMP, label_to_string(lab2));
     code.add(asmcode::LABEL, label_to_string(lab1));
-    compile_expression(env, cd, i.arguments[2]);
+    //compile_expression(env, cd, i.arguments[2]);
+    current_size = expressions.size();
+    expressions.emplace_back(env, cd, i.arguments[2]);
+    treat_expressions(current_size);
     code.add(asmcode::LABEL, label_to_string(lab2));
     }
 
@@ -583,13 +600,19 @@ namespace
       std::stringstream str;
       str << i + 1;
       code.add(asmcode::COMMENT, "push function arg " + str.str() + " to stack");
-      compile_expression(env, cd, fun.arguments[i]);
+      //compile_expression(env, cd, fun.arguments[i]);
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, cd, fun.arguments[i]);
+      treat_expressions(current_size);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
 
     code.add(asmcode::COMMENT, "compute function");
-    compile_expression(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
+    //compile_expression(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
+    size_t current_size = expressions.size();
+    expressions.emplace_back(env, cd, fun.fun.front()); // the function itself should be evaluated after its arguments. Not clear why, but bugs otherwise.
+    treat_expressions(current_size);
 
     auto no_closure = label_to_string(label++);
     std::string error;
@@ -889,7 +912,10 @@ namespace
       }
     if (lam.body.size() != 1)
       throw_error(lam.line_nr, lam.column_nr, lam.filename, bad_syntax);
-    compile_expression(new_env, new_cd, lam.body.front());
+    //compile_expression(new_env, new_cd, lam.body.front());
+    size_t current_size = expressions.size();
+    expressions.emplace_back(new_env, new_cd, lam.body.front());
+    treat_expressions(current_size);
     code.add(asmcode::RET);
     if (options.safe_primitives)
       {
@@ -904,7 +930,10 @@ namespace
     {
     if (s.originates_from_define || s.originates_from_quote)
       {
-      compile_expression(env, cd, s.value.front());
+      //compile_expression(env, cd, s.value.front());
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, cd, s.value.front());
+      treat_expressions(current_size);
 
       environment_entry e;
       if (!env->find(e, s.name))
@@ -924,8 +953,11 @@ namespace
         throw_error(s.line_nr, s.column_nr, s.filename, invalid_variable_name);
 
       //set! in global namespace
-      compile_expression(env, cd, s.value.front());
-
+      //compile_expression(env, cd, s.value.front());
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, cd, s.value.front());
+      treat_expressions(current_size);
+      
       code.add(asmcode::MOV, asmcode::R15, GLOBALS);
       code.add(asmcode::MOV, asmcode::MEM_R15, e.pos, asmcode::RAX);
 
@@ -1014,7 +1046,10 @@ namespace
 
     if (nr_prim_args == 1)
       {
-      compile_expression(env, data, prim.arguments.back());
+      //compile_expression(env, data, prim.arguments.back());
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, data, prim.arguments.back());
+      treat_expressions(current_size);
       }
     else if (nr_prim_args > 1)
       {
@@ -1025,7 +1060,12 @@ namespace
       if (expressions_can_be_targetted)
         {
         for (int i = nr_prim_args - 1; i >= 0; --i)
-          compile_expression(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
+          {
+          //compile_expression(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
+          size_t current_size = expressions.size();
+          expressions.emplace_back(env, data, prim.arguments[i], args[i], false); // since we are going backwards, we cannot expire intervals. It is safe to go backwards, as the expressions are simple
+          treat_expressions(current_size);
+          }
         }
       else
         {
@@ -1033,11 +1073,17 @@ namespace
           {
           for (size_t i = 0; i < nr_prim_args - 1; ++i)
             {
-            compile_expression(env, data, prim.arguments[i]);
+            //compile_expression(env, data, prim.arguments[i]);
+            size_t current_size = expressions.size();
+            expressions.emplace_back(env, data, prim.arguments[i]);
+            treat_expressions(current_size);
             //code.add(asmcode::PUSH, asmcode::RAX);
             push(code, asmcode::RAX);
             }
-          compile_expression(env, data, prim.arguments.back());
+          //compile_expression(env, data, prim.arguments.back());
+          size_t current_size = expressions.size();
+          expressions.emplace_back(env, data, prim.arguments.back());
+          treat_expressions(current_size);
           code.add(asmcode::MOV, args[nr_prim_args - 1], asmcode::RAX);
           for (int i = nr_prim_args - 2; i >= 0; --i)
             {
@@ -1123,7 +1169,12 @@ namespace
       {
       // we choose this order of evaluation as it has most likelyhood to not interact with variables saved in register (I think)
       for (int i = 0; i < prim.arguments.size(); ++i)
-        compile_expression(env, data, prim.arguments[i], arg_reg[i], false);
+        {
+        //compile_expression(env, data, prim.arguments[i], arg_reg[i], false);
+        size_t current_size = expressions.size();
+        expressions.emplace_back(env, data, prim.arguments[i], arg_reg[i], false);
+        treat_expressions(current_size);
+        }
       }
     else
       {
@@ -1131,11 +1182,17 @@ namespace
         {
         for (int i = 0; i < nr_prim_args - 1; ++i)
           {
-          compile_expression(env, data, prim.arguments[i]);
+          //compile_expression(env, data, prim.arguments[i]);
+          size_t current_size = expressions.size();
+          expressions.emplace_back(env, data, prim.arguments[i]);
+          treat_expressions(current_size);
           //code.add(asmcode::PUSH, asmcode::RAX);
           push(code, asmcode::RAX);
           }
-        compile_expression(env, data, prim.arguments.back());
+        //compile_expression(env, data, prim.arguments.back());
+        size_t current_size = expressions.size();
+        expressions.emplace_back(env, data, prim.arguments.back());
+        treat_expressions(current_size);
         int i = (int)prim.arguments.size() - 1;
         if (i >= arg_reg.size())
           {
@@ -1375,7 +1432,10 @@ namespace
 
     for (size_t i = 0; i < foreign.arguments.size(); ++i)
       {
-      compile_expression(env, data, foreign.arguments[i]);
+      //compile_expression(env, data, foreign.arguments[i]);
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, data, foreign.arguments[i]);
+      treat_expressions(current_size);
       //code.add(asmcode::PUSH, asmcode::RAX);
       push(code, asmcode::RAX);
       }
@@ -1601,7 +1661,10 @@ namespace
     auto new_env = std::make_shared<environment<environment_entry>>(env);
     for (int i = 0; i < let.bindings.size(); ++i)
       {
-      compile_expression(env, data, let.bindings[i].second);
+      //compile_expression(env, data, let.bindings[i].second);
+      size_t current_size = expressions.size();
+      expressions.emplace_back(env, data, let.bindings[i].second);
+      treat_expressions(current_size);
       environment_entry e;
       e.live_range = let.live_ranges[i];
       if (data.ra->free_register_available())
@@ -1627,7 +1690,10 @@ namespace
 
       new_env->push(let.bindings[i].first, e);
       }
-    compile_expression(new_env, data, let.body.front());
+    //compile_expression(new_env, data, let.body.front());
+    size_t current_size = expressions.size();
+    expressions.emplace_back(new_env, data, let.body.front());
+    treat_expressions(current_size);
     }
 
   void compile_begin(environment_map& env, compile_data& data, const Begin& beg)
@@ -1641,14 +1707,12 @@ namespace
     size_t current_size = expressions.size();
     for (auto rit = beg.arguments.rbegin(); rit != beg.arguments.rend(); ++rit)
       {
-      push_expression(env, data, *rit);
+      expressions.emplace_back(env, data, *rit);
       }
     treat_expressions(current_size);
     }
     
   void treat_expressions(size_t target_size=0);
-    
-  inline void push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
   };
   
   void compiler::treat_expressions(size_t target_size)
@@ -1711,26 +1775,6 @@ namespace
         }
       }
     }
-  
-  inline void compiler::push_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
-    {
-    assert(target_is_valid(target));
-    expression_data d;
-    d.p_env = &env;
-    d.p_data = &data;
-    d.p_expr = &expr;
-    d.target = target;
-    d.expire_registers = expire_registers;
-    expressions.push_back(d);
-    }
-
-  inline void compiler::compile_expression(environment_map& env, compile_data& data, const Expression& expr, asmcode::operand target, bool expire_registers)
-    {
-    assert(target_is_valid(target));
-    size_t current_size = expressions.size();
-    push_expression(env, data, expr, target, expire_registers);
-    treat_expressions(current_size);    
-    }
 
   void compile_program(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Program& prog, const primitive_map& pm, const compiler_options& options)
     {
@@ -1742,7 +1786,7 @@ namespace
         for (const auto& expr2 : std::get<Begin>(expr).arguments)
           {
           data.halt_label = label_to_string(label++);
-          comp.push_expression(env, data, expr2);
+          comp.expressions.emplace_back(env, data, expr2);
           comp.treat_expressions();
           code.add(asmcode::LABEL, data.halt_label);
           data.ra->make_all_available();
@@ -1753,7 +1797,7 @@ namespace
       else
         {
         data.halt_label = label_to_string(label++);
-        comp.push_expression(env, data, expr);
+        comp.expressions.emplace_back(env, data, expr);
         comp.treat_expressions();
         code.add(asmcode::LABEL, data.halt_label);
         }
