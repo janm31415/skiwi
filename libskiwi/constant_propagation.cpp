@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <map>
+#include <algorithm>
 
 #include "compile_error.h"
 #include "visitor.h"

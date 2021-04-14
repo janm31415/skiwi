@@ -1,5 +1,6 @@
 #include "linear_scan_index.h"
 #include "visitor.h"
+#include <algorithm>
 
 SKIWI_BEGIN
 

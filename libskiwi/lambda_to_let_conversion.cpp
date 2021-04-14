@@ -2,6 +2,7 @@
 #include "visitor.h"
 
 #include <cassert>
+#include <algorithm>
 
 SKIWI_BEGIN
 

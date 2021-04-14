@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <map>
 #include <cmath>
+#include <algorithm>
 
 #include "compile_error.h"
 #include "visitor.h"

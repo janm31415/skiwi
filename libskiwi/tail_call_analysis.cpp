@@ -1,6 +1,7 @@
 #include "tail_call_analysis.h"
 #include "visitor.h"
 #include <variant>
+#include <algorithm>
 
 SKIWI_BEGIN
 
