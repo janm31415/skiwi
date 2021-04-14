@@ -8,7 +8,7 @@ SKIWI_BEGIN
 
 namespace
   {
-  
+
   struct remove_single_begin_state
     {
     enum struct e_rsb_state
@@ -23,11 +23,11 @@ namespace
     remove_single_begin_state(Expression* ip_expr) : p_expr(ip_expr), state(e_rsb_state::T_INIT) {}
     remove_single_begin_state(Expression* ip_expr, e_rsb_state s) : p_expr(ip_expr), state(s) {}
     };
-  
+
   struct remove_single_begin_helper
     {
     std::vector<remove_single_begin_state> expressions;
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -37,19 +37,19 @@ namespace
         Expression& e = *rsb_state.p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -105,14 +105,14 @@ namespace
           expressions.push_back(&l.body.front());
           for (auto rit = l.bindings.rbegin(); rit != l.bindings.rend(); ++rit)
             expressions.push_back(&(*rit).second);
-          
+
           }
         else
           throw std::runtime_error("Compiler error!: Remove single begin: not implemented");
         }
       }
     };
-  
+
   }
 
 

@@ -7,7 +7,7 @@ SKIWI_BEGIN
 
 namespace
   {
-  
+
   struct lamda_to_let_state
     {
     enum struct e_ll_state
@@ -30,9 +30,9 @@ namespace
 
     (let ([p1 v1] [p2 v2] ...) body)
     */
-    
+
     std::vector<lamda_to_let_state> expressions;
-            
+
     void _convert(FunCall& f, Expression& e)
       {
       assert(std::holds_alternative<Lambda>(f.fun.front()));
@@ -49,7 +49,7 @@ namespace
       e = Let();
       std::swap(std::get<Let>(e), let);
       }
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -59,19 +59,19 @@ namespace
         Expression& e = *ll_state.p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -135,7 +135,7 @@ namespace
         }
       }
     };
-    
+
   struct lambda_to_let_convertor : public base_visitor<lambda_to_let_convertor>
     {
     /*
@@ -183,7 +183,7 @@ void lambda_to_let_conversion(Program& prog)
   {
   //lambda_to_let_convertor llc;
   //visitor<Program, lambda_to_let_convertor>::visit(prog, &llc);
-  
+
   lambda_to_let_helper llh;
   for (auto& expr : prog.expressions)
     llh.expressions.push_back(&expr);

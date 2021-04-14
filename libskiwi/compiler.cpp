@@ -1840,7 +1840,7 @@ void compile_cinput_parameters(cinput_data& cinput, environment_map& env, asmcod
       else
         {
         int addr = rsp_index;
-        code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RSP, 8*addr);
+        code.add(asmcode::MOV, asmcode::RCX, asmcode::MEM_RSP, 8 * addr);
         code.add(asmcode::SHL, asmcode::RCX, asmcode::NUMBER, 1);
         code.add(asmcode::MOV, asmcode::MEM_RAX, e.pos, asmcode::RCX);
         ++rsp_index;
@@ -1929,7 +1929,7 @@ void compile(environment_map& env, repl_data& rd, macro_data& md, context& ctxt,
   We store the pointer to the context in register r10.
   */
   code.add(asmcode::MOV, CONTEXT, asmcode::RCX);
-  
+
 #else
   /*
   Linux parameters calling convention: rdi, rsi, rdx, rcx, r8, r9

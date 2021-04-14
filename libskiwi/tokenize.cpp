@@ -40,12 +40,12 @@ int is_number(int* is_real, int* is_scientific, const char* value)
         *is_real = 1;
       else if ((*s == 'e' || *s == 'E') && (*is_scientific == 0))
         {
-        *is_scientific = 1;        
+        *is_scientific = 1;
         *is_real = 1;
-        if (*(s+1) == '\0')
+        if (*(s + 1) == '\0')
           return 0;
         if (*(s + 1) == '-' || *(s + 1) == '+')
-          {          
+          {
           ++s;
           }
         if (*(s + 1) == '\0')
@@ -67,7 +67,7 @@ namespace
     if (pos == std::string::npos)
       return s;
 
-    std::stringstream str;    
+    std::stringstream str;
     while (pos != std::string::npos)
       {
       str << s.substr(0, pos);
@@ -79,9 +79,9 @@ namespace
         case 'r': str << '\r'; break;
         case 't': str << '\t'; break;
         default: str << s[pos + 1]; break;
-        }      
-      s = s.substr(pos+2);
-      pos = s.find_first_of('\\');      
+        }
+      s = s.substr(pos + 2);
+      pos = s.find_first_of('\\');
       }
     str << s;
     return str.str();
@@ -98,7 +98,7 @@ namespace
         {
         if (buff[0] == '#') // special case. some primitives (inlined ones) can start with two ##
           {
-          tokens.emplace_back(token::T_ID, "#"+buff, line_nr, column_nr - (int)buff.length());
+          tokens.emplace_back(token::T_ID, "#" + buff, line_nr, column_nr - (int)buff.length());
           }
         else
           tokens.emplace_back(token::T_SYMBOL, "#" + buff, line_nr, column_nr - (int)buff.length() - 1);
@@ -320,7 +320,7 @@ std::vector<token> tokenize(const std::string& str)
               {
               tokens.emplace_back(token::T_BAD, std::string(s, t), temp_line_nr, temp_column_nr);
               break;
-              }            
+              }
             }
           ++t;
           ++column_nr;

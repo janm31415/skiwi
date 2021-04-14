@@ -18,7 +18,7 @@ namespace
     {
     std::vector<Expression*> expressions;
     std::map<std::string, bool> is_unmutable;
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -28,7 +28,7 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
@@ -41,11 +41,11 @@ namespace
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -152,13 +152,13 @@ namespace
       }
 
     };
-    
+
   struct replace_variable_helper
     {
     std::vector<Expression*> expressions;
     std::string var_name;
     Expression replace_by_this_expr;
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -168,7 +168,7 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
@@ -178,16 +178,16 @@ namespace
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
           Set& s = std::get<Set>(e);
-          
+
           expressions.push_back(&std::get<Set>(e).value.front());
           }
         else if (std::holds_alternative<If>(e))
@@ -269,7 +269,7 @@ namespace
     {
     std::vector<constant_propagation_state> expressions;
     std::map<std::string, bool>* p_is_unmutable;
-    
+
     void treat_let(Expression& e)
       {
       Let& l = std::get<Let>(e);
@@ -341,8 +341,8 @@ namespace
         e = std::move(new_expr);
         }
       }
-    
- 
+
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -352,19 +352,19 @@ namespace
         Expression& e = *cp_state.p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -501,18 +501,18 @@ namespace
           }
         }
       }
- 
+
     };
   }
 
 void constant_propagation(Program& prog)
-  {    
+  {
   //assert(prog.alpha_converted);
 
   //is_unmutable_variable_visitor uvv;
   //visitor<Program, is_unmutable_variable_visitor>::visit(prog, &uvv);
   is_unmutable_variable_helper iuvh;
-  for (auto& expr: prog.expressions)
+  for (auto& expr : prog.expressions)
     iuvh.expressions.push_back(&expr);
   std::reverse(iuvh.expressions.begin(), iuvh.expressions.end());
   iuvh.treat_expressions();
@@ -521,10 +521,10 @@ void constant_propagation(Program& prog)
   //cpv.p_is_unmutable = &uvv.is_unmutable;
   //cpv.p_is_unmutable = &iuvh.is_unmutable;
   //visitor<Program, constant_propagation_visitor>::visit(prog, &cpv);
-  
+
   constant_propagation_helper cph;
   cph.p_is_unmutable = &iuvh.is_unmutable;
-  for (auto& expr: prog.expressions)
+  for (auto& expr : prog.expressions)
     cph.expressions.push_back(&expr);
   std::reverse(cph.expressions.begin(), cph.expressions.end());
   cph.treat_expressions();

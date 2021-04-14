@@ -187,7 +187,7 @@ namespace
       else
         {
         return make_list(p);
-        }      
+        }
       }
 
     Expression qq_expand_list(const cell& c, int depth)
@@ -234,7 +234,7 @@ namespace
         }
       else if (tag_is_backquote(c))
         {
-        return make_quote("quasiquote", c, true, depth);     
+        return make_quote("quasiquote", c, true, depth);
         }
       else if (is_pair(c))
         {
@@ -328,7 +328,7 @@ namespace
         }
       else if (tag_is_backquote(c))
         {
-        return make_quote("quasiquote", c, false, depth);        
+        return make_quote("quasiquote", c, false, depth);
         }
       else if (is_pair(c))
         {

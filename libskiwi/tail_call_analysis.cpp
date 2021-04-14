@@ -32,7 +32,7 @@ namespace
       }
     };
 
-  /*  
+  /*
   A procedure call is called a tail call if it occurs in a tail position.
   A tail position is defined recursively as follows:
 
@@ -60,7 +60,7 @@ namespace
     };
 
   struct tail_call_analysis_visitor : public base_visitor<tail_call_analysis_visitor>
-    {    
+    {
     bool in_tail_position;
     tail_call_analysis_visitor() : in_tail_position(false) {}
 
@@ -70,13 +70,13 @@ namespace
       std::visit(stp, e);
       }
 
-    virtual bool _previsit(Variable&) 
-      { 
+    virtual bool _previsit(Variable&)
+      {
       return true;
       }
 
-    virtual bool _previsit(Begin& b) 
-      { 
+    virtual bool _previsit(Begin& b)
+      {
       if (b.tail_position && !b.arguments.empty())
         {
         set_tail_position(b.arguments.back());
@@ -84,12 +84,12 @@ namespace
       return true;
       }
 
-    virtual bool _previsit(FunCall&) 
-      { 
+    virtual bool _previsit(FunCall&)
+      {
       return true;
       }
 
-    virtual bool _previsit(If& i) 
+    virtual bool _previsit(If& i)
       {
       if (i.tail_position)
         {
@@ -101,14 +101,14 @@ namespace
       return true;
       }
 
-    virtual bool _previsit(Lambda& l) 
-      { 
+    virtual bool _previsit(Lambda& l)
+      {
       set_tail_position(l.body.front());
       return true;
       }
 
     virtual bool _previsit(Let& l)
-      { 
+      {
       if (l.tail_position)
         {
         set_tail_position(l.body.front());
@@ -116,8 +116,8 @@ namespace
       return true;
       }
 
-    virtual bool _previsit(Literal&) 
-      { 
+    virtual bool _previsit(Literal&)
+      {
       return true;
       }
 
@@ -126,13 +126,13 @@ namespace
       return true;
       }
 
-    virtual bool _previsit(PrimitiveCall&) 
-      { 
+    virtual bool _previsit(PrimitiveCall&)
+      {
       return true;
       }
 
     virtual bool _previsit(Set&)
-      { 
+      {
       return true;
       }
 
@@ -151,8 +151,8 @@ namespace
       return true;
       }
     };
-    
-    
+
+
   struct tail_calls_set_helper
     {
     std::vector<Expression*> expressions;
@@ -161,7 +161,7 @@ namespace
     tail_calls_set_helper(bool target_tail_position) : tail_position(target_tail_position)
       {
       }
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -250,17 +250,17 @@ namespace
         }
       }
     };
-    
+
   struct tail_call_analysis_helper
     {
     std::vector<Expression*> expressions;
-      
+
     void set_tail_position(Expression& e)
       {
       set_tail_pos stp;
       std::visit(stp, e);
       }
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -270,19 +270,19 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -327,7 +327,7 @@ namespace
           Lambda& l = std::get<Lambda>(e);
           set_tail_position(l.body.front());
           expressions.push_back(&l.body.front());
-          
+
           }
         else if (std::holds_alternative<FunCall>(e))
           {
@@ -350,7 +350,7 @@ namespace
           throw std::runtime_error("Compiler error!: Tail call analysis: not implemented");
         }
       }
-        
+
     void add_program(Program& p)
       {
       if (!p.expressions.empty())
@@ -367,7 +367,7 @@ namespace
         expressions.push_back(&expr);
       std::reverse(expressions.begin(), expressions.end());
       }
-      
+
     void add_expression(Expression& e)
       {
       if (std::holds_alternative<Begin>(e))
@@ -395,20 +395,20 @@ void tail_call_analysis(Program& prog)
     }
   //tail_call_analysis_visitor tcav;
   //visitor<Program, tail_call_analysis_visitor>::visit(prog, &tcav);
-  
+
   tail_call_analysis_helper tcah;
   tcah.add_program(prog);
   tcah.treat_expressions();
-  
+
   prog.tail_call_analysis = true;
   }
-  
+
 void tail_call_analysis(Expression& e)
   {
   tail_calls_set_helper tcsh(false);
   tcsh.expressions.push_back(&e);
   tcsh.treat_expressions();
-  
+
   tail_call_analysis_helper tcah;
   tcah.add_expression(e);
   tcah.treat_expressions();

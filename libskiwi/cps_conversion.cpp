@@ -100,7 +100,7 @@ namespace
       T_INIT,
       T_STEP_1,
       T_STEP_2,
-      T_STEP_3      
+      T_STEP_3
       };
     Expression* p_expr;
     e_conversion_state state;
@@ -714,7 +714,7 @@ namespace
       Expression expr(std::move(p.arguments[nonsimple_vars.begin()->first]));
       e.swap(expr);*/
       }
-    
+
 
     void cps_convert_prim_simple(Expression& e)
       {
@@ -1292,7 +1292,7 @@ namespace
       {
       cps_assert(std::holds_alternative<Let>(e));
       Let& l = std::get<Let>(e);
-      
+
       expressions_to_treat.emplace_back(&e, cps_conversion_state::e_conversion_state::T_STEP_2);
       expressions_to_treat.back().index = (uint32_t)l.bindings.size() - 1;
       }
@@ -1410,7 +1410,7 @@ namespace
     void treat_expressions()
       {
       while (!expressions_to_treat.empty())
-        {        
+        {
         cps_conversion_state cps_state = expressions_to_treat.back();
         expressions_to_treat.pop_back();
         Expression& e = *cps_state.p_expr;
@@ -1563,7 +1563,7 @@ namespace
             throw std::runtime_error("Compiler error!: cps conversion: not implemented");
             }
           break;
-          }          
+          }
           } // switch
         }
       }

@@ -53,7 +53,7 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
 
     std::string label_name = "L_" + it->first;
     code.add(ASM::asmcode::MOV, ASM::asmcode::RAX, ASM::asmcode::LABELADDRESS, label_name);
-    code.add(ASM::asmcode::OR, ASM::asmcode::RAX, ASM::asmcode::NUMBER, procedure_tag);  
+    code.add(ASM::asmcode::OR, ASM::asmcode::RAX, ASM::asmcode::NUMBER, procedure_tag);
     code.add(ASM::asmcode::MOV, ASM::asmcode::R11, GLOBALS);
     code.add(ASM::asmcode::MOV, ASM::asmcode::MEM_R11, e.pos, ASM::asmcode::RAX);
 
@@ -79,16 +79,16 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
   for (auto it = fm.begin(); it != fm.end(); ++it)
     {
     primitive_entry pe;
-    pe.label_name = "L_"+it->first;
+    pe.label_name = "L_" + it->first;
     pe.address = 0;
     pm.insert(std::pair<std::string, primitive_entry>(it->first, pe));
     code.add(ASM::asmcode::LABEL_ALIGNED, pe.label_name);
     it->second(code, options);
     }
-  compile_bitwise_and_2(code, options);  
+  compile_bitwise_and_2(code, options);
   compile_bitwise_or_2(code, options);
   compile_bitwise_xor_2(code, options);
-  compile_add_2(code, options);  
+  compile_add_2(code, options);
   compile_divide_2(code, options);
   compile_multiply_2(code, options);
   compile_subtract_2(code, options);
@@ -112,7 +112,7 @@ void compile_primitives_library(primitive_map& pm, repl_data& rd, environment_ma
   compile_assoc_cmp_eq(code, options);
   compile_assoc_cmp_equal(code, options);
   compile_apply_fake_cps_identity(code, options);
-  code.pop();  
+  code.pop();
 
   //rd.alpha_conversion_env = new_alpha;
   }

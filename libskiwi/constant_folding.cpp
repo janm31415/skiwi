@@ -819,7 +819,7 @@ namespace
         {
         e = make_true();
         }
-      else if(is_false(lit1) && is_false(lit2))
+      else if (is_false(lit1) && is_false(lit2))
         {
         e = make_true();
         }
@@ -1141,7 +1141,7 @@ namespace
     assert(p.arguments.size() == 1);
     Literal lit1;
     Fixnum f1;
-    if (is_literal(lit1, p.arguments[0]) )
+    if (is_literal(lit1, p.arguments[0]))
       {
       if (is_fixnum(f1, lit1))
         {
@@ -1649,8 +1649,8 @@ namespace
       }
 
     };
-    
-    
+
+
   struct constant_folding_state
     {
     enum struct e_cf_state
@@ -1669,8 +1669,8 @@ namespace
   struct constant_folding_helper
     {
     std::vector<constant_folding_state> expressions;
-    
- 
+
+
     typedef void(*fun_ptr)(PrimitiveCall&, Expression&);
 
     std::map<std::string, fun_ptr> get_primitives_that_can_be_folded() const
@@ -1933,7 +1933,7 @@ namespace
         }
 
       }
- 
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -1943,19 +1943,19 @@ namespace
         Expression& e = *cf_state.p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -2034,7 +2034,7 @@ void constant_folding(Program& prog)
     cfh.expressions.push_back(&expr);
   std::reverse(cfh.expressions.begin(), cfh.expressions.end());
   cfh.treat_expressions();
-  
+
   prog.constant_folded = true;
   }
 

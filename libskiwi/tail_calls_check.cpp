@@ -6,7 +6,7 @@ SKIWI_BEGIN
 namespace
   {
 
-  /*  
+  /*
   A procedure call is called a tail call if it occurs in a tail position.
   A tail position is defined recursively as follows:
 
@@ -26,45 +26,45 @@ namespace
       {
       }
 
-    virtual bool _previsit(Variable&) 
-      { 
+    virtual bool _previsit(Variable&)
+      {
       return only_tails;
       }
 
-    virtual bool _previsit(Begin&) 
-      { 
+    virtual bool _previsit(Begin&)
+      {
       return only_tails;
       }
 
-    virtual bool _previsit(FunCall& f) 
-      { 
+    virtual bool _previsit(FunCall& f)
+      {
       if (!f.tail_position)
         only_tails = false;
       return only_tails;
       }
 
-    virtual bool _previsit(If&) 
-      { 
+    virtual bool _previsit(If&)
+      {
       return only_tails;
       }
 
-    virtual bool _previsit(Lambda&) 
-      { 
+    virtual bool _previsit(Lambda&)
+      {
       return only_tails;
       }
 
     virtual bool _previsit(Let&)
-      { 
+      {
       return only_tails;
       }
 
-    virtual bool _previsit(Literal&) 
-      { 
+    virtual bool _previsit(Literal&)
+      {
       return only_tails;
       }
 
-    virtual bool _previsit(PrimitiveCall&) 
-      { 
+    virtual bool _previsit(PrimitiveCall&)
+      {
       return only_tails;
       }
 
@@ -74,11 +74,11 @@ namespace
       }
 
     virtual bool _previsit(Set&)
-      { 
+      {
       return only_tails;
       }
     };
-    
+
   struct tail_calls_check_helper
     {
     std::vector<Expression*> expressions;
@@ -88,7 +88,7 @@ namespace
       {
       only_tails = true;
       }
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -98,19 +98,19 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -174,23 +174,23 @@ bool only_tail_calls(Program& prog)
   assert(prog.tail_call_analysis);
   //tail_calls_check tcc;
   //visitor<Program, tail_calls_check>::visit(prog, &tcc);
-  
+
   tail_calls_check_helper tcch;
   for (auto& expr : prog.expressions)
     tcch.expressions.push_back(&expr);
-    
+
   tcch.treat_expressions();
-  
+
   return tcch.only_tails;
   }
-  
+
 bool only_tail_calls(Expression& e)
-  {    
+  {
   tail_calls_check_helper tcch;
   tcch.expressions.push_back(&e);
-    
+
   tcch.treat_expressions();
-  
+
   return tcch.only_tails;
   }
 

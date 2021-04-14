@@ -36,7 +36,7 @@ context create_context(uint64_t heap_size, uint64_t globals_stack, uint32_t loca
   c.to_space = c.from_space + (heap_size / 2);
   c.total_heap_size = heap_size;
   c.alloc = c.from_space;
-  c.from_space_reserve = (c.total_heap_size/2) * 1 / 8;
+  c.from_space_reserve = (c.total_heap_size / 2) * 1 / 8;
   c.from_space_end = c.from_space + (heap_size / 2);
   c.to_space_end = c.to_space + (heap_size / 2);
   c.limit = c.from_space_end - c.from_space_reserve;
@@ -70,7 +70,7 @@ context clone_context(const context& ctxt)
   uint64_t local_stack = ctxt.globals - ctxt.locals;
   uint64_t scheme_stack = ctxt.stack_end - ctxt.stack_top;
   context c = create_context(heap_size, globals_stack, (uint32_t)local_stack, scheme_stack);
-  
+
   uint64_t total_size = (uint64_t)5 + (uint64_t)256 + (uint64_t)3 + (uint64_t)8 + (uint64_t)local_stack + globals_stack + heap_size + scheme_stack;
 
   for (uint64_t i = 0; i < total_size; ++i)

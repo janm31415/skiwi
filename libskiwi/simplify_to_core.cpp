@@ -97,7 +97,7 @@ namespace
         lam.variables.push_back(std::get<Variable>(bind.front()).name);
         }
       Begin lam_begin;
-      
+
       If i;
       i.arguments.push_back(d.test.front());
       Begin if_arg1;
@@ -202,7 +202,7 @@ namespace
             {
             FunCall new_fun;
             new_fun.fun.push_back(c.arguments.front()[1]);
-            new_fun.arguments.push_back(var);            
+            new_fun.arguments.push_back(var);
             if_arg.push_back(new_fun);
             }
           else
@@ -235,7 +235,7 @@ namespace
         }
       else
         {
-        throw_error(c.line_nr, c.column_nr, c.filename, invalid_number_of_arguments, "cond");        
+        throw_error(c.line_nr, c.column_nr, c.filename, invalid_number_of_arguments, "cond");
         /*
         std::vector<Expression> if_arg;
         ConditionalIf new_if(if_arg, line_nr);
@@ -251,7 +251,7 @@ namespace
       assert(l.bt == bt_let_star);
       if (l.bindings.size() <= 1)
         {
-        l.bt = bt_let;        
+        l.bt = bt_let;
         }
       else
         {
@@ -304,7 +304,7 @@ namespace
       {
       /*
       (let <variable 0> ([<variable 1> <init 1>] ...) <body>)
-      ==  
+      ==
       ((letrec ([<variable 0> (lambda (<variable 1> ...) <body>)]) <variable 0>) <init 1> ...)
       */
       assert(l.bt == bt_let);
@@ -428,7 +428,7 @@ namespace
 
     void _convert_delay(Expression& e, PrimitiveCall& p)
       {
-      assert(p.primitive_name == "delay"); 
+      assert(p.primitive_name == "delay");
       if (p.arguments.size() != 1)
         throw_error(p.line_nr, p.column_nr, p.filename, invalid_number_of_arguments, "delay");
       Lambda lam;

@@ -67,9 +67,9 @@ namespace
       obj.live_ranges.clear();
       for (size_t i = 0; i < obj.bindings.size(); ++i)
         {
-        liveness_range lr;        
+        liveness_range lr;
         lr.first = get_scan_index(obj.bindings[i].second);
-        lr.last = obj.scan_index;        
+        lr.last = obj.scan_index;
         obj.live_ranges.push_back(lr);
         }
       return true;
@@ -82,17 +82,17 @@ namespace
         {
         liveness_range lr;
         lr.first = get_pre_scan_index(obj.body.front());
-        lr.last = obj.scan_index;     
+        lr.last = obj.scan_index;
         obj.live_ranges.push_back(lr);
         }
       return true;
       }
     };
-    
+
   struct naive_scan_helper
     {
     std::vector<Expression*> expressions;
-      
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -102,19 +102,19 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -180,7 +180,7 @@ namespace
         }
       }
     };
-  
+
   struct find_liveness_of_variable : public base_visitor<find_liveness_of_variable>
     {
     std::map<std::string, uint64_t> var_last_occurence_map;
@@ -197,12 +197,12 @@ namespace
         }
       }
     };
-    
+
   struct find_liveness_of_variable_helper
     {
     std::vector<Expression*> expressions;
     std::map<std::string, uint64_t> var_last_occurence_map;
-    
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -212,7 +212,7 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
@@ -228,11 +228,11 @@ namespace
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
@@ -312,12 +312,12 @@ namespace
       return true;
       }
     };
-    
+
   struct linear_scan_helper
     {
     std::vector<Expression*> expressions;
     std::map<std::string, uint64_t>* p_var_last_occurence_map;
-    
+
     void treat_expressions()
       {
       while (!expressions.empty())
@@ -327,19 +327,19 @@ namespace
         Expression& e = *p_expr;
         if (std::holds_alternative<Literal>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Variable>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Nop>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Quote>(e))
           {
-        
+
           }
         else if (std::holds_alternative<Set>(e))
           {
