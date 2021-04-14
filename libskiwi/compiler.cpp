@@ -294,7 +294,7 @@ namespace
     return fm;
     }
 
-  void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
+  inline void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target = asmcode::RAX, bool expire_registers = true);
 
   struct get_scan_index_helper
     {
@@ -1229,7 +1229,7 @@ namespace
       }
     }
 
-  void compile_prim_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  inline void compile_prim_call(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
     if (is_inlined_primitive(prim.primitive_name))
       compile_prim_call_inlined(fns, env, rd, data, code, prim, pm, options);
@@ -1237,7 +1237,7 @@ namespace
       compile_prim_call_not_inlined(fns, env, rd, data, code, prim, pm, options);
     }
 
-  void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options& ops)
+  inline void compile_prim_object(registered_functions&, environment_map& env, repl_data&, compile_data&, asmcode& code, const PrimitiveCall& prim, const primitive_map&, const compiler_options& ops)
     {
     environment_entry e;
     if (!env->find(e, prim.primitive_name))
@@ -1249,12 +1249,32 @@ namespace
     add_global_variable_to_debug_info(code, e.pos, ops);
     }
 
-  void compile_prim(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
+  inline void compile_prim(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const PrimitiveCall& prim, const primitive_map& pm, const compiler_options& options)
     {
+    /*
     if (prim.as_object)
       compile_prim_object(fns, env, rd, data, code, prim, pm, options);
     else
       compile_prim_call(fns, env, rd, data, code, prim, pm, options);
+    */
+    if (prim.as_object)
+      {
+      environment_entry e;
+      if (!env->find(e, prim.primitive_name))
+        {
+        throw_error(prim.line_nr, prim.column_nr, prim.filename, primitive_unknown, prim.primitive_name);
+        }
+      code.add(asmcode::MOV, asmcode::R15, GLOBALS);
+      code.add(asmcode::MOV, asmcode::RAX, asmcode::MEM_R15, e.pos);
+      add_global_variable_to_debug_info(code, e.pos, options);
+      }
+    else
+      {
+      if (is_inlined_primitive(prim.primitive_name))
+        compile_prim_call_inlined(fns, env, rd, data, code, prim, pm, options);
+      else
+        compile_prim_call_not_inlined(fns, env, rd, data, code, prim, pm, options);
+      }
     }
 
   std::vector<asmcode::operand> get_windows_calling_registers()
@@ -1630,7 +1650,7 @@ namespace
       }
     }
 
-  void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target, bool expire_registers)
+  inline void compile_expression(registered_functions& fns, environment_map& env, repl_data& rd, compile_data& data, asmcode& code, const Expression& expr, const primitive_map& pm, const compiler_options& options, asmcode::operand target, bool expire_registers)
     {
     assert(target_is_valid(target));
     if (std::holds_alternative<Literal>(expr))
