@@ -29,6 +29,8 @@ When running the skiwi repl (e.g. via the "s.exe" or "./s" executable program th
 
 The sample application `life` makes use of `X11` on Linux and MacOS. Since `X11` is not included in MacOS anymore, you'll have to install it. It is available via the [XQuartz project](https://www.xquartz.org). If the C++ compiler cannot find the `XLib.h` file or cannot link correctly, you might need to change the X11 paths in the CMakeLists.txt file in folder life.
 
+If you build for a mac M1 with ARM processor, be sure to set the CMake variable SKIWI_TARGET to arm.
+
 Using the compiler as a stand-alone repl
 ----------------------------------------
 
