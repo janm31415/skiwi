@@ -21,8 +21,7 @@ typedef std::map<std::string, macro_entry> macro_map;
 
 struct macro_data
   {
-  macro_map m;  
-
+  macro_map m;
   std::vector<std::pair<void*, uint64_t>> compiled_macros;
   };
 

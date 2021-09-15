@@ -1251,8 +1251,10 @@ void run_all_asm_code_tests()
   save_rax_on_stack();
   convert_short_string_to_string();
   asmcode_call();
+#ifndef _SKIWI_FOR_ARM
   asmcode_add_7_and_3();
   asmcode_add_two_integers();
+#endif
   asmcode_cmp();
   asmcode_dec_inc();
   asmcode_mul();

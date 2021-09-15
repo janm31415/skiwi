@@ -12,7 +12,9 @@ int main(int /*argc*/, const char* /*argv*/[])
 
   auto tic = std::clock();
   run_all_asm_code_tests();
+#ifndef _SKIWI_FOR_ARM
   run_all_assembler_tests();
+#endif
   run_all_vm_tests();
   auto toc = std::clock();
 

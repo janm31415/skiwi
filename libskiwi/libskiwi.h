@@ -11,8 +11,11 @@ namespace skiwi
 
   class scm_type;
 
+#ifdef _SKIWI_FOR_ARM
+typedef uint8_t* skiwi_compiled_function_ptr;
+#else
   typedef uint64_t(*skiwi_compiled_function_ptr)(void*, ...);
-
+#endif
   struct skiwi_parameters
     {
     SKIWI_SCHEME_API skiwi_parameters();

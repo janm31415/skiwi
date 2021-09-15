@@ -18,9 +18,7 @@ int main(int /*argc*/, const char* /*argv*/[])
   run_all_parse_tests();
   run_all_tokenize_tests();
   run_all_conversion_tests();
-#ifndef _SKIWI_FOR_ARM
   run_all_compile_tests();
-#endif
   run_all_compile_vm_tests();
   auto toc = std::clock();
 

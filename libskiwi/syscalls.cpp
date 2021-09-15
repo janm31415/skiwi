@@ -263,4 +263,38 @@ externals[ef.name] = ef;
   externals[ef.name] = ef;
   }
 
+namespace {
+ASM::external_function::argtype convert(SKIWI::external_function::argtype arg)
+  {
+  switch (arg)
+    {
+    case SKIWI::external_function::T_BOOL: return ASM::external_function::T_BOOL;
+    case SKIWI::external_function::T_CHAR_POINTER: return ASM::external_function::T_CHAR_POINTER;
+    case SKIWI::external_function::T_DOUBLE: return ASM::external_function::T_DOUBLE;
+    case SKIWI::external_function::T_INT64: return ASM::external_function::T_INT64;
+    case SKIWI::external_function::T_VOID: return ASM::external_function::T_VOID;
+    case SKIWI::external_function::T_SCM: return ASM::external_function::T_INT64;
+    default: return ASM::external_function::T_VOID;
+    }
+  }
+}
+
+std::vector<ASM::external_function> convert_externals_to_vm(std::map<std::string, external_function>& externals)
+  {
+  std::vector<ASM::external_function> out;
+  for (const auto& e : externals)
+    {
+    ASM::external_function ef;
+    ef.name = e.second.name;
+    ef.address = e.second.address;
+    ef.return_type = convert(e.second.return_type);
+    for (auto arg : e.second.arguments)
+      {
+      ef.arguments.push_back(convert(arg));
+      }
+    out.push_back(ef);
+    }
+    return out;
+  }
+
 SKIWI_END

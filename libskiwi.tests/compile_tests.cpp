@@ -6,6 +6,7 @@
 //#define PRINT_OUT_REGISTERS_AND_OPERANDS
 
 #include "compile_tests.h"
+#ifndef _SKIWI_FOR_ARM
 #include "test_assert.h"
 
 #include <asm/assembler.h>
@@ -6212,3 +6213,9 @@ void run_all_compile_tests()
     }
 #endif
   }
+
+#else
+void run_all_compile_tests()
+  {
+  }
+#endif

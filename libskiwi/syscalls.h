@@ -3,6 +3,7 @@
 #include "namespace.h"
 #include "compiler.h"
 #include "libskiwi_api.h"
+#include "asm/vm.h"
 
 SKIWI_BEGIN
 
@@ -18,5 +19,7 @@ uint64_t _skiwi_sprintf(char *, const char * , const char* );
 uint64_t _skiwi_sprintf_floating(char * a, const char * b, double c);
 
 SKIWI_SCHEME_API void add_system_calls(std::map<std::string, external_function>& externals);
+
+std::vector<ASM::external_function> convert_externals_to_vm(std::map<std::string, external_function>& externals);
 
 SKIWI_END

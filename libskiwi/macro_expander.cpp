@@ -7,13 +7,15 @@
 #include <iostream>
 #include <sstream>
 
-#include <asm/assembler.h>
+#include "asm/assembler.h"
+#include "asm/vm.h"
 
 #include "parse.h"
 #include "context.h"
 
 #include "runtime.h"
 #include "dump.h"
+#include "syscalls.h"
 
 SKIWI_BEGIN
 
@@ -148,12 +150,52 @@ namespace
             Program pr;
             pr.expressions.push_back(f);
             std::map<std::string, external_function> externals;
+                add_system_calls(externals);
             asmcode code;
             try
               {
+                  registers reg;
               macro_data md; // all macros are in the environment
+#ifdef _SKIWI_FOR_ARM
               compile(*p_env, *p_rd, md, *p_ctxt, code, pr, *p_pm, externals, ops);
+              auto externals_for_vm = convert_externals_to_vm(externals);
+                  first_pass_data d;
+                  uint64_t fie_size;
+                  uint8_t* fie = (uint8_t*)vm_bytecode(fie_size, d, code);
+                  if (fie)
+                  {
+#ifdef _WIN32
+        reg.rcx = (uint64_t)(p_ctxt);
+#else
+        reg.rdi = (uint64_t)(p_ctxt);
+#endif
+              run_bytecode(fie, fie_size, reg, externals_for_vm);
+                      uint64_t res = reg.rax;
+                      std::stringstream str;
+                      scheme_runtime(res, str, *p_env, *p_rd, p_ctxt);
+                      std::string script = str.str();
+                      //printf("%s\n", script.c_str());
+                      auto tokens = tokenize(script);
+                      std::reverse(tokens.begin(), tokens.end());
+                      auto result = make_program(tokens);
 
+                      if (result.expressions.empty())
+                        e = Nop();
+                      else if (result.expressions.size() == 1)
+                        e = result.expressions.front();
+                      else
+                        {
+                        Begin b;
+                        b.arguments.swap(result.expressions);
+                        e = b;
+                        }
+                      free_bytecode((void*)fie, fie_size);
+                  }
+                  else
+                    e = Nop();
+                  
+#else
+              compile(*p_env, *p_rd, md, *p_ctxt, code, pr, *p_pm, externals, ops);
               typedef uint64_t(*compiled_fun_ptr)(void*);
 
               first_pass_data d;
@@ -186,6 +228,7 @@ namespace
                 }
               else
                 e = Nop();
+#endif
               }
             catch (std::logic_error er)
               {
@@ -375,6 +418,18 @@ namespace
       compile(env, rd, md, ctxt, code, prog, pm, externals, ops); // they need to be inside the global environment, because of gc
 
       first_pass_data d;
+          registers reg;
+#ifdef _SKIWI_FOR_ARM
+          uint64_t fie_size;
+          uint8_t* f = (uint8_t*)vm_bytecode(fie_size, d, code);
+  #ifdef _WIN32
+          reg.rcx = (uint64_t)(&ctxt);
+  #else
+          reg.rdi = (uint64_t)(&ctxt);
+  #endif
+          run_bytecode(f, fie_size, reg);
+          md.compiled_macros.emplace_back(f, fie_size);
+#else
       typedef uint64_t(*_fun_ptr)(void*);
 
       uint64_t fie_size;
@@ -384,6 +439,7 @@ namespace
         fie(&ctxt);
         md.compiled_macros.emplace_back((void*)fie, fie_size);
         }
+#endif
       }
     catch (std::logic_error e)
       {
