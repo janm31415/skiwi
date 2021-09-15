@@ -114,6 +114,18 @@ uint64_t _skiwi_current_milliseconds()
   return millisecondsUTC;
   }
 
+uint64_t _skiwi_sprintf_floating(char * a, const char * b, double c)
+{
+    int value = sprintf(a, b, c);
+    return (uint64_t)value;
+}
+
+uint64_t _skiwi_sprintf(char * a, const char * b, const char* c)
+{
+    int value = sprintf(a, b, c);
+    return (uint64_t)value;
+}
+
 void add_system_calls(std::map<std::string, external_function>& externals)
   {
   external_function ef;
@@ -160,13 +172,22 @@ void add_system_calls(std::map<std::string, external_function>& externals)
   externals[ef.name] = ef;
   
   ef.arguments.clear();
-  ef.name = "sprintf";
-  ef.address = (uint64_t)&sprintf;
+  ef.name = "_skiwi_sprintf";
+  ef.address = (uint64_t)&_skiwi_sprintf;
   ef.return_type = external_function::T_INT64;
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
   ef.arguments.push_back(external_function::T_CHAR_POINTER);
   externals[ef.name] = ef;
+    
+ef.arguments.clear();
+ef.name = "_skiwi_sprintf_floating";
+ef.address = (uint64_t)&_skiwi_sprintf_floating;
+ef.return_type = external_function::T_INT64;
+ef.arguments.push_back(external_function::T_CHAR_POINTER);
+ef.arguments.push_back(external_function::T_CHAR_POINTER);
+ef.arguments.push_back(external_function::T_DOUBLE);
+externals[ef.name] = ef;
 
   ef.arguments.clear();
   ef.name = "_skiwi_close";

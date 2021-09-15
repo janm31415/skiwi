@@ -6845,10 +6845,10 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_sprintf_floating);
 #else
   code.add(asmcode::MOV, asmcode::RAX, asmcode::NUMBER, 1);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_sprintf_floating);
 #endif  
   code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context
@@ -6901,10 +6901,10 @@ void compile_num2str(asmcode& code, const compiler_options& ops)
   code.add(asmcode::MOV, asmcode::R15, CONTEXT); // r15 should be saved by the callee but r10 not, so we save the context in r15
 #ifdef _WIN32
   code.add(asmcode::SUB, asmcode::RSP, asmcode::NUMBER, 32);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_sprintf);
 #else
   code.add(asmcode::XOR, asmcode::RAX, asmcode::RAX);
-  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&sprintf);
+  code.add(asmcode::MOV, asmcode::R11, asmcode::NUMBER, (uint64_t)&_skiwi_sprintf);
 #endif  
   code.add(asmcode::CALLEXTERNAL, asmcode::R11);
   code.add(asmcode::MOV, CONTEXT, asmcode::R15); // now we restore the context

@@ -5113,7 +5113,7 @@ to /* and */ in c/c++
 
 SKIWI_END
 
-#define ONLY_LAST
+//#define ONLY_LAST
 
 void run_all_compile_vm_tests()
   {
@@ -5204,6 +5204,7 @@ void run_all_compile_vm_tests()
   lambda_variable_arity_while_using_rest_arg().test();
   lambda_bug().test();
   lambda_variable_arity_while_using_rest_arg_and_closure().test();
+    
   foreign_call_1().test();
   foreign_call_2().test();
   foreign_call_3().test();
@@ -5215,6 +5216,7 @@ void run_all_compile_vm_tests()
   foreign_call_9().test();
   foreign_call_10().test();
   foreign_call_11().test();
+     
   case_examples().test();
   memv().test();
   memq().test();
@@ -5269,10 +5271,11 @@ void run_all_compile_vm_tests()
 
   c_input_test_5doubles().test();
 
-  c_input_test_8doubles().test();
+  //c_input_test_8doubles().test();
 
   current_seconds_test().test();
   current_milliseconds_test().test();
+     
 #endif     
 
   /*
@@ -5283,4 +5286,7 @@ void run_all_compile_vm_tests()
   c_input_test_mix_ints_doubles().test();
   c_input_test_mix_ints_doubles_2().test();
   */
+    
+  //c_input_test_8doubles().test();
+
   }

@@ -14,6 +14,8 @@ int _skiwi_putenv(const char* name, const char* value);
 int _skiwi_file_exists(const char* filename);
 uint64_t _skiwi_current_seconds();
 uint64_t _skiwi_current_milliseconds();
+uint64_t _skiwi_sprintf(char *, const char * , const char* );
+uint64_t _skiwi_sprintf_floating(char * a, const char * b, double c);
 
 SKIWI_SCHEME_API void add_system_calls(std::map<std::string, external_function>& externals);
 
