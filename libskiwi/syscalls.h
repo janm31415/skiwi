@@ -20,6 +20,7 @@ uint64_t _skiwi_sprintf_floating(char * a, const char * b, double c);
 
 SKIWI_SCHEME_API void add_system_calls(std::map<std::string, external_function>& externals);
 
+ASM::external_function convert_external_to_vm(const external_function& ext);
 std::vector<ASM::external_function> convert_externals_to_vm(std::map<std::string, external_function>& externals);
 
 SKIWI_END

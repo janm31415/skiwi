@@ -279,20 +279,24 @@ ASM::external_function::argtype convert(SKIWI::external_function::argtype arg)
   }
 }
 
+ASM::external_function convert_external_to_vm(const external_function& ext)
+{
+    ASM::external_function ef;
+    ef.name = ext.name;
+    ef.address = ext.address;
+    ef.return_type = convert(ext.return_type);
+    for (auto arg : ext.arguments)
+      {
+      ef.arguments.push_back(convert(arg));
+      }
+    return ef;
+}
 std::vector<ASM::external_function> convert_externals_to_vm(std::map<std::string, external_function>& externals)
   {
   std::vector<ASM::external_function> out;
   for (const auto& e : externals)
     {
-    ASM::external_function ef;
-    ef.name = e.second.name;
-    ef.address = e.second.address;
-    ef.return_type = convert(e.second.return_type);
-    for (auto arg : e.second.arguments)
-      {
-      ef.arguments.push_back(convert(arg));
-      }
-    out.push_back(ef);
+    out.push_back(convert_external_to_vm(e.second));
     }
     return out;
   }

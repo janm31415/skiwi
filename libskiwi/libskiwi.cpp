@@ -1183,6 +1183,9 @@ void register_external_primitive(const std::string& name, void* func_ptr, extern
     for (auto arg : arguments)
         ef.arguments.push_back(_convert(arg));
     cd.externals[ef.name] = ef;
+#ifdef _SKIWI_FOR_ARM
+    cd.externals_for_vm.push_back(convert_external_to_vm(ef));
+#endif
     std::stringstream ss;
     ss << "(define (" << ef.name;
     int max_pars = (int)arguments.size();

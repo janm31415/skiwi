@@ -4459,12 +4459,11 @@ to /* and */ in c/c++
 #ifdef _WIN32
     skiwi_run("(load \"data\\\\load_test_1.scm\")");
 #else
-    //skiwi_run("(load \"./data/load_test_1.scm\")");
-      skiwi_run("(define result 9)");
+    skiwi_run("(load \"./data/load_test_1.scm\")");
+    //  skiwi_run("(define result 9)");
 #endif
     uint64_t res = skiwi_run_raw("result");
     TEST_EQ("9", skiwi_raw_to_string(res));
-/*
 #ifdef _WIN32
     std::string script = R"(
 (load (string-append "data\\" "load_test_2.scm"))
@@ -4478,7 +4477,6 @@ to /* and */ in c/c++
 #endif
     res = skiwi_run_raw(script);
     TEST_EQ("8", skiwi_raw_to_string(res));
- */
     skiwi_quit();
     }
 
@@ -5121,7 +5119,7 @@ to /* and */ in c/c++
 
 SKIWI_END
 
-#define ONLY_LAST
+//#define ONLY_LAST
 
 void run_all_compile_vm_tests()
   {
