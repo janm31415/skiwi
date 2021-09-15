@@ -4770,11 +4770,14 @@ to /* and */ in c/c++
 #else
           // need to check this on Linux for correct calling conventions
           reg.rdi = (uint64_t)(&ctxt);
-          reg.xmm0 = 3.4;
-          reg.xmm1 = 6.7;
-          reg.xmm2 = 1.1;
-          reg.xmm3 = 2.2;
-          reg.xmm4 = 3.3;
+          reg.xmm0 = 1.1;
+          reg.xmm1 = 2.2;
+          reg.xmm2 = 3.3;
+          reg.xmm3 = 4.4;
+          reg.xmm4 = 5.5;
+          reg.xmm5 = 6.6;
+          reg.xmm6 = 7.7;
+          reg.xmm7 = 8.8;
 #endif
           run_bytecode(f, size, reg);
           scheme_runtime(reg.rax, str, env, rd, nullptr);
@@ -5271,7 +5274,7 @@ void run_all_compile_vm_tests()
 
   c_input_test_5doubles().test();
 
-  //c_input_test_8doubles().test();
+  c_input_test_8doubles().test();
 
   current_seconds_test().test();
   current_milliseconds_test().test();
@@ -5288,5 +5291,4 @@ void run_all_compile_vm_tests()
   */
     
   //c_input_test_8doubles().test();
-
   }
