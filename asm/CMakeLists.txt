@@ -12,6 +12,8 @@ asmcode.cpp
 vm.cpp
 )
 
+include ("../skiwi.cmake")
+
 # general build definitions
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 

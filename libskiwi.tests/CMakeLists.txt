@@ -26,6 +26,9 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 add_definitions(-DMEMORY_LEAK_TRACKING)
 
+include ("../skiwi.cmake")
+
+
 add_executable(libskiwi.tests ${HDRS} ${SRCS})
 source_group("Header Files" FILES ${hdrs})
 source_group("Source Files" FILES ${srcs})

@@ -16,6 +16,10 @@ set(CMAKE_C_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi /DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi /DNDEBUG")
 endif (WIN32)
 
+set(SKIWI_TARGET "x64" CACHE STRING  "Choose your target platform: x64 compatible pc or arm.")
+set_property(CACHE SKIWI_TARGET PROPERTY STRINGS x64 arm)
+
+
 add_subdirectory(asm)
 add_subdirectory(asm.tests)
 add_subdirectory(libskiwi)
