@@ -68,7 +68,7 @@ typedef uint8_t* skiwi_compiled_function_ptr;
   SKIWI_SCHEME_API void skiwi_show_expand(const std::string& input);
   SKIWI_SCHEME_API void skiwi_show_assembly(const std::string& input);
   SKIWI_SCHEME_API void skiwi_show_unresolved();
-  SKIWI_SCHEME_API void skiwi_show_external_primitives();
+  SKIWI_SCHEME_API void skiwi_show_external_primitives(const std::string& arg);
   SKIWI_SCHEME_API void skiwi_show_memory();
   SKIWI_SCHEME_API void skiwi_show_environment();
 
