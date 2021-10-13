@@ -125,6 +125,7 @@ typedef uint8_t* skiwi_compiled_function_ptr;
       SKIWI_SCHEME_API int64_t get_fixnum() const;
       SKIWI_SCHEME_API double get_flonum() const;
       SKIWI_SCHEME_API double get_number() const;
+      SKIWI_SCHEME_API std::string get_string() const;
       SKIWI_SCHEME_API std::vector<scm_type> get_vector() const;
       SKIWI_SCHEME_API std::pair<scm_type, scm_type> get_pair() const;
       SKIWI_SCHEME_API std::vector<scm_type> get_list() const;

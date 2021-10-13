@@ -1394,6 +1394,28 @@ double scm_type::get_number() const
     return get_flonum();
 }
 
+std::string scm_type::get_string() const
+  {  
+  if (!is_string())
+    throw std::runtime_error("skiwi error: not a string");
+  std::string s;
+  uint64_t* addr = get_address_from_block(scm_value);
+  uint64_t header = *addr;
+  uint64_t vsize = get_block_size(header);
+  for (uint64_t i = 0; i < vsize; ++i)
+    {
+    uint64_t item = *((uint64_t*)(addr + i + 1));
+    for (uint64_t j = 0; j < 8; ++j)
+      {
+      unsigned char ch = (unsigned char)((item >> (j*8)) & 255);
+      if (ch == 0)
+        return s;
+      s.push_back(ch);
+      }
+    }
+  return s;
+  }
+
 std::vector<scm_type> scm_type::get_vector() const
 {
     if (!is_vector())
