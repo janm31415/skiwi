@@ -4,6 +4,7 @@
 (define-module list-common (misc list-common))
 (define-module mbe (misc mbe))
 (define-module oldscheme (misc oldscheme))
+(define-module substring (misc substring))
 
 ;; r5rs
 (define-module values (r5rs values))
