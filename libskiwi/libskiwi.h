@@ -59,7 +59,7 @@ typedef uint8_t* skiwi_compiled_function_ptr;
 
   SKIWI_SCHEME_API uint64_t skiwi_run_raw(const std::string& scheme_expression);
   SKIWI_SCHEME_API uint64_t skiwi_runf_raw(const std::string& scheme_file);
-  SKIWI_SCHEME_API std::string skiwi_raw_to_string(uint64_t scm_value);
+  SKIWI_SCHEME_API std::string skiwi_raw_to_string(uint64_t scm_value, std::streamsize precision=6);
 
   SKIWI_SCHEME_API void skiwi_run(const std::string& scheme_expression);
   SKIWI_SCHEME_API void skiwi_runf(const std::string& scheme_file);

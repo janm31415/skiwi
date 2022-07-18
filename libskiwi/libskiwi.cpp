@@ -943,10 +943,10 @@ uint64_t skiwi_run_raw(const std::string& scheme_expression)
   return compile_and_run(scheme_expression, cd.env, cd.rd);
   }
 
-std::string skiwi_raw_to_string(uint64_t scm_value)
+std::string skiwi_raw_to_string(uint64_t scm_value, std::streamsize precision)
   {
   std::stringstream ss;
-  ss << std::setprecision(6);
+  ss << std::setprecision(precision);
   scheme_runtime(scm_value, ss, cd.env, cd.rd, &cd.ctxt);
   return ss.str();
   }
