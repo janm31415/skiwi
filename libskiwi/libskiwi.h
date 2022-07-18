@@ -147,7 +147,7 @@ typedef uint8_t* skiwi_compiled_function_ptr;
   SKIWI_SCHEME_API scm_type make_pair(scm_type first, scm_type second);
   SKIWI_SCHEME_API scm_type make_list(const std::vector<scm_type>& lst);
   SKIWI_SCHEME_API scm_type make_vector(const std::vector<scm_type>& vec);
-  
+  SKIWI_SCHEME_API scm_type make_string(const std::string& s);
 
   SKIWI_SCHEME_API void set_prompt(const std::string& prompt_text);
   SKIWI_SCHEME_API void set_welcome_message(const std::string& welcome_message_text);
