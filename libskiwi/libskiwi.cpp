@@ -1583,7 +1583,7 @@ scm_type make_string(const std::string& s)
     {
     uint64_t current_blob = 0;
     uint64_t char_index = blob_index*8;
-    uint64_t char_index_end = std::min(s.size(), char_index+8);
+    uint64_t char_index_end = std::min<uint64_t>(s.size(), char_index+8);
     for (uint64_t i = char_index; i < char_index_end; ++i)
       {
       uint64_t b = i-char_index;
