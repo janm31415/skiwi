@@ -68,8 +68,8 @@ SKIWI_END
 void run_all_tokenize_tests()
   {
   using namespace SKIWI;
-  void tokenize_symbol();
-  void tokenize_list();
-  void tokenize_string();
-  void tokenize_fixnum_real();
+  tokenize_symbol();
+  tokenize_list();
+  tokenize_string();
+  tokenize_fixnum_real();
   }
