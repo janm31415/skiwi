@@ -6,6 +6,7 @@ compile_vm_tests.h
 conversion_tests.h
 format_tests.h
 parse_tests.h
+preprocess_tests.h
 tokenize_tests.h
     )
 	
@@ -17,6 +18,7 @@ compile_vm_tests.cpp
 conversion_tests.cpp
 format_tests.cpp
 parse_tests.cpp
+preprocess_tests.cpp
 tokenize_tests.cpp
 )
 
